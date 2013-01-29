@@ -1,0 +1,56 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>1.466</version>
+  </parent>
+
+  <artifactId>WindowsAzureStorage</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>hpi</packaging>
+  <name>Windows Azure Storage plugin</name>
+  <description>Uploads build artifacts to Windows Azure storage</description>
+    
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0 (the "License")</name>
+      <comments>Licensed under the Apache License, Version 2.0 (the "License").</comments>
+    </license>
+  </licenses>
+  
+  <developers>
+    	<developer>
+      		<id>snallami</id>
+      		<name>Suresh Nallamilli</name>
+      		<email>v-sunal@microsoft.com</email>
+    	</developer>
+    	<developer>
+      		<id>marcins</id>
+      		<name>Martin Sawicki</name>
+      		<email>marcins@microsoft.com</email>
+    	</developer>
+  </developers>
+    
+  <dependencies>
+  	<dependency>
+    	<groupId>com.microsoft.windowsazure</groupId>
+    	<artifactId>microsoft-windowsazure-api</artifactId>
+    	<version>0.4.0</version>
+	</dependency>
+   </dependencies>
+  
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+</project>
