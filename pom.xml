@@ -6,11 +6,17 @@
     <version>1.466</version>
   </parent>
 
-  <artifactId>WindowsAzureStorage</artifactId>
+  <artifactId>windows-azure-storage</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Windows Azure Storage plugin</name>
   <description>Uploads build artifacts to Windows Azure storage</description>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/Windows+Azure+Storage+Plugin</url>
+  
+  <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
     
   <licenses>
     <license>
@@ -21,12 +27,12 @@
   
   <developers>
     	<developer>
-      		<id>snallami</id>
+      		<id>sureshreddygithub</id>
       		<name>Suresh Nallamilli</name>
       		<email>v-sunal@microsoft.com</email>
     	</developer>
     	<developer>
-      		<id>marcins</id>
+      		<id>martinsawicki</id>
       		<name>Martin Sawicki</name>
       		<email>marcins@microsoft.com</email>
     	</developer>
@@ -39,6 +45,12 @@
     	<version>0.4.0</version>
 	</dependency>
    </dependencies>
+   
+   <scm>
+		<connection>scm:git:ssh://github.com/jenkinsci/windows-azure-storage-plugin.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/windows-azure-storage-plugin.git</developerConnection>
+		<url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
+   </scm>
   
   <repositories>
     <repository>

@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
    
-    <f:entry title="${%storageAccountName_title}" help="/plugin/WindowsAzureStorage/help-selectstorageaccount.html">
+    <f:entry title="${%storageAccountName_title}" help="/plugin/windows-azure-storage/help-selectstorageaccount.html">
   		<select class="setting-input" name="storageAccName">
   			<j:forEach var="storageAcc" items="${descriptor.storageAccounts}">
   				<f:option selected="${storageAcc.storageAccName==instance.storageAccName}">${storageAcc.storageAccName}</f:option>
@@ -9,21 +9,21 @@
   		</select>
   	</f:entry>
   
-  	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/WindowsAzureStorage/help-containerName.html">
+  	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-containerName.html">
     	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
  	</f:entry>
  	
- 	<f:entry  field="cntPubAccess" help="/plugin/WindowsAzureStorage/help-containerAccess.html">
+ 	<f:entry  field="cntPubAccess" help="/plugin/windows-azure-storage/help-containerAccess.html">
  		<div align="right">
     		<f:checkbox title="${%containerAccess_title}" />
     	</div>
   	</f:entry>
  	
-  	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/WindowsAzureStorage/help-filesPath.html">
+  	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
     	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
   	</f:entry>
   	
-  	<f:entry title="${%virtualPath}" field="virtualPath" help="/plugin/WindowsAzureStorage/help-virtualPath.html">
+  	<f:entry title="${%virtualPath}" field="virtualPath" help="/plugin/windows-azure-storage/help-virtualPath.html">
     	<f:textbox />
   	</f:entry>
 </j:jelly>
