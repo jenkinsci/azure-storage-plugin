@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>windows-azure-storage</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <packaging>hpi</packaging>
   <name>Windows Azure Storage plugin</name>
   <description>Uploads build artifacts to Windows Azure storage</description>
