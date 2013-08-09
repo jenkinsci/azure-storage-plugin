@@ -17,6 +17,9 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
+import java.io.InputStream;
+import java.io.IOException;
+
 
 import hudson.FilePath;
 import hudson.model.BuildListener;
@@ -163,7 +166,17 @@ public class WAStorageClient {
     	            	 } else {
     	            		 blob = container.getBlockBlobReference(expVP+src.getName());
     	            	 }
-    	                 blob.upload(src.read(), src.length());
+    	            	 InputStream inputStream = src.read();
+    	            	 try{
+    	            	 	blob.upload(inputStream, src.length());	
+    	            	 }finally{
+    	            	 	try{
+    	            	 		inputStream.close();
+    	            	 	}catch(IOException e){
+
+    	            	 	}
+    	            	 }
+    	                 
     	                 filesUploaded++;
     	            } 
     			}
