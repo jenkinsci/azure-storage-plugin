@@ -6,6 +6,7 @@
     <version>1.466</version>
   </parent>
 
+
   <artifactId>windows-azure-storage</artifactId>
   <version>0.1.2-SNAPSHOT</version>
   <packaging>hpi</packaging>
