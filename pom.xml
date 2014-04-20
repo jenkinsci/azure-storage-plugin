@@ -8,7 +8,7 @@
 
 
   <artifactId>windows-azure-storage</artifactId>
-  <version>0.1.3-SNAPSHOT</version>
+  <version>0.1.3</version>
   <packaging>hpi</packaging>
   <name>Windows Azure Storage plugin</name>
   <description>Uploads build artifacts to Windows Azure storage</description>
@@ -51,7 +51,8 @@
 		<connection>scm:git:ssh://github.com/jenkinsci/windows-azure-storage-plugin.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/windows-azure-storage-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
-   </scm>
+     <tag>windows-azure-storage-0.1.3</tag>
+  </scm>
   
   <repositories>
     <repository>
