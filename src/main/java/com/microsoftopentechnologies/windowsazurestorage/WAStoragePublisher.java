@@ -1,5 +1,5 @@
 /*
- Copyright 2013 Microsoft Open Technologies, Inc.
+ Copyright 2014 Microsoft Open Technologies, Inc.
  
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
  limitations under the License.
  */
 package com.microsoftopentechnologies.windowsazurestorage;
+
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
@@ -27,6 +29,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
@@ -35,55 +38,65 @@ import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInf
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 
 import javax.servlet.ServletException;
+
 import java.io.IOException;
 import java.util.Locale;
-
 
 public class WAStoragePublisher extends Recorder {
 
 	/** Windows Azure Storage Account Name. */
-	private  String storageAccName;
+	private String storageAccName;
 
 	/** Windows Azure storage container name. */
-	private  String containerName;
+	private String containerName;
 
 	/** Windows Azure storage container access. */
-    private  boolean cntPubAccess;
+	private boolean cntPubAccess;
 
-    /** Files path. Ant glob sysntax. */
-    private  String filesPath;
-    
-    /** File Path prefix  */
-    private  String virtualPath;
-    
-    @DataBoundConstructor
-    public WAStoragePublisher(final String storageAccName,final String filesPath,
-    						  final	String containerName,final boolean cntPubAccess, final String virtualPath) {
-    	super();
-    	this.storageAccName	=	storageAccName;
-        this.filesPath 		= 	filesPath;
-        this.containerName 	= 	containerName;
-        this.cntPubAccess 	= 	cntPubAccess;
-        this.virtualPath    =   virtualPath;
-    }
+	/** Windows Azure storage container cleanup option. */
+	private boolean cleanUpContainer;
 
-    public String getFilesPath() {
-        return filesPath;
-    }
+	/** Files path. Ant glob sysntax. */
+	private String filesPath;
 
-    public String getContainerName() {
-        return containerName;
-    }
+	/** File Path prefix */
+	private String virtualPath;
 
-    public boolean isCntPubAccess() {
-        return cntPubAccess;
-    }
+	@DataBoundConstructor
+	public WAStoragePublisher(final String storageAccName,
+			final String filesPath, final String containerName,
+			final boolean cntPubAccess, final String virtualPath,
+			final boolean cleanUpContainer) {
+		super();
+		this.storageAccName = storageAccName;
+		this.filesPath = filesPath;
+		this.containerName = containerName;
+		this.cntPubAccess = cntPubAccess;
+		this.virtualPath = virtualPath;
+		this.cleanUpContainer = cleanUpContainer;
+	}
 
-    public String getStorageAccName() {
-    	return storageAccName;
-    }
+	public String getFilesPath() {
+		return filesPath;
+	}
 
-    public void setStorageAccName(final String storageAccName) {
+	public String getContainerName() {
+		return containerName;
+	}
+
+	public boolean isCntPubAccess() {
+		return cntPubAccess;
+	}
+
+	public boolean isCleanUpContainer() {
+		return cleanUpContainer;
+	}
+
+	public String getStorageAccName() {
+		return storageAccName;
+	}
+
+	public void setStorageAccName(final String storageAccName) {
 		this.storageAccName = storageAccName;
 	}
 
@@ -95,10 +108,14 @@ public class WAStoragePublisher extends Recorder {
 		this.cntPubAccess = cntPubAccess;
 	}
 
+	public void setCleanUpContainer(final boolean cleanUpContainer) {
+		this.cleanUpContainer = cleanUpContainer;
+	}
+
 	public void setFilesPath(final String filesPath) {
 		this.filesPath = filesPath;
 	}
-	
+
 	public String getVirtualPath() {
 		return virtualPath;
 	}
@@ -106,120 +123,152 @@ public class WAStoragePublisher extends Recorder {
 	public void setVirtualPath(final String virtualPath) {
 		this.virtualPath = virtualPath;
 	}
-	
-    public WAStorageDescriptor getDescriptor() {
-        return (WAStorageDescriptor)super.getDescriptor();
-    }
-	
+
+	public WAStorageDescriptor getDescriptor() {
+		return (WAStorageDescriptor) super.getDescriptor();
+	}
+
 	/**
-	 * Returns storage account object based on the name selected in job configuration
+	 * Returns storage account object based on the name selected in job
+	 * configuration
+	 * 
 	 * @return StorageAccount
 	 */
 	public StorageAccountInfo getStorageAccount() {
-		StorageAccountInfo storageAcc = null ;
-        for (StorageAccountInfo sa : getDescriptor().getStorageAccounts()) {
-            if (sa.getStorageAccName().equals(storageAccName)) {
-            	storageAcc = sa;
-            	break;
-            }
-        }
-        return storageAcc;
-    }
-
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) 
-    throws InterruptedException, IOException  {
-    	
-    	// Get storage account and set formatted blob endpoint url. 
-    	StorageAccountInfo 	strAcc = getStorageAccount();
-    	if (strAcc != null ) {
-    		strAcc.setBlobEndPointURL(Utils.getBlobEP(strAcc.getStorageAccName(), strAcc.getBlobEndPointURL()));
-    	}
-    	
-    	// Resolve container name
-    	String expContainerName = Utils.replaceTokens(build, listener, containerName);
-		if	(expContainerName != null) {
-			 expContainerName = expContainerName.trim().toLowerCase(Locale.ENGLISH);
+		StorageAccountInfo storageAcc = null;
+		for (StorageAccountInfo sa : getDescriptor().getStorageAccounts()) {
+			if (sa.getStorageAccName().equals(storageAccName)) {
+				storageAcc = sa;
+				if (storageAcc != null) {
+					storageAcc.setBlobEndPointURL(Utils.getBlobEP(
+							storageAcc.getStorageAccName(),
+							storageAcc.getBlobEndPointURL()));
+				}
+				break;
+			}
 		}
-		
+		return storageAcc;
+	}
+
+	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
+			BuildListener listener) throws InterruptedException, IOException {
+
+		// Get storage account and set formatted blob endpoint url.
+		StorageAccountInfo strAcc = getStorageAccount();
+
+		// Resolve container name
+		String expContainerName = Utils.replaceTokens(build, listener,
+				containerName);
+		if (expContainerName != null) {
+			expContainerName = expContainerName.trim().toLowerCase(
+					Locale.ENGLISH);
+		}
+
 		// Resolve file path
-		String expFP = Utils.replaceTokens(build, listener, filesPath).trim();
-		
+		String expFP = Utils.replaceTokens(build, listener, filesPath);
+
+		if (expFP != null) {
+			expFP = expFP.trim();
+		}
+
 		// Resolve virtual path
-		String	expVP	= 	Utils.replaceTokens(build, listener, virtualPath);
+		String expVP = Utils.replaceTokens(build, listener, virtualPath);
+		if (Utils.isNullOrEmpty(expVP)) {
+			expVP = null;
+		}
 		if (!Utils.isNullOrEmpty(expVP) && !expVP.endsWith(Utils.FWD_SLASH)) {
 			expVP = expVP.trim() + Utils.FWD_SLASH;
-		}		
-		
-        // Validate input data
-    	if	(!validateData(build, listener, strAcc, expContainerName)) {
-    		return true; // returning true so that build can continue.
-    	}
+		}
 
-    	try {
-        	int filesUploaded = WAStorageClient.upload(build,listener,strAcc,expContainerName,cntPubAccess,expFP,expVP);
-    		
-    		if (filesUploaded == 0) { //Mark build unstable if no files are uploaded
-    			listener.getLogger().println(Messages.WAStoragePublisher_nofiles_uploaded());
-    			build.setResult(Result.UNSTABLE);
-    		} else {
-    			listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
-    		}
-    	} catch(Exception e) {
-    		e.printStackTrace(listener.error(Messages.WAStoragePublisher_uploaded_err(strAcc.getStorageAccName())));
-    		build.setResult(Result.UNSTABLE);
-    	}
-    	return true;
-    }
+		// Validate input data
+		if (!validateData(build, listener, strAcc, expContainerName)) {
+			return true; // returning true so that build can continue.
+		}
+
+		try {
+			int filesUploaded = WAStorageClient.upload(build, listener, strAcc,
+					expContainerName, cntPubAccess, cleanUpContainer, expFP,
+					expVP);
+
+			if (filesUploaded == 0) { // Mark build unstable if no files are
+										// uploaded
+				listener.getLogger().println(
+						Messages.WAStoragePublisher_nofiles_uploaded());
+				build.setResult(Result.UNSTABLE);
+			} else {
+				listener.getLogger()
+						.println(
+								Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
+			}
+		} catch (Exception e) {
+			e.printStackTrace(listener.error(Messages
+					.WAStoragePublisher_uploaded_err(strAcc.getStorageAccName())));
+			build.setResult(Result.UNSTABLE);
+		}
+		return true;
+	}
 
 	public BuildStepMonitor getRequiredMonitorService() {
 		return BuildStepMonitor.STEP;
 	}
-	
-	private boolean validateData(AbstractBuild<?, ?> build, BuildListener listener, StorageAccountInfo storageAccount, String expContainerName) 
-	throws IOException, InterruptedException {
-		
-    	// No need to upload artifacts if build failed
-    	if (build.getResult() == Result.FAILURE) {
-    		listener.getLogger().println(Messages.WAStoragePublisher_build_failed_err());
-    		return false;
-    	}
 
-    	if (storageAccount == null) {
-    		listener.getLogger().println(Messages.WAStoragePublisher_storage_account_err());
-    		build.setResult(Result.UNSTABLE);
-    		return false;
-    	}
+	private boolean validateData(AbstractBuild<?, ?> build,
+			BuildListener listener, StorageAccountInfo storageAccount,
+			String expContainerName) throws IOException, InterruptedException {
 
-    	// Validate container name
-    	if (!Utils.validateContainerName(expContainerName)) {
-    		listener.getLogger().println(Messages.WAStoragePublisher_container_name_err());
-    		build.setResult(Result.UNSTABLE);
-    		return false;
-    	}
+		// No need to upload artifacts if build failed
+		if (build.getResult() == Result.FAILURE) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_build_failed_err());
+			return false;
+		}
 
-    	// Validate files path
-    	if (Utils.isNullOrEmpty(filesPath)) {
-    		listener.getLogger().println(Messages.WAStoragePublisher_filepath_err());
-    		build.setResult(Result.UNSTABLE);
-    		return false;
-    	}
-    	
-    	// Check if storage account credentials are valid
-    	try {
-			WAStorageClient.validateStorageAccount(storageAccount.getStorageAccName(), storageAccount.getStorageAccountKey(), 
+		if (storageAccount == null) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_storage_account_err());
+			build.setResult(Result.UNSTABLE);
+			return false;
+		}
+
+		// Validate container name
+		if (!Utils.validateContainerName(expContainerName)) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_container_name_err());
+			build.setResult(Result.UNSTABLE);
+			return false;
+		}
+
+		// Validate files path
+		if (Utils.isNullOrEmpty(filesPath)) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_filepath_err());
+			build.setResult(Result.UNSTABLE);
+			return false;
+		}
+
+		// Check if storage account credentials are valid
+		try {
+			WAStorageClient.validateStorageAccount(
+					storageAccount.getStorageAccName(),
+					storageAccount.getStorageAccountKey(),
 					storageAccount.getBlobEndPointURL());
-        } catch (Exception e) {
-        	listener.getLogger().println(Messages.Client_SA_val_fail());
-        	listener.getLogger().println("Storage Account name --->"+storageAccount.getStorageAccName()+"<----");
-        	listener.getLogger().println("Blob end point url --->"+storageAccount.getBlobEndPointURL()+"<----");
-        	build.setResult(Result.UNSTABLE);
-    		return false;
-        }
-    	return true;
+		} catch (Exception e) {
+			listener.getLogger().println(Messages.Client_SA_val_fail());
+			listener.getLogger().println(
+					"Storage Account name --->"
+							+ storageAccount.getStorageAccName() + "<----");
+			listener.getLogger().println(
+					"Blob end point url --->"
+							+ storageAccount.getBlobEndPointURL() + "<----");
+			build.setResult(Result.UNSTABLE);
+			return false;
+		}
+		return true;
 	}
 
 	@Extension
-	public static final class WAStorageDescriptor extends BuildStepDescriptor<Publisher> {
+	public static final class WAStorageDescriptor extends
+			BuildStepDescriptor<Publisher> {
 
 		private final CopyOnWriteList<StorageAccountInfo> storageAccounts = new CopyOnWriteList<StorageAccountInfo>();
 
@@ -228,14 +277,17 @@ public class WAStoragePublisher extends Recorder {
 			load();
 		}
 
-		public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-        	storageAccounts.replaceBy(req.bindParametersToList(StorageAccountInfo.class, "was_"));
-            save();
-            return super.configure(req,formData);
-        }
+		public boolean configure(StaplerRequest req, JSONObject formData)
+				throws FormException {
+			storageAccounts.replaceBy(req.bindParametersToList(
+					StorageAccountInfo.class, "was_"));
+			save();
+			return super.configure(req, formData);
+		}
 
 		/**
 		 * Validates storage account details.
+		 * 
 		 * @param storageAccountName
 		 * @param blobEndPointURL
 		 * @param storageAccountKey
@@ -243,54 +295,81 @@ public class WAStoragePublisher extends Recorder {
 		 * @throws IOException
 		 * @throws ServletException
 		 */
-		public FormValidation doCheckAccount(@QueryParameter String was_storageAccName, 
-							  @QueryParameter String was_storageAccountKey, @QueryParameter String was_blobEndPointURL) 
-		throws IOException, ServletException {
-			
-			if (Utils.isNullOrEmpty(was_storageAccName)) {  
-				return FormValidation.error(Messages.WAStoragePublisher_storage_name_req());
+		public FormValidation doCheckAccount(
+				@QueryParameter String was_storageAccName,
+				@QueryParameter String was_storageAccountKey,
+				@QueryParameter String was_blobEndPointURL) throws IOException,
+				ServletException {
+
+			if (Utils.isNullOrEmpty(was_storageAccName)) {
+				return FormValidation.error(Messages
+						.WAStoragePublisher_storage_name_req());
 			}
 
 			if (Utils.isNullOrEmpty(was_storageAccountKey)) {
-					return FormValidation.error(Messages.WAStoragePublisher_storage_key_req());
+				return FormValidation.error(Messages
+						.WAStoragePublisher_storage_key_req());
 			}
 
 			try {
 				// Get formatted blob end point URL.
-				was_blobEndPointURL = Utils.getBlobEP(was_storageAccName, was_blobEndPointURL);
-				WAStorageClient.validateStorageAccount(was_storageAccName, was_storageAccountKey, was_blobEndPointURL);
-	        } catch (Exception e) {
-	            return FormValidation.error("Error : " + e.getMessage());
-	        }
+				was_blobEndPointURL = Utils.getBlobEP(was_storageAccName,
+						was_blobEndPointURL);
+				WAStorageClient.validateStorageAccount(was_storageAccName,
+						was_storageAccountKey, was_blobEndPointURL);
+			} catch (Exception e) {
+				return FormValidation.error("Error : " + e.getMessage());
+			}
 			return FormValidation.ok(Messages.WAStoragePublisher_SA_val());
-	    }
+		}
 
-	/**
-	 * Checks for valid container name. 
-	 * @param val name of the container
-	 * @return FormValidation result 
-	 * @throws IOException
-	 * @throws ServletException
-	 */
-		public FormValidation doCheckName(@QueryParameter String val) throws IOException, ServletException {
+		/**
+		 * Checks for valid container name.
+		 * 
+		 * @param val
+		 *            name of the container
+		 * @return FormValidation result
+		 * @throws IOException
+		 * @throws ServletException
+		 */
+		public FormValidation doCheckName(@QueryParameter String val)
+				throws IOException, ServletException {
 			if (!Utils.isNullOrEmpty(val)) {
-				//Token resolution happens dynamically at runtime , so for basic validations
+				// Token resolution happens dynamically at runtime , so for
+				// basic validations
 				// if text contain tokens considering it as valid input.
-				if (Utils.containTokens(val) || Utils.validateContainerName(val)) { 
+				if (Utils.containTokens(val)
+						|| Utils.validateContainerName(val)) {
 					return FormValidation.ok();
-				} else { 
-					return FormValidation.error(Messages.WAStoragePublisher_container_name_invalid());
+				} else {
+					return FormValidation.error(Messages
+							.WAStoragePublisher_container_name_invalid());
 				}
-		   } else {
-			   return FormValidation.error(Messages.WAStoragePublisher_container_name_req());
-		   }
+			} else {
+				return FormValidation.error(Messages
+						.WAStoragePublisher_container_name_req());
+			}
 		}
 
 		public FormValidation doCheckPath(@QueryParameter String val) {
-			if (Utils.isNullOrEmpty(val) ) { 
-				return FormValidation.error(Messages.WAStoragePublisher_artifacts_req());
+			if (Utils.isNullOrEmpty(val)) {
+				return FormValidation.error(Messages
+						.WAStoragePublisher_artifacts_req());
 			}
 			return FormValidation.ok();
+		}
+
+		public FormValidation doCheckBlobName(@QueryParameter String val) {
+			if (Utils.isNullOrEmpty(val)) {
+				return FormValidation.error(Messages
+						.AzureStorageBuilder_blobName_req());
+			} else if (!Utils.validateBlobName(val)) {
+				return FormValidation.error(Messages
+						.AzureStorageBuilder_blobName_invalid());
+			} else {
+				return FormValidation.ok();
+			}
+
 		}
 
 		@SuppressWarnings("rawtypes")
@@ -301,14 +380,74 @@ public class WAStoragePublisher extends Recorder {
 		public String getDisplayName() {
 			return Messages.WAStoragePublisher_displayName();
 		}
-		
+
 		public StorageAccountInfo[] getStorageAccounts() {
-            return storageAccounts.toArray(new StorageAccountInfo[storageAccounts.size()]);
-        }
-		
+			return storageAccounts
+					.toArray(new StorageAccountInfo[storageAccounts.size()]);
+		}
+
+		public StorageAccountInfo getStorageAccount(String name) {
+
+			if (name == null || (name.trim().length() == 0)) {
+				return null;
+			}
+
+			StorageAccountInfo storageAccountInfo = null;
+			StorageAccountInfo[] storageAccounts = getStorageAccounts();
+
+			if (storageAccounts != null) {
+				for (StorageAccountInfo sa : storageAccounts) {
+					if (sa.getStorageAccName().equals(name)) {
+						storageAccountInfo = sa;
+
+						if (storageAccountInfo != null) {
+							storageAccountInfo.setBlobEndPointURL(Utils
+									.getBlobEP(storageAccountInfo
+											.getStorageAccName(),
+											storageAccountInfo
+													.getBlobEndPointURL()));
+						}
+						break;
+					}
+
+				}
+			}
+			return storageAccountInfo;
+		}
+
 		public String getDefaultBlobURL() {
 			return Utils.getDefaultBlobURL();
 		}
+
+		/*
+		 * public List<String> getContainersList(String StorageAccountName) {
+		 * try { return WAStorageClient.getContainersList(
+		 * getStorageAccount(StorageAccountName), false); } catch (Exception e)
+		 * { e.printStackTrace(); return null; } }
+		 */
+
+		public ListBoxModel doFillStorageAccNameItems() {
+			ListBoxModel m = new ListBoxModel();
+			StorageAccountInfo[] StorageAccounts = getStorageAccounts();
+
+			if (StorageAccounts != null) {
+				for (StorageAccountInfo storageAccount : StorageAccounts) {
+					m.add(storageAccount.getStorageAccName());
+				}
+			}
+			return m;
+		}
+
+		/*
+		 * public ComboBoxModel doFillContainerNameItems(
+		 * 
+		 * @QueryParameter String storageAccName) { ComboBoxModel m = new
+		 * ComboBoxModel();
+		 * 
+		 * List<String> containerList = getContainersList(storageAccName); if
+		 * (containerList != null) { for (String containerName :
+		 * getContainersList(storageAccName)) { m.add(containerName); } } return
+		 * m; }
+		 */
 	}
 }
-

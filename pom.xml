@@ -28,22 +28,27 @@
   
   <developers>
     	<developer>
-      		<id>sureshreddygithub</id>
-      		<name>Suresh Nallamilli</name>
-      		<email>v-sunal@microsoft.com</email>
-    	</developer>
-    	<developer>
       		<id>martinsawicki</id>
       		<name>Martin Sawicki</name>
       		<email>marcins@microsoft.com</email>
     	</developer>
+		<developer>
+      		<id>snallami</id>
+      		<name>Suresh Nallamilli</name>
+      		<email>snallami@gmail.com</email>
+    	</developer>
   </developers>
     
   <dependencies>
-  	<dependency>
-    	<groupId>com.microsoft.windowsazure</groupId>
-    	<artifactId>microsoft-windowsazure-api</artifactId>
-    	<version>0.4.0</version>
+	<dependency>
+		<groupId>com.microsoft.windowsazure.storage</groupId>
+		<artifactId>microsoft-windowsazure-storage-sdk</artifactId>
+		<version>0.6.0</version>
+	</dependency>
+	<dependency>
+		<groupId>commons-lang</groupId>
+		<artifactId>commons-lang</artifactId>
+		<version>2.3</version>
 	</dependency>
    </dependencies>
    

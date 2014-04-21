@@ -1,12 +1,22 @@
 <div>
-	Follow the Ant glob syntax to specify the files to upload.<br />
+	Follow the Ant glob syntax or absolute file path to specify the files to upload.<br />
 	Multiple inputs are accepted if separated by semi-colons.<br />
-	
 	The base directory is the workspace.<br />
 	Examples: 
 	<br />	1. build/*.jar
 	<br />	2. **/*.jar
-	<br />	3. build/*.zip;build/*.jar 
-	<br />  4. notices/*.txt
-  Environment variables and system environment variables are allowed.
+	<br />	3. build/*.zip;build/*.jar
+	<br />	4. c:/libs/mysample.jar 
+	
+	<br/><br/>Environment variables and system environment variables are allowed.
+
+	<br/>For each group of artifacts, you can also specify the URL path that those files will be uploaded to by using '::' after the source path and entering a name for that URL part. e.g. build/*.jar::binaries;build/*.txt::notices
+
+<br><br>The final upload URL for each group of artifacts is constructed as follows, where &lt;group-path&gt; represents that last group URL path part:
+
+<br><br>http://&lt;storage-account-name&gt;.&lt;azure-bob-service-endpoint&gt;/&lt;container-name&gt;/&lt;common-virtual-path&gt;/&lt;group-path&gt;/&lt;artifacts-file-name&gt;
+
+<br><br>For example:
+<br>http://mystorageaccount.blob.core.windows.net/mycontainer/mycommonvirtualpath/mygrouppath/myartifact.jar
+
 </div>

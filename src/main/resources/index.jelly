@@ -1,4 +1,4 @@
 <div>
- 	Windows Azure Blob Storage Plugin enables uploading build <br />
- 	artifacts to Windows Azure Blob storage
+ 	Azure Blob Storage Plugin enables uploading build <br />
+ 	artifacts to, or downloading blob files from, Microsoft Azure Blob storage
 </div>

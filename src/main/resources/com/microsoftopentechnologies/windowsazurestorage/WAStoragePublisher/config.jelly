@@ -1,22 +1,24 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
    
-    <f:entry title="${%storageAccountName_title}" help="/plugin/windows-azure-storage/help-selectstorageaccount.html">
-  		<select class="setting-input" name="storageAccName">
-  			<j:forEach var="storageAcc" items="${descriptor.storageAccounts}">
-  				<f:option selected="${storageAcc.storageAccName==instance.storageAccName}">${storageAcc.storageAccName}</f:option>
-  			</j:forEach>
-  		</select>
+    <f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-selectstorageaccount.html">
+  		<f:select />
   	</f:entry>
   
   	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-containerName.html">
-    	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
+    	<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
  	</f:entry>
  	
- 	<f:entry  field="cntPubAccess" help="/plugin/windows-azure-storage/help-containerAccess.html">
- 		<div align="right">
+ 	<f:entry field="cntPubAccess"  help="/plugin/windows-azure-storage/help-containerAccess.html">
+ 		<div align="left">
     		<f:checkbox title="${%containerAccess_title}" />
     	</div>
+  	</f:entry>
+  	
+  	<f:entry  field="cleanUpContainer" help="/plugin/windows-azure-storage/help-cleanContainer.html">
+    		<div align="left">
+    			<f:checkbox  title="${%cleanContainer_title}"/>
+    		</div>
   	</f:entry>
  	
   	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
