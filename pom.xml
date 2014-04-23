@@ -11,7 +11,7 @@
   <version>0.2.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Windows Azure Storage plugin</name>
-  <description>Uploads build artifacts to Windows Azure storage</description>
+  <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/Windows+Azure+Storage+Plugin</url>
   
   <properties>
