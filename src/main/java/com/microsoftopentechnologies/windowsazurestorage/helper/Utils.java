@@ -180,5 +180,4 @@ public class Utils {
 	public static String getDefaultBlobURL() {
 		return DEF_BLOB_URL;
 	}
-
 }

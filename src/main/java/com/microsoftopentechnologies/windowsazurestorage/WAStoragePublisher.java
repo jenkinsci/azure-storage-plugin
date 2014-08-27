@@ -21,6 +21,7 @@ import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.model.AbstractBuild;
+import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.model.AbstractProject;
@@ -40,6 +41,10 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 public class WAStoragePublisher extends Recorder {
@@ -61,7 +66,7 @@ public class WAStoragePublisher extends Recorder {
 
 	/** File Path prefix */
 	private String virtualPath;
-
+	
 	@DataBoundConstructor
 	public WAStoragePublisher(final String storageAccName,
 			final String filesPath, final String containerName,
@@ -127,6 +132,15 @@ public class WAStoragePublisher extends Recorder {
 	public WAStorageDescriptor getDescriptor() {
 		return (WAStorageDescriptor) super.getDescriptor();
 	}
+	
+	//Defines project actions
+	public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
+		AzureBlobProjectAction projectAction= new AzureBlobProjectAction(project);
+		List<Action> projectActions = new ArrayList<Action>();
+		projectActions.add(projectAction);
+		
+  	    return Collections.unmodifiableList(projectActions);
+    }
 
 	/**
 	 * Returns storage account object based on the name selected in job
@@ -186,9 +200,11 @@ public class WAStoragePublisher extends Recorder {
 		}
 
 		try {
+			List<AzureBlob> blobs = new ArrayList<AzureBlob>();
+			
 			int filesUploaded = WAStorageClient.upload(build, listener, strAcc,
 					expContainerName, cntPubAccess, cleanUpContainer, expFP,
-					expVP);
+					expVP, blobs);
 
 			if (filesUploaded == 0) { // Mark build unstable if no files are
 										// uploaded
@@ -196,9 +212,11 @@ public class WAStoragePublisher extends Recorder {
 						Messages.WAStoragePublisher_nofiles_uploaded());
 				build.setResult(Result.UNSTABLE);
 			} else {
-				listener.getLogger()
-						.println(
-								Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
+				listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
+				
+				if (blobs.size() > 0) {
+	                build.getActions().add(new AzureBlobAction(build, strAcc.getStorageAccName(), expContainerName, blobs));
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace(listener.error(Messages

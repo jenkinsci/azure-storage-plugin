@@ -19,7 +19,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang.time.DurationFormatUtils;
 
@@ -40,11 +48,14 @@ import com.microsoft.windowsazure.storage.blob.CloudBlobContainer;
 import com.microsoft.windowsazure.storage.blob.CloudBlobDirectory;
 import com.microsoft.windowsazure.storage.blob.CloudBlockBlob;
 import com.microsoft.windowsazure.storage.blob.ListBlobItem;
+import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPermissions;
+import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPolicy;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 
 public class WAStorageClient {
+	private static final Logger LOGGER = Logger.getLogger(WAStorageClient.class.getName());
 
 	/*
 	 * A random name for container name to test validity of storage account
@@ -274,11 +285,10 @@ public class WAStorageClient {
 	public static int upload(AbstractBuild<?, ?> build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName,
 			boolean cntPubAccess, boolean cleanUpContainer, String expFP,
-			String expVP) throws WAStorageException {
+			String expVP, List<AzureBlob> blobs) throws WAStorageException {
 
 		CloudBlockBlob blob = null;
-		int filesUploaded = 0; // Counter to track no. of files that are
-								// uploaded
+		int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
 		try {
 			FilePath workspacePath = build.getWorkspace();
@@ -360,8 +370,7 @@ public class WAStorageClient {
 									prefix = expVP + embeddedVP;
 								}
 							}
-							blob = container.getBlockBlobReference(prefix
-									+ src.getName());
+							blob = container.getBlockBlobReference(prefix + src.getName());
 						}
 
 						long startTime = System.currentTimeMillis();
@@ -377,11 +386,8 @@ public class WAStorageClient {
 							}
 						}
 						long endTime = System.currentTimeMillis();
-						listener.getLogger()
-								.println(
-										"Uploaded blob with uri "
-												+ blob.getUri() + " in "
-												+ getTime(endTime - startTime));
+						listener.getLogger().println("Uploaded blob with uri "+ blob.getUri() + " in " + getTime(endTime - startTime));
+						blobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://")));
 						filesUploaded++;
 					}
 				}
@@ -637,6 +643,52 @@ public class WAStorageClient {
 
 		}
 
+	}
+	
+	/**
+	 * Generates SAS URL for blob in Azure storage account
+	 * @param storageAccountName
+	 * @param storageAccountKey
+	 * @param containerName
+	 * @param strBlobURL
+	 * @return SAS URL
+	 * @throws Exception
+	 */
+	public static String generateSASURL(String storageAccountName, String storageAccountKey, String containerName, String saBlobEndPoint) throws Exception {
+		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
+		URL blobURL = new  URL(saBlobEndPoint);
+		String saBlobURI = 	new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
+							.append(blobURL.getHost()).append("/").toString();
+		CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI), 
+				  new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)), 
+				  new URI(getCustomURI(storageAccountName, TABLE, saBlobURI)));
+		// Create the blob client.
+		CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
+		CloudBlobContainer container = blobClient.getContainerReference(containerName);
+
+		// At this point need to throw an error back since container itself did not exist.
+		if (!container.exists()) {
+			throw new Exception("WAStorageClient: generateSASURL: Container " + containerName
+					+ " does not exist in storage account " + storageAccountName);
+		}
+
+		SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
+		GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+		calendar.setTime(new Date());
+		
+		//policy.setSharedAccessStartTime(calendar.getTime());
+		calendar.add(Calendar.HOUR, 1);
+		policy.setSharedAccessExpiryTime(calendar.getTime());
+		policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
+
+		BlobContainerPermissions containerPermissions = new BlobContainerPermissions();
+		containerPermissions.getSharedAccessPolicies().put("jenkins"+System.currentTimeMillis(), policy);
+		container.uploadPermissions(containerPermissions);
+
+		// Create a shared access signature for the container.
+		String sas = container.generateSharedAccessSignature(policy, null);
+
+		return sas;
 	}
 
 	/**

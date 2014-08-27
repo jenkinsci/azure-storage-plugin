@@ -1,0 +1,19 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:set var="lastSuccessfulArtifactsAction" value="${it.lastSuccessfulArtifactsAction}"/>
+  <j:if test="${lastSuccessfulArtifactsAction != null}">
+      <table style="margin-top:1em; margin-left:1em;">
+        <t:summary icon="/plugin/windows-azure-storage/images/48x48/Azure.png">
+            ${%Latest Azure Artifacts}
+            <ul>
+               <j:set var="buildNumber" value="${it.lastSuccessfulBuildNumber}"/>
+               <j:forEach var="blob" items="${lastSuccessfulArtifactsAction.blobs}" >
+                   <li>
+                       <a href="${buildNumber}/Azure/processDownloadRequest/${blob.blobName}">${blob.blobName}</a>
+                       <br />
+                   </li>
+               </j:forEach>
+            </ul>
+        </t:summary>
+      </table>
+  </j:if>
+</j:jelly>
