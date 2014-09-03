@@ -1,7 +1,6 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
 import java.util.List;
-
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Run;

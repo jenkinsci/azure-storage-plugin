@@ -26,7 +26,7 @@ public class StorageAccountInfo {
 
 	/** Windows Azure stoarge blob end point url. */
 	private String 			blobEndPointURL;
-
+	
 	@DataBoundConstructor
 	public StorageAccountInfo(final String storageAccName, final String storageAccountKey, 
 							  final String blobEndPointURL) {

@@ -20,6 +20,12 @@
     			<f:checkbox  title="${%cleanContainer_title}"/>
     		</div>
   	</f:entry>
+  	
+  	<f:entry field="allowAnonymousAccess" help="/plugin/windows-azure-storage/help-allowAnonymousAccess.html">
+    	<div align="left">
+    		<f:checkbox title="${%allowAnonymousAccess_title}"/>
+    	</div>
+  	</f:entry>
  	
   	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
     	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>

@@ -18,7 +18,6 @@
     						default="${descriptor.getDefaultBlobURL()}" />
   				</f:entry>
   				
-  			
   			    <f:entry title="">
   			    	<div align="right">
   			    	<f:validateButton
