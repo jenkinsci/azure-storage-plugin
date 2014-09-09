@@ -121,7 +121,7 @@ public class AzureBlobAction implements RunAction {
 				try {
 					response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo));
 				} catch(Exception e) {
-					response.sendError(500, "Error occurred while downlaoding artifact "+e.getMessage());
+					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
 				}
 				return;
 			}

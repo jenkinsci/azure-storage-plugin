@@ -53,6 +53,10 @@ For a tutorial, see http://go.microsoft.com/fwlink/?LinkId=280058.
 Changelog
 =========
 
+Version 0.3.0 September 09, 2014
+-----------------------------
+- Added easily accessible links for azure artifacts uploaded to blob storage.
+
 Version 0.2.0 April 23, 2014
 ----------------------------
 - changed the logic of the "make container public" checkbox to apply to newly created containers only
