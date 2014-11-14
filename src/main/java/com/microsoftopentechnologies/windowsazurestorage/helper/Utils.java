@@ -141,12 +141,11 @@ public class Utils {
 	 * Returns formatted blob end point in case if a non-default one is
 	 * specified.
 	 * 
-	 * @param storageAccName
 	 * @param blobURL
 	 * @return DEF_BLOB_URL if blobURL is empty or blobURL is default one else
 	 *         returns formatted blob url.
 	 */
-	public static String getBlobEP(String storageAccName, String blobURL) {
+	public static String getBlobEP(String blobURL) {
 
 		if (isNullOrEmpty(blobURL)) {
 			return DEF_BLOB_URL;
@@ -160,12 +159,9 @@ public class Utils {
 		if (blobURL.equals(DEF_BLOB_URL)) {
 			return DEF_BLOB_URL;
 		} else {
-			if (blobURL.indexOf(PRT_SEP) != -1) { // insert storage account name
-				blobURL = blobURL.replace(PRT_SEP, PRT_SEP + storageAccName
-						+ ".");
-			} else { // insert http and storage account name
+			if (blobURL.indexOf(PRT_SEP) == -1) { // prepend http protocol if missing
 				blobURL = new StringBuilder().append(HTTP_PRT)
-						.append(storageAccName).append(".").append(blobURL)
+						.append(blobURL)
 						.toString();
 			}
 		}
