@@ -156,15 +156,14 @@ public class Utils {
 			blobURL = blobURL.concat(FWD_SLASH);
 		}
 
-		if (blobURL.equals(DEF_BLOB_URL)) {
-			return DEF_BLOB_URL;
-		} else {
-			if (blobURL.indexOf(PRT_SEP) == -1) { // prepend http protocol if missing
-				blobURL = new StringBuilder().append(HTTP_PRT)
-						.append(blobURL)
-						.toString();
-			}
+		// prepend http protocol if missing
+		if (blobURL.indexOf(PRT_SEP) == -1) { 
+			blobURL = new StringBuilder()
+				.append(HTTP_PRT)
+				.append(blobURL)
+				.toString();
 		}
+
 		return blobURL;
 	}
 

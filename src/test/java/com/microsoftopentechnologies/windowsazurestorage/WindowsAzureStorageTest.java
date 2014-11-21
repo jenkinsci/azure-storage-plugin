@@ -54,5 +54,23 @@ public class WindowsAzureStorageTest extends TestCase {
 		// checking with not null and not empty string
 		assertEquals(false, Utils.isNullOrEmpty("xyz"));
 	}
+
+	@Test
+	public void testGetBlobEPReturnsDefaultURL() throws Exception {
+		// return default blob host given null URL
+		assertEquals(Utils.DEF_BLOB_URL, Utils.getBlobEP(null));
+		// return default blob host given the default blob URL
+		assertEquals(Utils.DEF_BLOB_URL, Utils.getBlobEP(Utils.DEF_BLOB_URL));
+	}
+
+	@Test
+	public void testGetBlobEPAddsHttpProtocolWhenNoProtocolPresent() throws Exception {
+		assertEquals("http://blob.host.domain.tld/", Utils.getBlobEP("blob.host.domain.tld"));
+	}
+
+	@Test
+	public void testGetBlobEPAddsTrailingForwardSlashWhenMissing() throws Exception {
+		assertEquals("https://blob.core.windows.net/", Utils.getBlobEP("https://blob.core.windows.net"));
+	}
 	
 }
