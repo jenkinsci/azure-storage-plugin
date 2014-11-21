@@ -12,13 +12,13 @@ public class WindowsAzureStorageTest extends TestCase {
 	@Test
 	public void testContainerName() throws Exception {
 		
-		// checking for container name lenth of 3 characters
+		// checking for container name length of 3 characters
 		assertEquals(true, Utils.validateContainerName("abc"));
 		
-		// checking for container name lenth of 5 characters
+		// checking for container name length of 5 characters
 		assertEquals(true, Utils.validateContainerName("1abc3"));
 		
-		// checking for container name lenth of 63 characters
+		// checking for container name length of 63 characters
 		assertEquals(true, Utils.validateContainerName("abcde12345abcde12345abcde12345abcde12345abcde12345abcde12345abc"));
 		
 		// checking for container name with dash (-) characters 
