@@ -429,11 +429,9 @@ public class WAStoragePublisher extends Recorder {
 						storageAccountInfo = sa;
 
 						if (storageAccountInfo != null) {
-							storageAccountInfo.setBlobEndPointURL(Utils
-									.getBlobEP(storageAccountInfo
-											.getStorageAccName(),
-											storageAccountInfo
-													.getBlobEndPointURL()));
+							storageAccountInfo.setBlobEndPointURL(
+								Utils.getBlobEP(storageAccountInfo.getBlobEndPointURL())
+							);
 						}
 						break;
 					}
