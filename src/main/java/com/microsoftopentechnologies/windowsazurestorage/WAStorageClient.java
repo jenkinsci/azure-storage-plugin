@@ -66,7 +66,7 @@ public class WAStorageClient {
 	private static final String QUEUE = "queue";
 	private static final String TABLE = "table";
 
-	private static final String fpSeparator = ";";
+	private static final String fpSeparator = ",";
 
 	/**
 	 * This method validates Storage Account credentials by checking for a dummy
@@ -278,6 +278,8 @@ public class WAStorageClient {
 	 *            File Path in ant glob syntax relative to CI tool workspace.
 	 * @param expVP
 	 *            Virtual Path of blob container.
+     * @param excludeFP
+	 *            File Path in ant glob syntax to exclude from upload
 	 * @return filesUploaded number of files that are uploaded.
 	 * @throws WAStorageException
 	 * @throws Exception
@@ -285,7 +287,8 @@ public class WAStorageClient {
 	public static int upload(AbstractBuild<?, ?> build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName,
 			boolean cntPubAccess, boolean cleanUpContainer, String expFP,
-			String expVP, List<AzureBlob> blobs) throws WAStorageException {
+			String expVP, String excludeFP, 
+			List<AzureBlob> blobs) throws WAStorageException {
 
 		CloudBlockBlob blob = null;
 		int filesUploaded = 0; // Counter to track no. of files that are uploaded
@@ -351,7 +354,7 @@ public class WAStorageClient {
 					paths = new FilePath[1];
 					paths[0] = fp;
 				} else {
-					paths = workspacePath.list(fileName);
+					paths = workspacePath.list(fileName, excludeFP);
 				}
 
 				if (paths.length != 0) {
