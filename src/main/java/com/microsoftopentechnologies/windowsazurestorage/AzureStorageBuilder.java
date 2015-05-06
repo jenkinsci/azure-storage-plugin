@@ -46,14 +46,16 @@ public class AzureStorageBuilder extends Builder {
 	private String containerName;
 	private String blobName;
 	private String downloadDirLoc;
+	private boolean flattenDirectories;
 
 	@DataBoundConstructor
 	public AzureStorageBuilder(String storageAccName, String containerName,
-			String blobName, String downloadDirLoc) {
+			String blobName, String downloadDirLoc, boolean flattenDirectories) {
 		this.storageAccName = storageAccName;
 		this.containerName = containerName;
 		this.blobName = blobName;
 		this.downloadDirLoc = downloadDirLoc;
+		this.flattenDirectories = flattenDirectories;
 	}
 
 	public String getStorageAccName() {
@@ -86,6 +88,14 @@ public class AzureStorageBuilder extends Builder {
 
 	public void setDownloadDirLoc(String downloadDirLoc) {
 		this.downloadDirLoc = downloadDirLoc;
+	}
+	
+	public boolean isFlattenDirectories() {
+		return flattenDirectories;
+	}
+	
+	public void setFlattenDirectories(boolean flattenDirectories){
+		this.flattenDirectories = flattenDirectories;
 	}
 
 	public BuildStepMonitor getRequiredMonitorService() {
@@ -121,7 +131,7 @@ public class AzureStorageBuilder extends Builder {
 			}
 
 			int filesDownloaded = WAStorageClient.download(build, listener,
-					strAcc, expContainerName, expBlobName, downloadDir);
+					strAcc, expContainerName, expBlobName, downloadDir, flattenDirectories);
 
 			if (filesDownloaded == 0) { // Mark build unstable if no files are
 										// downloaded

@@ -2,22 +2,27 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
    
-    <f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
-  		<f:select  />
-  	</f:entry>
-  	
-  	
-  	
- 	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
- 		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
- 	</f:entry>
+	<f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
+		<f:select  />
+	</f:entry>
+	
+	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
+		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
+	</f:entry>
  
   
-  	<f:entry title="${%blob_name_title}" field="blobName" help="/plugin/windows-azure-storage/help-blobName.html">
-    	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkBlobName?val='+encodeURIComponent(this.value)" />
- 	</f:entry> 	
- 	
- 	<f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
-    	<f:textbox />
- 	</f:entry>
+	<f:entry title="${%blob_name_title}" field="blobName" help="/plugin/windows-azure-storage/help-blobName.html">
+		<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkBlobName?val='+encodeURIComponent(this.value)" />
+	</f:entry>
+	
+	<f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
+		<f:textbox />
+	</f:entry>
+	
+	<f:entry field="flattenDirectories" help="/plugin/windows-azure-storage/help-flattenDirectories.html">
+		<div align="left">
+			<f:checkbox  title="${%flattenDirectories_title}"/>
+		</div>
+	</f:entry>
+	
 </j:jelly>

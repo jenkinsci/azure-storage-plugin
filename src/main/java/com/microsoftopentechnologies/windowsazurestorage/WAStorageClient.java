@@ -278,7 +278,7 @@ public class WAStorageClient {
 	 *            File Path in ant glob syntax relative to CI tool workspace.
 	 * @param expVP
 	 *            Virtual Path of blob container.
-     * @param excludeFP
+	 * @param excludeFP
 	 *            File Path in ant glob syntax to exclude from upload
 	 * @return filesUploaded number of files that are uploaded.
 	 * @throws WAStorageException
@@ -357,12 +357,16 @@ public class WAStorageClient {
 					paths = workspacePath.list(fileName, excludeFP);
 				}
 
+				URI workspaceURI = workspacePath.toURI();
+
 				if (paths.length != 0) {
 					for (FilePath src : paths) {
+						// Remove the workspace bit of this path
+						URI srcURI = workspaceURI.relativize(src.toURI());
+						String srcPrefix = srcURI.getPath();
 						if (Utils.isNullOrEmpty(expVP)
 								&& Utils.isNullOrEmpty(embeddedVP)) {
-							blob = container.getBlockBlobReference(src
-									.getName());
+							blob = container.getBlockBlobReference(srcPrefix);
 						} else {
 							String prefix = expVP;
 
@@ -373,7 +377,7 @@ public class WAStorageClient {
 									prefix = expVP + embeddedVP;
 								}
 							}
-							blob = container.getBlockBlobReference(prefix + src.getName());
+							blob = container.getBlockBlobReference(prefix + srcPrefix);
 						}
 
 						long startTime = System.currentTimeMillis();
@@ -458,7 +462,8 @@ public class WAStorageClient {
 	 */
 	public static int download(AbstractBuild<?, ?> build,
 			BuildListener listener, StorageAccountInfo strAcc,
-			String expContainerName, String blobName, String downloadDirLoc)
+			String expContainerName, String blobName, String downloadDirLoc, 
+			boolean flattenDirectories)
 			throws WAStorageException {
 
 		int filesDownloaded = 0;
@@ -491,7 +496,7 @@ public class WAStorageClient {
 							strAcc.getBlobEndPointURL(), expContainerName,
 							false, true, null);
 
-			filesDownloaded = downloadBlobs(container, blobName, downloadDir,
+			filesDownloaded = downloadBlobs(container, blobName, downloadDir, flattenDirectories,
 					listener);
 
 		} catch (Exception e) {
@@ -516,7 +521,7 @@ public class WAStorageClient {
 	 * @throws WAStorageException
 	 */
 	private static int downloadBlobs(CloudBlobContainer container,
-			String blobName, FilePath downloadDir, BuildListener listener)
+			String blobName, FilePath downloadDir, boolean flattenDirectories, BuildListener listener)
 			throws URISyntaxException, StorageException, IOException,
 			WAStorageException {
 
@@ -538,7 +543,7 @@ public class WAStorageClient {
 			}
 
 			if (blobReference.exists()) {
-				downloadBlob(blobReference, downloadDir, listener);
+				downloadBlob(blobReference, downloadDir, flattenDirectories, listener);
 				filesDownloaded++;
 			}
 		} else {
@@ -549,12 +554,12 @@ public class WAStorageClient {
 					// name
 					CloudBlob blob = (CloudBlob) blobItem;
 
-					downloadBlob(blob, downloadDir, listener);
+					downloadBlob(blob, downloadDir, flattenDirectories, listener);
 					filesDownloaded++;
 
 				} else if (blobItem instanceof CloudBlobDirectory) {
 					CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-					filesDownloaded += downloadBlob(blobDirectory, downloadDir,
+					filesDownloaded += downloadBlob(blobDirectory, downloadDir, flattenDirectories,
 							listener);
 				}
 			}
@@ -576,7 +581,7 @@ public class WAStorageClient {
 	 * @throws WAStorageException
 	 */
 	private static int downloadBlob(CloudBlobDirectory blobDirectory,
-			FilePath downloadDir, BuildListener listener)
+			FilePath downloadDir, boolean flattenDirectories, BuildListener listener)
 			throws StorageException, URISyntaxException, IOException,
 			WAStorageException {
 
@@ -589,12 +594,12 @@ public class WAStorageClient {
 				// name
 				CloudBlob blob = (CloudBlob) blobItem;
 
-				downloadBlob(blob, downloadDir, listener);
+				downloadBlob(blob, downloadDir, flattenDirectories, listener);
 				filesDownloaded++;
 
 			} else if (blobItem instanceof CloudBlobDirectory) {
 				CloudBlobDirectory blobDir = (CloudBlobDirectory) blobItem;
-				filesDownloaded += downloadBlob(blobDir, downloadDir, listener);
+				filesDownloaded += downloadBlob(blobDir, downloadDir, flattenDirectories, listener);
 			}
 		}
 
@@ -612,11 +617,19 @@ public class WAStorageClient {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private static void downloadBlob(CloudBlob blob, FilePath downloadDir,
+	private static void downloadBlob(CloudBlob blob, FilePath downloadDir, boolean flattenDirectories,
 			BuildListener listener) throws WAStorageException {
 		OutputStream fos = null;
 		try {
 			FilePath downloadFile = new FilePath(downloadDir, blob.getName());
+
+			// That filepath will contain all the directories and explicit virtual
+			// paths, so if the user wanted it flattened, grab just the file name and
+			// recreate the file path
+
+			if (flattenDirectories) {
+				downloadFile = new FilePath(downloadDir, downloadFile.getName());
+			}
 
 			// fos = new FileOutputStream(downloadDir + File.separator +
 			// blob.getName());
