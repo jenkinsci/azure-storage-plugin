@@ -44,16 +44,18 @@ public class AzureStorageBuilder extends Builder {
 
 	private String storageAccName;
 	private String containerName;
-	private String blobName;
+	private String includeFilesPattern;
+	private String excludeFilesPattern;
 	private String downloadDirLoc;
 	private boolean flattenDirectories;
 
 	@DataBoundConstructor
 	public AzureStorageBuilder(String storageAccName, String containerName,
-			String blobName, String downloadDirLoc, boolean flattenDirectories) {
+			String includeFilesPattern, String excludeFilesPattern, String downloadDirLoc, boolean flattenDirectories) {
 		this.storageAccName = storageAccName;
 		this.containerName = containerName;
-		this.blobName = blobName;
+		this.includeFilesPattern = includeFilesPattern;
+		this.excludeFilesPattern = excludeFilesPattern;
 		this.downloadDirLoc = downloadDirLoc;
 		this.flattenDirectories = flattenDirectories;
 	}
@@ -74,12 +76,20 @@ public class AzureStorageBuilder extends Builder {
 		this.containerName = containerName;
 	}
 
-	public String getBlobName() {
-		return blobName;
+	public String getIncludeFilesPattern() {
+		return includeFilesPattern;
 	}
 
-	public void setBlobName(String blobName) {
-		this.blobName = blobName;
+	public void setIncludeFilesPattern(String excludeFilesPattern) {
+		this.includeFilesPattern = excludeFilesPattern;
+	}
+	
+	public String getExcludeFilesPattern() {
+		return excludeFilesPattern;
+	}
+
+	public void setExcludeFilesPattern(String excludeFilesPattern) {
+		this.excludeFilesPattern = excludeFilesPattern;
 	}
 
 	public String getDownloadDirLoc() {
@@ -117,21 +127,29 @@ public class AzureStorageBuilder extends Builder {
 						Locale.ENGLISH);
 			}
 
-			// Resolve blob name
-			String expBlobName = Utils.replaceTokens(build, listener, blobName);
+			// Resolve include patterns
+			String expIncludePattern = Utils.replaceTokens(build, listener, includeFilesPattern);
+			
+			// Resolve exclude patterns
+			String expExcludePattern = Utils.replaceTokens(build, listener, excludeFilesPattern);
+			
+			// If the include is empty, make **/*
+			if (Utils.isNullOrEmpty(expIncludePattern)) {
+				expIncludePattern = "**/*";
+			}
 
 			// Resolve download location
 			String downloadDir = Utils.replaceTokens(build, listener,
 					downloadDirLoc);
 
 			// Validate input data
-			if (!validateData(build, listener, strAcc, expContainerName,
-					expBlobName)) {
+			if (!validateData(build, listener, strAcc, expContainerName)) {
 				return true; // returning true so that build can continue.
 			}
 
 			int filesDownloaded = WAStorageClient.download(build, listener,
-					strAcc, expContainerName, expBlobName, downloadDir, flattenDirectories);
+					strAcc, expContainerName, expIncludePattern, expExcludePattern, 
+					downloadDir, flattenDirectories);
 
 			if (filesDownloaded == 0) { // Mark build unstable if no files are
 										// downloaded
@@ -153,8 +171,7 @@ public class AzureStorageBuilder extends Builder {
 	}
 
 	private boolean validateData(AbstractBuild build, BuildListener listener,
-			StorageAccountInfo strAcc, String expContainerName,
-			String blobNamePrefix) {
+			StorageAccountInfo strAcc, String expContainerName) {
 
 		// No need to download artifacts if build failed
 		if (build.getResult() == Result.FAILURE) {
@@ -174,14 +191,6 @@ public class AzureStorageBuilder extends Builder {
 		if (!Utils.validateContainerName(expContainerName)) {
 			listener.getLogger().println(
 					Messages.WAStoragePublisher_container_name_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// validate blob name
-		if (!Utils.validateBlobName(blobNamePrefix)) {
-			listener.getLogger().println(
-					Messages.AzureStorageBuilder_blobName_invalid());
 			build.setResult(Result.UNSTABLE);
 			return false;
 		}

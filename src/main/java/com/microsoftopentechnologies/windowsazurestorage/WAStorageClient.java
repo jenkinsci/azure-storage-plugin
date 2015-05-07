@@ -30,6 +30,9 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.time.DurationFormatUtils;
+import org.apache.tools.ant.types.FileSet;
+
+import org.springframework.util.AntPathMatcher;
 
 import hudson.FilePath;
 import hudson.model.BuildListener;
@@ -455,15 +458,16 @@ public class WAStorageClient {
 	 * @param listener
 	 * @param strAcc
 	 * @param expContainerName
-	 * @param blobName
+	 * @param includePattern
+	 * @param excludePattern
 	 * @param downloadDirLoc
 	 * @return
 	 * @throws WAStorageException
 	 */
 	public static int download(AbstractBuild<?, ?> build,
 			BuildListener listener, StorageAccountInfo strAcc,
-			String expContainerName, String blobName, String downloadDirLoc, 
-			boolean flattenDirectories)
+			String expContainerName, String includePattern, String excludePattern, 
+			String downloadDirLoc, boolean flattenDirectories)
 			throws WAStorageException {
 
 		int filesDownloaded = 0;
@@ -496,8 +500,8 @@ public class WAStorageClient {
 							strAcc.getBlobEndPointURL(), expContainerName,
 							false, true, null);
 
-			filesDownloaded = downloadBlobs(container, blobName, downloadDir, flattenDirectories,
-					listener);
+			filesDownloaded = downloadBlobs(container, includePattern, excludePattern, 
+					downloadDir, flattenDirectories, listener);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -506,12 +510,64 @@ public class WAStorageClient {
 		return filesDownloaded;
 
 	}
+	
+	private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns, 
+			boolean isFullPath) {
+		if (!isFullPath) {
+			// If we don't have a full path, we can't check for exclusions
+			// yet.  Consider include: **/*, exclude **/foo.txt.  Both would match
+			// any dir.
+			if (isPotentialMatch(path, includePatterns)) {
+				return true;
+			}
+		} else {
+			if (isExactMatch(path, includePatterns) && 
+					(excludePatterns == null || !isExactMatch(path, excludePatterns))) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Determines whether the path is an exact match to any of the provided patterns
+	 * @param path
+	 * @param patterns
+	 * @return 
+	 */
+	private static boolean isExactMatch(String path, String[] patterns) {
+		AntPathMatcher matcher = new AntPathMatcher();
+		for (int i=0; i < patterns.length; i++) {
+			if (matcher.match(patterns[i], path)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Determines whether the path is a potential match to any of the provided patterns
+	 * @param path
+	 * @param patterns
+	 * @return 
+	 */
+	private static boolean isPotentialMatch(String path, String[] patterns) {
+		AntPathMatcher matcher = new AntPathMatcher();
+		for (int i=0; i < patterns.length; i++) {
+			if (matcher.matchStart(patterns[i], path)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Downloads blobs from container
 	 * 
 	 * @param container
-	 * @param blobName
+	 * @param includePattern
+	 * @param excludePattern
 	 * @param downloadDir
 	 * @param listener
 	 * @return
@@ -521,50 +577,40 @@ public class WAStorageClient {
 	 * @throws WAStorageException
 	 */
 	private static int downloadBlobs(CloudBlobContainer container,
-			String blobName, FilePath downloadDir, boolean flattenDirectories, BuildListener listener)
+			String includePattern, String excludePattern, 
+			FilePath downloadDir, boolean flattenDirectories, BuildListener listener)
 			throws URISyntaxException, StorageException, IOException,
 			WAStorageException {
 
-		int filesDownloaded = 0;
-
-		boolean exactBlobName = true;
-		// checking wild card support for blob name
-		if (blobName.endsWith("*")) {
-			exactBlobName = false;
-			blobName = blobName.substring(0, blobName.length() - 1);
+		String[] includePatterns = includePattern.split(fpSeparator);
+		String[] excludePatterns = null;
+		
+		if (excludePattern != null) {
+			excludePatterns = excludePattern.split(fpSeparator);
 		}
+		
+		int filesDownloaded = 0;
+		
+		for (ListBlobItem blobItem : container.listBlobs()) {
+			// If the item is a blob, not a virtual directory
+			if (blobItem instanceof CloudBlob) {
+				// Download the item and save it to a file with the same
+				// name
+				CloudBlob blob = (CloudBlob) blobItem;
 
-		if (exactBlobName) {
-			CloudBlob blobReference = container.getBlockBlobReference(blobName);
-
-			// Check if it is page blob
-			if (!blobReference.exists()) {
-				blobReference = container.getPageBlobReference(blobName);
-			}
-
-			if (blobReference.exists()) {
-				downloadBlob(blobReference, downloadDir, flattenDirectories, listener);
-				filesDownloaded++;
-			}
-		} else {
-			for (ListBlobItem blobItem : container.listBlobs(blobName)) {
-				// If the item is a blob, not a virtual directory
-				if (blobItem instanceof CloudBlob) {
-					// Download the item and save it to a file with the same
-					// name
-					CloudBlob blob = (CloudBlob) blobItem;
-
+				// Check whether we should download it.
+				if (blobPathMatches(blob.getName(), includePatterns, excludePatterns, true)) {
 					downloadBlob(blob, downloadDir, flattenDirectories, listener);
 					filesDownloaded++;
-
-				} else if (blobItem instanceof CloudBlobDirectory) {
-					CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-					filesDownloaded += downloadBlob(blobDirectory, downloadDir, flattenDirectories,
-							listener);
 				}
+
+			} else if (blobItem instanceof CloudBlobDirectory) {
+				CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
+					filesDownloaded += downloadBlob(blobDirectory, includePatterns, 
+						excludePatterns, downloadDir, flattenDirectories, listener);
 			}
 		}
-
+		
 		return filesDownloaded;
 	}
 
@@ -581,9 +627,14 @@ public class WAStorageClient {
 	 * @throws WAStorageException
 	 */
 	private static int downloadBlob(CloudBlobDirectory blobDirectory,
+			String[] includePatterns, String[] excludePatterns,
 			FilePath downloadDir, boolean flattenDirectories, BuildListener listener)
 			throws StorageException, URISyntaxException, IOException,
 			WAStorageException {
+
+		if (!blobPathMatches(blobDirectory.getPrefix(), includePatterns, excludePatterns, false)) {
+			return 0;
+		}
 
 		int filesDownloaded = 0;
 
@@ -594,12 +645,14 @@ public class WAStorageClient {
 				// name
 				CloudBlob blob = (CloudBlob) blobItem;
 
-				downloadBlob(blob, downloadDir, flattenDirectories, listener);
-				filesDownloaded++;
-
+				if (blobPathMatches(blob.getName(), includePatterns, excludePatterns, true)) {
+					downloadBlob(blob, downloadDir, flattenDirectories, listener);
+					filesDownloaded++;
+				}
 			} else if (blobItem instanceof CloudBlobDirectory) {
 				CloudBlobDirectory blobDir = (CloudBlobDirectory) blobItem;
-				filesDownloaded += downloadBlob(blobDir, downloadDir, flattenDirectories, listener);
+				filesDownloaded += downloadBlob(blobDir, includePatterns, excludePatterns, 
+						downloadDir, flattenDirectories, listener);
 			}
 		}
 
