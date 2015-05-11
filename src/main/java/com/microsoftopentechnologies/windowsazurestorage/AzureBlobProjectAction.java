@@ -24,24 +24,28 @@ public class AzureBlobProjectAction implements Action {
 		return null;
 	}
 	
+	public int getMaxResultsDisplay() {
+		return 100;
+	}
+	
 	public int getLastSuccessfulBuildNumber() {
 	    Run build = project.getLastSuccessfulBuild();
 	    if (build == null) {
 	        return 0;
 	    }
 	    return build.getNumber();
-    }
+	}
 	
 	public AzureBlobAction getLastSuccessfulArtifactsAction() {
-        Run build = project.getLastSuccessfulBuild();
-        if (build == null) {
-            return null;
-        }
-        
-        List<AzureBlobAction> actions = build.getActions(AzureBlobAction.class);
-        if (actions == null || actions.size() == 0) {
-            return null;
-        }
-        return actions.get(actions.size() - 1);
-    }
+		Run build = project.getLastSuccessfulBuild();
+		if (build == null) {
+			return null;
+		}
+		
+		List<AzureBlobAction> actions = build.getActions(AzureBlobAction.class);
+		if (actions == null || actions.size() == 0) {
+			return null;
+		}
+		return actions.get(actions.size() - 1);
+	}
 }
