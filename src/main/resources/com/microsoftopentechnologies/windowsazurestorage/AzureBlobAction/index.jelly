@@ -10,12 +10,12 @@
       </h1>
       <table>
         <ul>
-	        <j:forEach var="blob" items="${it.blobs}">
-	        	<li>
-		         	<a href="processDownloadRequest/${blob.blobName}" >${blob.blobName}</a>
-		         </li>
-	        </j:forEach>
-	     </ul>
+            <j:forEach var="blob" items="${it.blobs}">
+                <li>
+                     <a href="processDownloadRequest/${blob.blobName}" >${blob.blobName}</a>
+                 </li>
+            </j:forEach>
+         </ul>
       </table>
     </l:main-panel>
   </l:layout>

@@ -42,290 +42,290 @@ import hudson.util.ListBoxModel;
 
 public class AzureStorageBuilder extends Builder {
 
-	private String storageAccName;
-	private String containerName;
-	private String blobName;
-	private String downloadDirLoc;
+    private String storageAccName;
+    private String containerName;
+    private String blobName;
+    private String downloadDirLoc;
 
-	@DataBoundConstructor
-	public AzureStorageBuilder(String storageAccName, String containerName,
-			String blobName, String downloadDirLoc) {
-		this.storageAccName = storageAccName;
-		this.containerName = containerName;
-		this.blobName = blobName;
-		this.downloadDirLoc = downloadDirLoc;
-	}
+    @DataBoundConstructor
+    public AzureStorageBuilder(String storageAccName, String containerName,
+            String blobName, String downloadDirLoc) {
+        this.storageAccName = storageAccName;
+        this.containerName = containerName;
+        this.blobName = blobName;
+        this.downloadDirLoc = downloadDirLoc;
+    }
 
-	public String getStorageAccName() {
-		return storageAccName;
-	}
+    public String getStorageAccName() {
+        return storageAccName;
+    }
 
-	public void setStorageAccName(String storageAccName) {
-		this.storageAccName = storageAccName;
-	}
+    public void setStorageAccName(String storageAccName) {
+        this.storageAccName = storageAccName;
+    }
 
-	public String getContainerName() {
-		return containerName;
-	}
+    public String getContainerName() {
+        return containerName;
+    }
 
-	public void setContainerName(String containerName) {
-		this.containerName = containerName;
-	}
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
+    }
 
-	public String getBlobName() {
-		return blobName;
-	}
+    public String getBlobName() {
+        return blobName;
+    }
 
-	public void setBlobName(String blobName) {
-		this.blobName = blobName;
-	}
+    public void setBlobName(String blobName) {
+        this.blobName = blobName;
+    }
 
-	public String getDownloadDirLoc() {
-		return downloadDirLoc;
-	}
+    public String getDownloadDirLoc() {
+        return downloadDirLoc;
+    }
 
-	public void setDownloadDirLoc(String downloadDirLoc) {
-		this.downloadDirLoc = downloadDirLoc;
-	}
+    public void setDownloadDirLoc(String downloadDirLoc) {
+        this.downloadDirLoc = downloadDirLoc;
+    }
 
-	public BuildStepMonitor getRequiredMonitorService() {
-		return BuildStepMonitor.NONE;
-	}
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.NONE;
+    }
 
-	public boolean perform(AbstractBuild build, Launcher launcher,
-			BuildListener listener) {
-		StorageAccountInfo strAcc = null;
-		try {
-			// Get storage account
-			strAcc = getDescriptor().getStorageAccount(storageAccName);
+    public boolean perform(AbstractBuild build, Launcher launcher,
+            BuildListener listener) {
+        StorageAccountInfo strAcc = null;
+        try {
+            // Get storage account
+            strAcc = getDescriptor().getStorageAccount(storageAccName);
 
-			// Resolve container name
-			String expContainerName = Utils.replaceTokens(build, listener,
-					containerName);
-			if (expContainerName != null) {
-				expContainerName = expContainerName.trim().toLowerCase(
-						Locale.ENGLISH);
-			}
+            // Resolve container name
+            String expContainerName = Utils.replaceTokens(build, listener,
+                    containerName);
+            if (expContainerName != null) {
+                expContainerName = expContainerName.trim().toLowerCase(
+                        Locale.ENGLISH);
+            }
 
-			// Resolve blob name
-			String expBlobName = Utils.replaceTokens(build, listener, blobName);
+            // Resolve blob name
+            String expBlobName = Utils.replaceTokens(build, listener, blobName);
 
-			// Resolve download location
-			String downloadDir = Utils.replaceTokens(build, listener,
-					downloadDirLoc);
+            // Resolve download location
+            String downloadDir = Utils.replaceTokens(build, listener,
+                    downloadDirLoc);
 
-			// Validate input data
-			if (!validateData(build, listener, strAcc, expContainerName,
-					expBlobName)) {
-				return true; // returning true so that build can continue.
-			}
+            // Validate input data
+            if (!validateData(build, listener, strAcc, expContainerName,
+                    expBlobName)) {
+                return true; // returning true so that build can continue.
+            }
 
-			int filesDownloaded = WAStorageClient.download(build, listener,
-					strAcc, expContainerName, expBlobName, downloadDir);
+            int filesDownloaded = WAStorageClient.download(build, listener,
+                    strAcc, expContainerName, expBlobName, downloadDir);
 
-			if (filesDownloaded == 0) { // Mark build unstable if no files are
-										// downloaded
-				listener.getLogger().println(
-						Messages.AzureStorageBuilder_nofiles_downloaded());
-				build.setResult(Result.UNSTABLE);
-			} else {
-				listener.getLogger()
-						.println(
-								Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
-			}
-		} catch (Exception e) {
-			e.printStackTrace(listener.error(Messages
-					.AzureStorageBuilder_download_err(strAcc
-							.getStorageAccName())));
-			build.setResult(Result.UNSTABLE);
-		}
-		return true;
-	}
+            if (filesDownloaded == 0) { // Mark build unstable if no files are
+                                        // downloaded
+                listener.getLogger().println(
+                        Messages.AzureStorageBuilder_nofiles_downloaded());
+                build.setResult(Result.UNSTABLE);
+            } else {
+                listener.getLogger()
+                        .println(
+                                Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
+            }
+        } catch (Exception e) {
+            e.printStackTrace(listener.error(Messages
+                    .AzureStorageBuilder_download_err(strAcc
+                            .getStorageAccName())));
+            build.setResult(Result.UNSTABLE);
+        }
+        return true;
+    }
 
-	private boolean validateData(AbstractBuild build, BuildListener listener,
-			StorageAccountInfo strAcc, String expContainerName,
-			String blobNamePrefix) {
+    private boolean validateData(AbstractBuild build, BuildListener listener,
+            StorageAccountInfo strAcc, String expContainerName,
+            String blobNamePrefix) {
 
-		// No need to download artifacts if build failed
-		if (build.getResult() == Result.FAILURE) {
-			listener.getLogger().println(
-					Messages.AzureStorageBuilder_build_failed_err());
-			return false;
-		}
+        // No need to download artifacts if build failed
+        if (build.getResult() == Result.FAILURE) {
+            listener.getLogger().println(
+                    Messages.AzureStorageBuilder_build_failed_err());
+            return false;
+        }
 
-		if (strAcc == null) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_storage_account_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
+        if (strAcc == null) {
+            listener.getLogger().println(
+                    Messages.WAStoragePublisher_storage_account_err());
+            build.setResult(Result.UNSTABLE);
+            return false;
+        }
 
-		// Validate container name
-		if (!Utils.validateContainerName(expContainerName)) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_container_name_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
+        // Validate container name
+        if (!Utils.validateContainerName(expContainerName)) {
+            listener.getLogger().println(
+                    Messages.WAStoragePublisher_container_name_err());
+            build.setResult(Result.UNSTABLE);
+            return false;
+        }
 
-		// validate blob name
-		if (!Utils.validateBlobName(blobNamePrefix)) {
-			listener.getLogger().println(
-					Messages.AzureStorageBuilder_blobName_invalid());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
+        // validate blob name
+        if (!Utils.validateBlobName(blobNamePrefix)) {
+            listener.getLogger().println(
+                    Messages.AzureStorageBuilder_blobName_invalid());
+            build.setResult(Result.UNSTABLE);
+            return false;
+        }
 
-		// Check if storage account credentials are valid
-		try {
-			WAStorageClient.validateStorageAccount(strAcc.getStorageAccName(),
-					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
-		} catch (Exception e) {
-			listener.getLogger().println(Messages.Client_SA_val_fail());
-			listener.getLogger().println(strAcc.getStorageAccName());
-			listener.getLogger().println(strAcc.getBlobEndPointURL());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-		return true;
-	}
+        // Check if storage account credentials are valid
+        try {
+            WAStorageClient.validateStorageAccount(strAcc.getStorageAccName(),
+                    strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
+        } catch (Exception e) {
+            listener.getLogger().println(Messages.Client_SA_val_fail());
+            listener.getLogger().println(strAcc.getStorageAccName());
+            listener.getLogger().println(strAcc.getBlobEndPointURL());
+            build.setResult(Result.UNSTABLE);
+            return false;
+        }
+        return true;
+    }
 
-	public AzureStorageBuilderDesc getDescriptor() {
-		// see Descriptor javadoc for more about what a descriptor is.
-		return (AzureStorageBuilderDesc) super.getDescriptor();
-	}
+    public AzureStorageBuilderDesc getDescriptor() {
+        // see Descriptor javadoc for more about what a descriptor is.
+        return (AzureStorageBuilderDesc) super.getDescriptor();
+    }
 
-	@Extension
-	public static final class AzureStorageBuilderDesc extends
-			Descriptor<Builder> {
+    @Extension
+    public static final class AzureStorageBuilderDesc extends
+            Descriptor<Builder> {
 
-		public boolean isApplicable(
-				@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
-			return true;
-		}
+        public boolean isApplicable(
+                @SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
+            return true;
+        }
 
-		public AzureStorageBuilderDesc() {
-			super();
-			load();
-		}
+        public AzureStorageBuilderDesc() {
+            super();
+            load();
+        }
 
-		// Can be used in future for dynamic display in UI
-		/*
-		 * private List<String> getContainersList(String StorageAccountName) {
-		 * try { return WAStorageClient.getContainersList(
-		 * getStorageAccount(StorageAccountName), false); } catch (Exception e)
-		 * { e.printStackTrace(); return null; } }
-		 * 
-		 * private List<String> getBlobsList(String StorageAccountName, String
-		 * containerName) { try { return WAStorageClient.getContainerBlobList(
-		 * getStorageAccount(StorageAccountName), containerName); } catch
-		 * (Exception e) { e.printStackTrace(); return null; } }
-		 */
+        // Can be used in future for dynamic display in UI
+        /*
+         * private List<String> getContainersList(String StorageAccountName) {
+         * try { return WAStorageClient.getContainersList(
+         * getStorageAccount(StorageAccountName), false); } catch (Exception e)
+         * { e.printStackTrace(); return null; } }
+         * 
+         * private List<String> getBlobsList(String StorageAccountName, String
+         * containerName) { try { return WAStorageClient.getContainerBlobList(
+         * getStorageAccount(StorageAccountName), containerName); } catch
+         * (Exception e) { e.printStackTrace(); return null; } }
+         */
 
-		public ListBoxModel doFillStorageAccNameItems() {
-			ListBoxModel m = new ListBoxModel();
-			StorageAccountInfo[] StorageAccounts = getStorageAccounts();
+        public ListBoxModel doFillStorageAccNameItems() {
+            ListBoxModel m = new ListBoxModel();
+            StorageAccountInfo[] StorageAccounts = getStorageAccounts();
 
-			if (StorageAccounts != null) {
-				for (StorageAccountInfo storageAccount : StorageAccounts) {
-					m.add(storageAccount.getStorageAccName());
-				}
-			}
-			return m;
-		}
+            if (StorageAccounts != null) {
+                for (StorageAccountInfo storageAccount : StorageAccounts) {
+                    m.add(storageAccount.getStorageAccName());
+                }
+            }
+            return m;
+        }
 
-		/*
-		 * public ComboBoxModel doFillContainerNameItems(
-		 * 
-		 * @QueryParameter String storageAccName) { ComboBoxModel m = new
-		 * ComboBoxModel();
-		 * 
-		 * List<String> containerList = getContainersList(storageAccName); if
-		 * (containerList != null) { m.addAll(containerList); } return m; }
-		 * 
-		 * public ComboBoxModel doFillBlobNameItems(
-		 * 
-		 * @QueryParameter String storageAccName,
-		 * 
-		 * @QueryParameter String containerName) { ComboBoxModel m = new
-		 * ComboBoxModel();
-		 * 
-		 * List<String> blobList = getBlobsList(storageAccName, containerName);
-		 * if (blobList != null) { m.addAll(blobList); } return m; }
-		 * 
-		 * public AutoCompletionCandidates
-		 * doAutoCompleteBlobName(@QueryParameter String storageAccName,
-		 * 
-		 * @QueryParameter String containerName) { List<String> blobList =
-		 * getBlobsList(storageAccName, containerName); AutoCompletionCandidates
-		 * autoCand = null;
-		 * 
-		 * if (blobList != null ) { autoCand = new AutoCompletionCandidates();
-		 * autoCand.add(blobList.toArray(new String[blobList.size()])); } return
-		 * autoCand; }
-		 */
+        /*
+         * public ComboBoxModel doFillContainerNameItems(
+         * 
+         * @QueryParameter String storageAccName) { ComboBoxModel m = new
+         * ComboBoxModel();
+         * 
+         * List<String> containerList = getContainersList(storageAccName); if
+         * (containerList != null) { m.addAll(containerList); } return m; }
+         * 
+         * public ComboBoxModel doFillBlobNameItems(
+         * 
+         * @QueryParameter String storageAccName,
+         * 
+         * @QueryParameter String containerName) { ComboBoxModel m = new
+         * ComboBoxModel();
+         * 
+         * List<String> blobList = getBlobsList(storageAccName, containerName);
+         * if (blobList != null) { m.addAll(blobList); } return m; }
+         * 
+         * public AutoCompletionCandidates
+         * doAutoCompleteBlobName(@QueryParameter String storageAccName,
+         * 
+         * @QueryParameter String containerName) { List<String> blobList =
+         * getBlobsList(storageAccName, containerName); AutoCompletionCandidates
+         * autoCand = null;
+         * 
+         * if (blobList != null ) { autoCand = new AutoCompletionCandidates();
+         * autoCand.add(blobList.toArray(new String[blobList.size()])); } return
+         * autoCand; }
+         */
 
-		/* public FormValidation doCheckIsDirectory(@QueryParameter String val) {
-			// If null or if file does not exists don't display any validation
-			// error.
-			File downloadDir = new File(val);
-			if (Utils.isNullOrEmpty(val) || !downloadDir.exists()) {
-				return FormValidation.ok();
-			} else if (downloadDir.exists() && !downloadDir.isDirectory()) {
-				return FormValidation.error(Messages
-						.AzureStorageBuilder_downloadDir_invalid());
-			} else {
-				return FormValidation.ok();
-			}
-		} */
+        /* public FormValidation doCheckIsDirectory(@QueryParameter String val) {
+            // If null or if file does not exists don't display any validation
+            // error.
+            File downloadDir = new File(val);
+            if (Utils.isNullOrEmpty(val) || !downloadDir.exists()) {
+                return FormValidation.ok();
+            } else if (downloadDir.exists() && !downloadDir.isDirectory()) {
+                return FormValidation.error(Messages
+                        .AzureStorageBuilder_downloadDir_invalid());
+            } else {
+                return FormValidation.ok();
+            }
+        } */
 
-		public boolean configure(StaplerRequest req, JSONObject formData)
-				throws FormException {
-			save();
-			return super.configure(req, formData);
-		}
+        public boolean configure(StaplerRequest req, JSONObject formData)
+                throws FormException {
+            save();
+            return super.configure(req, formData);
+        }
 
-		public String getDisplayName() {
-			return Messages.AzureStorageBuilder_displayName();
-		}
+        public String getDisplayName() {
+            return Messages.AzureStorageBuilder_displayName();
+        }
 
-		public StorageAccountInfo[] getStorageAccounts() {
-			WAStoragePublisher.WAStorageDescriptor publisherDescriptor = Jenkins
-					.getInstance().getDescriptorByType(
-							WAStoragePublisher.WAStorageDescriptor.class);
+        public StorageAccountInfo[] getStorageAccounts() {
+            WAStoragePublisher.WAStorageDescriptor publisherDescriptor = Jenkins
+                    .getInstance().getDescriptorByType(
+                            WAStoragePublisher.WAStorageDescriptor.class);
 
-			StorageAccountInfo[] sa = publisherDescriptor.getStorageAccounts();
+            StorageAccountInfo[] sa = publisherDescriptor.getStorageAccounts();
 
-			return sa;
-		}
+            return sa;
+        }
 
-		/**
-		 * Returns storage account object
-		 * 
-		 * @return StorageAccount
-		 */
-		public StorageAccountInfo getStorageAccount(String storageAccountName) {
-			if ((storageAccountName == null)
-					|| (storageAccountName.trim().length() == 0)) {
-				return null;
-			}
+        /**
+         * Returns storage account object
+         * 
+         * @return StorageAccount
+         */
+        public StorageAccountInfo getStorageAccount(String storageAccountName) {
+            if ((storageAccountName == null)
+                    || (storageAccountName.trim().length() == 0)) {
+                return null;
+            }
 
-			StorageAccountInfo storageAcc = null;
-			StorageAccountInfo[] StorageAccounts = getStorageAccounts();
+            StorageAccountInfo storageAcc = null;
+            StorageAccountInfo[] StorageAccounts = getStorageAccounts();
 
-			if (StorageAccounts != null) {
-				for (StorageAccountInfo sa : StorageAccounts) {
-					if (sa.getStorageAccName().equals(storageAccountName)) {
-						storageAcc = sa;
+            if (StorageAccounts != null) {
+                for (StorageAccountInfo sa : StorageAccounts) {
+                    if (sa.getStorageAccName().equals(storageAccountName)) {
+                        storageAcc = sa;
 
-						storageAcc.setBlobEndPointURL(Utils.getBlobEP(
-								storageAcc.getStorageAccName(),
-								storageAcc.getBlobEndPointURL()));
-						break;
-					}
-				}
-			}
-			return storageAcc;
-		}
-	}
+                        storageAcc.setBlobEndPointURL(Utils.getBlobEP(
+                                storageAcc.getStorageAccName(),
+                                storageAcc.getBlobEndPointURL()));
+                        break;
+                    }
+                }
+            }
+            return storageAcc;
+        }
+    }
 }

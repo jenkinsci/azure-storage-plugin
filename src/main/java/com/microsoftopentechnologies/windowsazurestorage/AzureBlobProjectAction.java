@@ -6,33 +6,33 @@ import hudson.model.Action;
 import hudson.model.Run;
 
 public class AzureBlobProjectAction implements Action {
-	private final AbstractProject<?, ?> project;
-	
-	public AzureBlobProjectAction(AbstractProject<?, ?> project) {
-		this.project = project;
-	}
-
-	public String getDisplayName() {
-		return "Azure Last Successful Artifacts";
-	}
-
-	public String getIconFileName() {
-		return null;
-	}
-
-	public String getUrlName() {
-		return null;
-	}
-	
-	public int getLastSuccessfulBuildNumber() {
-	    Run build = project.getLastSuccessfulBuild();
-	    if (build == null) {
-	        return 0;
-	    }
-	    return build.getNumber();
+    private final AbstractProject<?, ?> project;
+    
+    public AzureBlobProjectAction(AbstractProject<?, ?> project) {
+        this.project = project;
     }
-	
-	public AzureBlobAction getLastSuccessfulArtifactsAction() {
+
+    public String getDisplayName() {
+        return "Azure Last Successful Artifacts";
+    }
+
+    public String getIconFileName() {
+        return null;
+    }
+
+    public String getUrlName() {
+        return null;
+    }
+    
+    public int getLastSuccessfulBuildNumber() {
+        Run build = project.getLastSuccessfulBuild();
+        if (build == null) {
+            return 0;
+        }
+        return build.getNumber();
+    }
+    
+    public AzureBlobAction getLastSuccessfulArtifactsAction() {
         Run build = project.getLastSuccessfulBuild();
         if (build == null) {
             return null;
