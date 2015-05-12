@@ -18,6 +18,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.util.CopyOnWriteList;
+import hudson.util.EnumConverter;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.model.AbstractBuild;
@@ -34,12 +35,14 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.Stapler;
 
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 
 import javax.servlet.ServletException;
 
+import java.io.OutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,8 +72,14 @@ public class WAStoragePublisher extends Recorder {
 
 	/** If true, build will not be changed to UNSTABLE if archiving returns nothing. */
 	private boolean doNotFailIfArchivingReturnsNothing;
+	
+	/** If true, artifacts will also be uploaded as a zip rollup **/
+	private boolean uploadZips;
+	
+	/** If true, artifacts will not be uploaded as individual files **/
+	private boolean doNotUploadIndividualFiles;
 
-	/** Files path. Ant glob sysntax. */
+	/** Files path. Ant glob syntax. */
 	private String filesPath;
 	
 	/** Files to exclude from archival.  Ant glob syntax */
@@ -79,13 +88,22 @@ public class WAStoragePublisher extends Recorder {
 	/** File Path prefix */
 	private String virtualPath;
 	
+	public enum UploadType {
+		INDIVIDUAL,
+		ZIP,
+		BOTH,
+		INVALID;
+	}
+	
 	@DataBoundConstructor
 	public WAStoragePublisher(final String storageAccName,
 			final String filesPath, final String excludeFilesPath, final String containerName,
 			final boolean cntPubAccess, final String virtualPath,
 			final boolean cleanUpContainer, final boolean allowAnonymousAccess,
 			final boolean uploadArtifactsOnlyIfSuccessful,
-			final boolean doNotFailIfArchivingReturnsNothing) {
+			final boolean doNotFailIfArchivingReturnsNothing,
+			final boolean doNotUploadIndividualFiles,
+			final boolean uploadZips) {
 		super();
 		this.storageAccName = storageAccName;
 		this.filesPath = filesPath;
@@ -97,6 +115,8 @@ public class WAStoragePublisher extends Recorder {
 		this.allowAnonymousAccess = allowAnonymousAccess;
 		this.uploadArtifactsOnlyIfSuccessful = uploadArtifactsOnlyIfSuccessful;
 		this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
+		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
+		this.uploadZips = uploadZips;
 	}
 
 	public String getFilesPath() {
@@ -129,6 +149,30 @@ public class WAStoragePublisher extends Recorder {
 	
 	public boolean isUploadArtifactsOnlyIfSuccessful() {
 		return uploadArtifactsOnlyIfSuccessful;
+	}
+	
+	public boolean isUploadZips() {
+		return uploadZips;
+	}
+	
+	public boolean isDoNotUploadIndividualFiles() {
+		return doNotUploadIndividualFiles;
+	}
+	
+	private UploadType computeArtifactUploadType(final boolean uploadZips, final boolean doNotUploadIndividualFiles) {
+		if (uploadZips && !doNotUploadIndividualFiles) {
+			return UploadType.BOTH;
+		} else if (!uploadZips && !doNotUploadIndividualFiles) {
+			return UploadType.INDIVIDUAL;
+		} else if (uploadZips && doNotUploadIndividualFiles) {
+			return UploadType.ZIP;
+		} else {
+			return UploadType.INVALID;
+		}
+	}
+	
+	public UploadType getArtifactUploadType() {
+		return computeArtifactUploadType(this.uploadZips, this.doNotUploadIndividualFiles);
 	}
 
 	public String getStorageAccName() {
@@ -169,6 +213,14 @@ public class WAStoragePublisher extends Recorder {
 	
 	public void setExcludeFilesPath(final String excludeFilesPath) {
 		this.excludeFilesPath = excludeFilesPath;
+	}
+	
+	public void setUploadZips(final boolean uploadZips) {
+		this.uploadZips = uploadZips;
+	}
+	
+	public void setDoNotUploadIndividualFiles() {
+		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
 	}
 
 	public String getVirtualPath() {
@@ -257,24 +309,30 @@ public class WAStoragePublisher extends Recorder {
 		}
 
 		try {
-			List<AzureBlob> blobs = new ArrayList<AzureBlob>();
+			List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
+			List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
 			
 			int filesUploaded = WAStorageClient.upload(build, listener, strAcc,
 					expContainerName, cntPubAccess, cleanUpContainer, expFP,
-					expVP, excludeFP, blobs);
+					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs);
 
 			// Mark build unstable if no files are uploaded and the user
 			// doesn't want the build not to fail in that case.
-			if (filesUploaded == 0 && !doNotFailIfArchivingReturnsNothing) {
+			if (filesUploaded == 0) {
 				listener.getLogger().println(
 						Messages.WAStoragePublisher_nofiles_uploaded());
-				build.setResult(Result.UNSTABLE);
+				if (!doNotFailIfArchivingReturnsNothing) {
+					build.setResult(Result.UNSTABLE);
+				}
 			} else {
+				AzureBlob zipArchiveBlob = null;
+				if (getArtifactUploadType() != UploadType.INDIVIDUAL) {
+					zipArchiveBlob = archiveBlobs.get(0);
+				}
 				listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
 				
-				if (blobs.size() > 0) {
-					build.getActions().add(new AzureBlobAction(build, strAcc.getStorageAccName(), expContainerName, blobs, allowAnonymousAccess));
-				}
+				build.getActions().add(new AzureBlobAction(build, strAcc.getStorageAccName(), 
+						expContainerName, individualBlobs, zipArchiveBlob, allowAnonymousAccess));
 			}
 		} catch (Exception e) {
 			e.printStackTrace(listener.error(Messages
@@ -319,6 +377,13 @@ public class WAStoragePublisher extends Recorder {
 		if (Utils.isNullOrEmpty(filesPath)) {
 			listener.getLogger().println(
 					Messages.WAStoragePublisher_filepath_err());
+			build.setResult(Result.UNSTABLE);
+			return false;
+		}
+		
+		if (getArtifactUploadType() == UploadType.INVALID) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_uploadtype_invalid());
 			build.setResult(Result.UNSTABLE);
 			return false;
 		}

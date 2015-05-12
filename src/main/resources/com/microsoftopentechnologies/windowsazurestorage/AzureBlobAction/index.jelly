@@ -1,22 +1,25 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <l:layout>
-    <st:include it="${it.build}" page="sidepanel.jelly" />
-    
-    <l:main-panel>
-      <h1>
-        <img src="/plugin/windows-azure-storage/images/48x48/Azure.png" alt="Azure Cloud" height="48" width="48"/>
-        Azure Artifacts
-      </h1>
-      <table>
-        <ul>
-	        <j:forEach var="blob" items="${it.blobs}">
-	        	<li>
-		         	<a href="processDownloadRequest/${blob.blobName}" >${blob.blobName}</a>
-		         </li>
-	        </j:forEach>
-	     </ul>
-      </table>
-    </l:main-panel>
+	<st:include it="${it.build}" page="sidepanel.jelly" />
+	
+	<l:main-panel>
+	  <h1>
+		<img src="/plugin/windows-azure-storage/images/48x48/Azure.png" alt="Azure Cloud" height="48" width="48"/>
+		Azure Artifacts
+	  </h1>
+	  <table>
+		<j:if test="${it.zipArchiveBlob != null}">
+		  <a href="processDownloadRequest/${it.zipArchiveBlob.blobName}">(download artifacts in zip)</a>
+		  <br /><br />
+		</j:if>
+		<j:forEach var="blob" items="${it.individualBlobs}" >
+		  <li>
+			<a href="processDownloadRequest/${blob.blobName}">${blob.blobName}</a>
+			<br />
+		  </li>
+		</j:forEach>
+	  </table>
+	</l:main-panel>
   </l:layout>
 </j:jelly>

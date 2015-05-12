@@ -13,18 +13,26 @@
 		<f:textbox />
 	</f:entry>
 	
-	<f:entry title="${%excludePattern_title}" field="excludeFilesPattern" help="/plugin/windows-azure-storage/help-excludePattern.html">
-		<f:textbox />
-	</f:entry>
-	
-	<f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
-		<f:textbox />
-	</f:entry>
-	
-	<f:entry field="flattenDirectories" help="/plugin/windows-azure-storage/help-flattenDirectories.html">
-		<div align="left">
-			<f:checkbox  title="${%flattenDirectories_title}"/>
-		</div>
-	</f:entry>
+	<f:advanced>
+		<f:entry title="${%excludePattern_title}" field="excludeFilesPattern" help="/plugin/windows-azure-storage/help-excludePattern.html">
+			<f:textbox />
+		</f:entry>
+
+		<f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
+			<f:textbox />
+		</f:entry>
+
+		<f:entry field="flattenDirectories" help="/plugin/windows-azure-storage/help-flattenDirectories.html">
+			<div align="left">
+				<f:checkbox  title="${%flattenDirectories_title}"/>
+			</div>
+		</f:entry>
+
+		<f:entry field="includeArchiveZips" help="/plugin/windows-azure-storage/help-includeArchiveZips.html">
+			<div align="left">
+				<f:checkbox  title="${%includeArchiveZips_title}"/>
+			</div>
+		</f:entry>
+	</f:advanced>
 	
 </j:jelly>

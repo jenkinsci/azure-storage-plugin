@@ -17,9 +17,11 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
@@ -31,12 +33,14 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.tools.ant.types.FileSet;
+import org.apache.tools.ant.DirectoryScanner;
 
 import org.springframework.util.AntPathMatcher;
 
 import hudson.FilePath;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
+import hudson.util.DirScanner.*;
 
 import com.microsoft.windowsazure.storage.CloudStorageAccount;
 import com.microsoft.windowsazure.storage.RetryNoRetry;
@@ -53,9 +57,11 @@ import com.microsoft.windowsazure.storage.blob.CloudBlockBlob;
 import com.microsoft.windowsazure.storage.blob.ListBlobItem;
 import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPermissions;
 import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPolicy;
+import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.UploadType;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+import java.util.Arrays;
 
 public class WAStorageClient {
 	private static final Logger LOGGER = Logger.getLogger(WAStorageClient.class.getName());
@@ -265,6 +271,24 @@ public class WAStorageClient {
 	 * blobItem; blobList.add(blobDir.getPrefix()); // list blobs again
 	 * getBlobDirectoryList(blobDir, blobList); } } } }
 	 */
+	
+	private static void upload(BuildListener listener, CloudBlockBlob blob, FilePath src) 
+			throws StorageException, IOException, InterruptedException {
+		long startTime = System.currentTimeMillis();
+		InputStream inputStream = src.read();
+		try {
+			blob.upload(inputStream, src.length(), null,
+					getBlobRequestOptions(), null);
+		} finally {
+			try {
+				inputStream.close();
+			} catch (IOException e) {
+
+			}
+		}
+		long endTime = System.currentTimeMillis();
+		listener.getLogger().println("Uploaded blob with uri "+ blob.getUri() + " in " + getTime(endTime - startTime));
+	}
 
 	/**
 	 * Uploads files to Windows Azure Storage.
@@ -290,10 +314,9 @@ public class WAStorageClient {
 	public static int upload(AbstractBuild<?, ?> build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName,
 			boolean cntPubAccess, boolean cleanUpContainer, String expFP,
-			String expVP, String excludeFP, 
-			List<AzureBlob> blobs) throws WAStorageException {
+			String expVP, String excludeFP, UploadType uploadType,
+			List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs) throws WAStorageException {
 
-		CloudBlockBlob blob = null;
 		int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
 		try {
@@ -304,7 +327,6 @@ public class WAStorageClient {
 				return filesUploaded;
 			}
 			StringTokenizer strTokens = new StringTokenizer(expFP, fpSeparator);
-			FilePath[] paths = null;
 
 			listener.getLogger().println(
 					Messages.WAStoragePublisher_uploading());
@@ -320,6 +342,15 @@ public class WAStorageClient {
 				deleteContents(container);
 			}
 
+			final String zipFolderName = "artifactsArchive";
+			final String zipName = "archive.zip";
+			// Make sure we exclude the tempPath from archiving.
+			String excludesWithoutZip = "**/" + zipFolderName + "*/" + zipName;
+			if (excludeFP != null) {
+				excludesWithoutZip = excludeFP + "," + excludesWithoutZip;
+			}
+			String archiveIncludes = "";
+			
 			while (strTokens.hasMoreElements()) {
 				String fileName = strTokens.nextToken();
 
@@ -346,62 +377,74 @@ public class WAStorageClient {
 						fileName = fileName.substring(0, embVPSepIndex);
 					}
 				}
-
-				if (Utils.isNullOrEmpty(fileName)) {
-					return filesUploaded;
-				}
-
-				FilePath fp = new FilePath(workspacePath, fileName);
-
-				if (fp.exists() && !fp.isDirectory()) {
-					paths = new FilePath[1];
-					paths[0] = fp;
-				} else {
-					paths = workspacePath.list(fileName, excludeFP);
-				}
-
+				
+				archiveIncludes += "," + fileName;
+				
+				// List all the paths without the zip archives.
+				FilePath[] paths = workspacePath.list(fileName, excludesWithoutZip);
+				filesUploaded += paths.length;
+				
 				URI workspaceURI = workspacePath.toURI();
 
 				if (paths.length != 0) {
-					for (FilePath src : paths) {
-						// Remove the workspace bit of this path
-						URI srcURI = workspaceURI.relativize(src.toURI());
-						String srcPrefix = srcURI.getPath();
-						if (Utils.isNullOrEmpty(expVP)
-								&& Utils.isNullOrEmpty(embeddedVP)) {
-							blob = container.getBlockBlobReference(srcPrefix);
-						} else {
-							String prefix = expVP;
+					if (uploadType != UploadType.ZIP) {
+						for (FilePath src : paths) {
+							// Remove the workspace bit of this path
+							URI srcURI = workspaceURI.relativize(src.toURI());
+							CloudBlockBlob blob = null;
+							String srcPrefix = srcURI.getPath();
+							if (Utils.isNullOrEmpty(expVP)
+									&& Utils.isNullOrEmpty(embeddedVP)) {
+								blob = container.getBlockBlobReference(srcPrefix);
+							} else {
+								String prefix = expVP;
 
-							if (!Utils.isNullOrEmpty(embeddedVP)) {
-								if (Utils.isNullOrEmpty(expVP)) {
-									prefix = embeddedVP;
-								} else {
-									prefix = expVP + embeddedVP;
+								if (!Utils.isNullOrEmpty(embeddedVP)) {
+									if (Utils.isNullOrEmpty(expVP)) {
+										prefix = embeddedVP;
+									} else {
+										prefix = expVP + embeddedVP;
+									}
 								}
+								blob = container.getBlockBlobReference(prefix + srcPrefix);
 							}
-							blob = container.getBlockBlobReference(prefix + srcPrefix);
-						}
 
-						long startTime = System.currentTimeMillis();
-						InputStream inputStream = src.read();
-						try {
-							blob.upload(inputStream, src.length(), null,
-									getBlobRequestOptions(), null);
-						} finally {
-							try {
-								inputStream.close();
-							} catch (IOException e) {
+							upload(listener, blob, src);
 
-							}
+							individualBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://")));
 						}
-						long endTime = System.currentTimeMillis();
-						listener.getLogger().println("Uploaded blob with uri "+ blob.getUri() + " in " + getTime(endTime - startTime));
-						blobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://")));
-						filesUploaded++;
 					}
 				}
 			}
+			
+			if (filesUploaded != 0 && (uploadType != UploadType.INDIVIDUAL)) {
+				// Create a temp dir for the upload
+				FilePath tempPath = workspacePath.createTempDir(zipFolderName, null);
+
+				Glob globScanner = new Glob(archiveIncludes, excludesWithoutZip);
+
+				OutputStream zipStream = new FileOutputStream(tempPath + "/" + zipName);
+				workspacePath.zip(zipStream, globScanner);
+
+				// When uploading the zip, do not add in the tempDir to the block
+				// blob reference.
+				FilePath zipPath = new FilePath(tempPath, zipName);
+				String blobURI = zipPath.getName();
+
+				if (!Utils.isNullOrEmpty(expVP)) {
+					blobURI = expVP + "/" + blobURI;
+				}
+
+				CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
+
+				upload(listener, blob, zipPath);
+				// Make sure to note the new blob as an archive blob,
+				// so that it can be specially marked on the azure storage page.
+				archiveBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://")));
+
+				tempPath.deleteRecursive();
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new WAStorageException(e.getMessage(), e.getCause());

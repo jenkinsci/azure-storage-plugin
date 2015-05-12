@@ -48,16 +48,19 @@ public class AzureStorageBuilder extends Builder {
 	private String excludeFilesPattern;
 	private String downloadDirLoc;
 	private boolean flattenDirectories;
+	private boolean includeArchiveZips;
 
 	@DataBoundConstructor
 	public AzureStorageBuilder(String storageAccName, String containerName,
-			String includeFilesPattern, String excludeFilesPattern, String downloadDirLoc, boolean flattenDirectories) {
+			String includeFilesPattern, String excludeFilesPattern, String downloadDirLoc, boolean flattenDirectories,
+			boolean includeArchiveZips) {
 		this.storageAccName = storageAccName;
 		this.containerName = containerName;
 		this.includeFilesPattern = includeFilesPattern;
 		this.excludeFilesPattern = excludeFilesPattern;
 		this.downloadDirLoc = downloadDirLoc;
 		this.flattenDirectories = flattenDirectories;
+		this.includeArchiveZips = includeArchiveZips;
 	}
 
 	public String getStorageAccName() {
@@ -100,11 +103,19 @@ public class AzureStorageBuilder extends Builder {
 		this.downloadDirLoc = downloadDirLoc;
 	}
 	
+	public boolean isIncludeArchiveZips() {
+		return includeArchiveZips;
+	}
+	
+	public void setIncludeArchiveZips(final boolean includeArchiveZips) {
+		this.includeArchiveZips = includeArchiveZips;
+	}
+	
 	public boolean isFlattenDirectories() {
 		return flattenDirectories;
 	}
 	
-	public void setFlattenDirectories(boolean flattenDirectories){
+	public void setFlattenDirectories(final boolean flattenDirectories){
 		this.flattenDirectories = flattenDirectories;
 	}
 
@@ -136,6 +147,16 @@ public class AzureStorageBuilder extends Builder {
 			// If the include is empty, make **/*
 			if (Utils.isNullOrEmpty(expIncludePattern)) {
 				expIncludePattern = "**/*";
+			}
+			
+			// Exclude archive.zip by default.
+			if (!includeArchiveZips) {
+				if (expExcludePattern != null) {
+					expExcludePattern += ",archive.zip";
+				}
+				else {
+					expExcludePattern = "archive.zip";
+				}
 			}
 
 			// Resolve download location

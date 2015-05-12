@@ -25,15 +25,18 @@ public class AzureBlobAction implements RunAction {
 	private final String storageAccountName;
 	private final String containerName;
 	private final boolean allowAnonymousAccess;
-	private final List<AzureBlob> blobs;
+	private final AzureBlob zipArchiveBlob;
+	private final List<AzureBlob> individualBlobs;
 
-	public AzureBlobAction(AbstractBuild build, String storageAccountName, String containerName,  List<AzureBlob> blobs, 
+	public AzureBlobAction(AbstractBuild build, String storageAccountName, String containerName,
+			List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
 			boolean allowAnonymousAccess) {
 		this.build = build;
 		this.storageAccountName = storageAccountName;
 		this.containerName = containerName;
-		this.blobs = blobs;
+		this.individualBlobs = individualBlobs;
 		this.allowAnonymousAccess = allowAnonymousAccess;
+		this.zipArchiveBlob = zipArchiveBlob;
 	}
 	
 	public String getDisplayName() {
@@ -46,6 +49,10 @@ public class AzureBlobAction implements RunAction {
 
 	public String getUrlName() {
 		return "Azure";
+	}
+	
+	public AzureBlob getZipArchiveBlob() {
+		return zipArchiveBlob;
 	}
 
 	public void onAttached(Run arg0) {
@@ -69,8 +76,8 @@ public class AzureBlobAction implements RunAction {
 		return containerName;
 	}
 	
-	public List<AzureBlob> getBlobs() {
-		return blobs;
+	public List<AzureBlob> getIndividualBlobs() {
+		return individualBlobs;
 	}
 	
 	public boolean getAllowAnonymousAccess() {
@@ -104,8 +111,8 @@ public class AzureBlobAction implements RunAction {
 		
 		if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
 			String url = request.getOriginalRequestURI();
-        	response.sendRedirect("/login?from=" + url);
-           	return;
+			response.sendRedirect("/login?from=" + url);
+			return;
 		}
 		
 		String queryPath = request.getRestOfPath();
@@ -116,7 +123,19 @@ public class AzureBlobAction implements RunAction {
 		
 		String blobName = queryPath.substring(1);
 		
-		for (AzureBlob blob : blobs) {
+		// Check the archive blob if it is non-null
+		if (zipArchiveBlob != null) {
+			if (zipArchiveBlob.getBlobName().equals(blobName)) {
+				try {
+					response.sendRedirect2(zipArchiveBlob.getBlobURL()+"?"+getSASURL(accountInfo));
+				} catch(Exception e) {
+					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
+				}
+				return;
+			}
+		}
+		
+		for (AzureBlob blob : individualBlobs) {
 			if (blob.getBlobName().equals(blobName)) {
 				try {
 					response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo));
@@ -126,7 +145,7 @@ public class AzureBlobAction implements RunAction {
 				return;
 			}
 		}
-
+		
 		response.sendError(404, "Azure artifact is not available");
 	}
 	
