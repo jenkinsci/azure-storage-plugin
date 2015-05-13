@@ -3,21 +3,21 @@
 
    
     <f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
-  		<f:select  />
-  	</f:entry>
-  	
-  	
-  	
- 	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
- 		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
- 	</f:entry>
+          <f:select  />
+      </f:entry>
+      
+      
+      
+     <f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
+         <f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
+     </f:entry>
  
   
-  	<f:entry title="${%blob_name_title}" field="blobName" help="/plugin/windows-azure-storage/help-blobName.html">
-    	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkBlobName?val='+encodeURIComponent(this.value)" />
- 	</f:entry> 	
- 	
- 	<f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
-    	<f:textbox />
- 	</f:entry>
+      <f:entry title="${%blob_name_title}" field="blobName" help="/plugin/windows-azure-storage/help-blobName.html">
+        <f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkBlobName?val='+encodeURIComponent(this.value)" />
+     </f:entry>     
+     
+     <f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
+        <f:textbox />
+     </f:entry>
 </j:jelly>
