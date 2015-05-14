@@ -319,7 +319,6 @@ public class AzureStorageBuilder extends Builder {
 						storageAcc = sa;
 
 						storageAcc.setBlobEndPointURL(Utils.getBlobEP(
-								storageAcc.getStorageAccName(),
 								storageAcc.getBlobEndPointURL()));
 						break;
 					}

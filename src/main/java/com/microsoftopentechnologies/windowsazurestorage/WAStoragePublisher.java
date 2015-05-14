@@ -167,7 +167,6 @@ public class WAStoragePublisher extends Recorder {
 				storageAcc = sa;
 				if (storageAcc != null) {
 					storageAcc.setBlobEndPointURL(Utils.getBlobEP(
-							storageAcc.getStorageAccName(),
 							storageAcc.getBlobEndPointURL()));
 				}
 				break;
@@ -343,8 +342,7 @@ public class WAStoragePublisher extends Recorder {
 
 			try {
 				// Get formatted blob end point URL.
-				was_blobEndPointURL = Utils.getBlobEP(was_storageAccName,
-						was_blobEndPointURL);
+				was_blobEndPointURL = Utils.getBlobEP(was_blobEndPointURL);
 				WAStorageClient.validateStorageAccount(was_storageAccName,
 						was_storageAccountKey, was_blobEndPointURL);
 			} catch (Exception e) {
@@ -431,11 +429,9 @@ public class WAStoragePublisher extends Recorder {
 						storageAccountInfo = sa;
 
 						if (storageAccountInfo != null) {
-							storageAccountInfo.setBlobEndPointURL(Utils
-									.getBlobEP(storageAccountInfo
-											.getStorageAccName(),
-											storageAccountInfo
-													.getBlobEndPointURL()));
+							storageAccountInfo.setBlobEndPointURL(
+								Utils.getBlobEP(storageAccountInfo.getBlobEndPointURL())
+							);
 						}
 						break;
 					}
