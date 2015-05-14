@@ -1,19 +1,29 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <j:set var="lastSuccessfulArtifactsAction" value="${it.lastSuccessfulArtifactsAction}"/>
+  <j:set var="listCutoff" value="${it.maxResultsDisplay}"/>
   <j:if test="${lastSuccessfulArtifactsAction != null}">
-      <table style="margin-top:1em; margin-left:1em;">
-        <t:summary icon="/plugin/windows-azure-storage/images/48x48/Azure.png">
-            ${%Latest Azure Artifacts}
-            <ul>
-               <j:set var="buildNumber" value="${it.lastSuccessfulBuildNumber}"/>
-               <j:forEach var="blob" items="${lastSuccessfulArtifactsAction.blobs}" >
-                   <li>
-                       <a href="${buildNumber}/Azure/processDownloadRequest/${blob.blobName}">${blob.blobName}</a>
-                       <br />
-                   </li>
-               </j:forEach>
-            </ul>
-        </t:summary>
-      </table>
+	<table style="margin-top:1em; margin-left:1em;">
+	  <t:summary icon="/plugin/windows-azure-storage/images/48x48/Azure.png"  href="lastSuccessfulBuild/Azure">
+		  ${%Latest Azure Artifacts}
+		  <br />
+		  <j:set var="buildNumber" value="${it.lastSuccessfulBuildNumber}"/>
+		  <!-- If a zip archive was uploaded, put that here -->
+		  <j:if test="${lastSuccessfulArtifactsAction.zipArchiveBlob != null}">
+			<br />
+			<a href="${buildNumber}/Azure/processDownloadRequest/${lastSuccessfulArtifactsAction.zipArchiveBlob.blobName}">(download artifacts in zip)</a>
+			<br />
+		  </j:if>
+		  <j:if test="${size(lastSuccessfulArtifactsAction.individualBlobs) le listCutoff}">
+			<ul>
+			  <j:forEach var="blob" items="${lastSuccessfulArtifactsAction.individualBlobs}" >
+				<li>
+				  <a href="${buildNumber}/Azure/processDownloadRequest/${blob.blobName}">${blob.blobName}</a>
+				  <br />
+				</li>
+			  </j:forEach>
+			</ul>
+		  </j:if>
+	  </t:summary>
+	</table>
   </j:if>
 </j:jelly>

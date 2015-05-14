@@ -1,37 +1,67 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
    
-    <f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-selectstorageaccount.html">
-  		<f:select />
-  	</f:entry>
+	<f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-selectstorageaccount.html">
+		<f:select />
+	</f:entry>
   
-  	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-containerName.html">
-    	<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
- 	</f:entry>
- 	
- 	<f:entry field="cntPubAccess"  help="/plugin/windows-azure-storage/help-containerAccess.html">
- 		<div align="left">
-    		<f:checkbox title="${%containerAccess_title}" />
-    	</div>
-  	</f:entry>
-  	
-  	<f:entry  field="cleanUpContainer" help="/plugin/windows-azure-storage/help-cleanContainer.html">
-    		<div align="left">
-    			<f:checkbox  title="${%cleanContainer_title}"/>
-    		</div>
-  	</f:entry>
-  	
-  	<f:entry field="allowAnonymousAccess" help="/plugin/windows-azure-storage/help-allowAnonymousAccess.html">
-    	<div align="left">
-    		<f:checkbox title="${%allowAnonymousAccess_title}"/>
-    	</div>
-  	</f:entry>
- 	
-  	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
-    	<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
-  	</f:entry>
-  	
-  	<f:entry title="${%virtualPath}" field="virtualPath" help="/plugin/windows-azure-storage/help-virtualPath.html">
-    	<f:textbox />
-  	</f:entry>
+	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-containerName.html">
+		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
+	</f:entry>
+	
+	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
+		<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
+	</f:entry>
+		
+	<f:advanced>
+		<f:entry title="${%excludeFilesPath_title}" field="excludeFilesPath" help="/plugin/windows-azure-storage/help-excludeFilesPath.html">
+			<f:textbox />
+		</f:entry>
+		
+		<f:entry title="${%virtualPath}" field="virtualPath" help="/plugin/windows-azure-storage/help-virtualPath.html">
+			<div align="left">
+				<f:textbox />
+			</div>
+		</f:entry>
+		
+		<f:entry field="cntPubAccess"  help="/plugin/windows-azure-storage/help-containerAccess.html">
+			<div align="left">
+				<f:checkbox title="${%containerAccess_title}" />
+			</div>
+		</f:entry>
+
+		<f:entry  field="cleanUpContainer" help="/plugin/windows-azure-storage/help-cleanContainer.html">
+			<div align="left">
+				<f:checkbox  title="${%cleanContainer_title}"/>
+			</div>
+		</f:entry>
+
+		<f:entry field="allowAnonymousAccess" help="/plugin/windows-azure-storage/help-allowAnonymousAccess.html">
+			<div align="left">
+				<f:checkbox title="${%allowAnonymousAccess_title}"/>
+			</div>
+		</f:entry>
+
+		<f:entry field="uploadArtifactsOnlyIfSuccessful" help="/plugin/windows-azure-storage/help-uploadArtifactsOnlyIfSuccessful.html">
+			<div align="left">
+				<f:checkbox title="${%uploadArtifactsOnlyIfSuccessful_title}"/>
+			</div>
+		</f:entry>
+
+		<f:entry field="doNotFailIfArchivingReturnsNothing" help="/plugin/windows-azure-storage/help-doNotFailIfArchivingReturnsNothing.html">
+			<div align="left">
+				<f:checkbox title="${%doNotFailIfArchivingReturnsNothing_title}"/>
+			</div>
+		</f:entry>
+		
+		<f:entry field="uploadZips" help="/plugin/windows-azure-storage/help-uploadZips.html">
+			<f:checkbox title="${%uploadZips_title}" />
+		</f:entry>
+
+		<f:entry field="doNotUploadIndividualFiles" help="/plugin/windows-azure-storage/help-doNotUploadIndividualFiles.html">
+			<div align="left">
+				<f:checkbox title="${%doNotUploadIndividualFiles_title}"/>
+			</div>
+		</f:entry>
+	</f:advanced>
 </j:jelly>
