@@ -12,13 +12,13 @@ public class WindowsAzureStorageTest extends TestCase {
 	@Test
 	public void testContainerName() throws Exception {
 		
-		// checking for container name length of 3 characters
+		// checking for container name lenth of 3 characters
 		assertEquals(true, Utils.validateContainerName("abc"));
 		
-		// checking for container name length of 5 characters
+		// checking for container name lenth of 5 characters
 		assertEquals(true, Utils.validateContainerName("1abc3"));
 		
-		// checking for container name length of 63 characters
+		// checking for container name lenth of 63 characters
 		assertEquals(true, Utils.validateContainerName("abcde12345abcde12345abcde12345abcde12345abcde12345abcde12345abc"));
 		
 		// checking for container name with dash (-) characters 
@@ -53,24 +53,6 @@ public class WindowsAzureStorageTest extends TestCase {
 		
 		// checking with not null and not empty string
 		assertEquals(false, Utils.isNullOrEmpty("xyz"));
-	}
-
-	@Test
-	public void testGetBlobEPReturnsDefaultURL() throws Exception {
-		// return default blob host given null URL
-		assertEquals(Utils.DEF_BLOB_URL, Utils.getBlobEP(null));
-		// return default blob host given the default blob URL
-		assertEquals(Utils.DEF_BLOB_URL, Utils.getBlobEP(Utils.DEF_BLOB_URL));
-	}
-
-	@Test
-	public void testGetBlobEPAddsHttpProtocolWhenNoProtocolPresent() throws Exception {
-		assertEquals("http://blob.host.domain.tld/", Utils.getBlobEP("blob.host.domain.tld"));
-	}
-
-	@Test
-	public void testGetBlobEPAddsTrailingForwardSlashWhenMissing() throws Exception {
-		assertEquals("https://blob.core.windows.net/", Utils.getBlobEP("https://blob.core.windows.net"));
 	}
 	
 }
