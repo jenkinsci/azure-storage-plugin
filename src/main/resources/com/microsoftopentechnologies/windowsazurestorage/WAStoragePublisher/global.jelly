@@ -10,7 +10,7 @@
   				</f:entry>
   			
   				<f:entry title="${%rep_storageAccountKey}" help="/plugin/windows-azure-storage/help-storageAccountKey.html">
-    				   <f:textbox name="was_storageAccountKey" value="${storageAccount.storageAccountKey}" />
+    				<f:textbox name="was_storageAccountKey" value="${storageAccount.storageAccountKey}" />
   				</f:entry>
   			
   				<f:entry title="${%rep_blobEndPointURL}" help="/plugin/windows-azure-storage/help-blobEndPointURL.html">
