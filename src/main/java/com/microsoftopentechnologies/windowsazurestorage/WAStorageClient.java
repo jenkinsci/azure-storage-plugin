@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -423,16 +424,15 @@ public class WAStorageClient {
 
 				Glob globScanner = new Glob(archiveIncludes, excludesWithoutZip);
 
-				OutputStream zipStream = new FileOutputStream(tempPath + "/" + zipName);
-				workspacePath.zip(zipStream, globScanner);
+				FilePath zipPath = tempPath.child(zipName);
+				workspacePath.zip(zipPath.write(), globScanner);
 
 				// When uploading the zip, do not add in the tempDir to the block
 				// blob reference.
-				FilePath zipPath = new FilePath(tempPath, zipName);
 				String blobURI = zipPath.getName();
 
 				if (!Utils.isNullOrEmpty(expVP)) {
-					blobURI = expVP + "/" + blobURI;
+					blobURI = expVP + blobURI;
 				}
 
 				CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
