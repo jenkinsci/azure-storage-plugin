@@ -14,15 +14,19 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
+import hudson.FilePath;
+import hudson.model.BuildListener;
+import hudson.model.AbstractBuild;
+import hudson.util.DirScanner.Glob;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.FileOutputStream;
-import java.io.File;
+import java.io.PrintStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
@@ -33,15 +37,7 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.time.DurationFormatUtils;
-import org.apache.tools.ant.types.FileSet;
-import org.apache.tools.ant.DirectoryScanner;
-
 import org.springframework.util.AntPathMatcher;
-
-import hudson.FilePath;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
-import hudson.util.DirScanner.*;
 
 import com.microsoft.windowsazure.storage.CloudStorageAccount;
 import com.microsoft.windowsazure.storage.RetryNoRetry;
@@ -62,7 +58,6 @@ import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.Uplo
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import java.util.Arrays;
 
 public class WAStorageClient {
 	private static final Logger LOGGER = Logger.getLogger(WAStorageClient.class.getName());
@@ -78,16 +73,103 @@ public class WAStorageClient {
 
 	private static final String fpSeparator = ",";
 
-	/**
-	 * This method validates Storage Account credentials by checking for a dummy
-	 * conatiner existence.
-	 * 
-	 * @param storageAccountName
-	 * @param storageAccountKey
-	 * @param blobEndPointURL
-	 * @return true if valid
-	 * @throws WAStorageException
-	 */
+	    /**
+     * First checks if proxy configuration is defined in java properties. If
+     * not, checks the OS environment variables and uses them.
+     */
+    public static void configureHttpProxySettingsWithOSFallback(PrintStream o) {
+        o.println(" * Checking java proxy properties. Current values are :");
+        String http_proxyHost = System.getProperty("http.proxyHost");
+        o.println(" * - http.proxyHost : " + http_proxyHost);
+        String http_proxyPort = System.getProperty("http.proxyPort");
+        o.println(" * - http.proxyPort : " + http_proxyPort);
+        String http_nonProxyHosts = System.getProperty("http.nonProxyHosts");
+        o.println(" * - http.nonProxyHosts : " + http_nonProxyHosts);
+
+        String https_proxyHost = System.getProperty("https.proxyHost");
+        o.println(" * - https.proxyHost : " + https_proxyHost);
+        String https_proxyPort = System.getProperty("https.proxyPort");
+        o.println(" * - https.proxyPort : " + https_proxyPort);
+
+        o.println(" * ");
+
+        if (!Utils.isNullOrEmpty(http_proxyHost)
+                && !Utils.isNullOrEmpty(http_proxyPort)) {
+            o.println(" * HTTP PROXY configuration is not empty - using it");
+
+        } else {
+            o.println(" * HTTP PROXY SEEMS EMPTY. Falling back to OS environment variables. Current values are  :");
+
+            String http_proxy = System.getenv("http_proxy");
+            o.println(" * - http_proxy : " + http_proxy);
+            String https_proxy = System.getenv("https_proxy");
+            o.println(" * - https_proxy : " + https_proxy);
+            String no_proxy = System.getenv("no_proxy");
+            o.println(" * - no_proxy : " + no_proxy);
+
+            o.println(" * ");
+
+            if (!Utils.isNullOrEmpty(http_proxy)) {
+                try {
+                    URL url = new URL(http_proxy);
+                    http_proxyHost = url.getHost();
+                    o.println(" * >> Setting http.proxyHost to : "
+                            + http_proxyHost);
+                    http_proxyPort = url.getPort() > 0 ? url.getPort() + ""
+                            : "80";
+                    o.println(" * >> Setting http.proxyPort to : "
+                            + http_proxyPort);
+                    // set it!
+                    System.setProperty("http.proxyHost", http_proxyHost);
+                    System.setProperty("http.proxyPort", http_proxyPort);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                o.println(" * HTTP proxy configuration from OS env is empty, not using it");
+            }
+            if (!Utils.isNullOrEmpty(https_proxy)) {
+                try {
+                    URL url = new URL(https_proxy);
+                    https_proxyHost = url.getHost();
+                    o.println(" * >> Setting https.proxyHost to : "
+                            + https_proxyHost);
+                    https_proxyPort = url.getPort() > 0 ? url.getPort() + ""
+                            : "80";
+                    o.println(" * >> Setting https.proxyPort to : "
+                            + https_proxyPort);
+                    // set it!
+                    System.setProperty("https.proxyHost", https_proxyHost);
+                    System.setProperty("https.proxyPort", https_proxyPort);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                o.println(" * HTTPS proxy configuration from OS env empty, not using it");
+            }
+            if (!Utils.isNullOrEmpty(no_proxy)) {
+                // in java hosts should be separated with '|' while on linux it
+                // is ','.
+                no_proxy = no_proxy.replace(',', '|');
+                no_proxy = no_proxy.replace(';', '|');
+                o.println(" * >> Setting http.nonProxyHosts to : " + no_proxy);
+                System.setProperty("http.nonProxyHosts", no_proxy);
+            } else {
+                o.println(" * HTTP no-proxy hosts configuration from OS env empty, not using it");
+            }
+        }
+    }
+
+    /**
+     * This method validates Storage Account credentials by checking for a dummy
+     * conatiner existence.
+     *
+     * @param storageAccountName
+     * @param storageAccountKey
+     * @param blobEndPointURL
+     * @return true if valid
+     * @throws WAStorageException
+     */
 	public static boolean validateStorageAccount(
 			final String storageAccountName, final String storageAccountKey,
 			final String blobEndPointURL) throws WAStorageException {
@@ -100,14 +182,14 @@ public class WAStorageClient {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new WAStorageException(Messages.Client_SA_val_fail());
+            throw new WAStorageException(Messages.Client_SA_val_fail(), e);
 		}
 		return true;
 	}
 
 	/**
 	 * Returns reference of Windows Azure cloud blob container.
-	 * 
+	 *
 	 * @param accName
 	 *            storage account name
 	 * @param key
@@ -196,75 +278,75 @@ public class WAStorageClient {
 	 * public static List<String> getContainersList( StorageAccountInfo
 	 * storageAccount, boolean allowRetry) throws URISyntaxException,
 	 * StorageException {
-	 * 
+	 *
 	 * if (storageAccount == null) { return null; }
-	 * 
+	 *
 	 * List<String> containerList = null;
-	 * 
+	 *
 	 * CloudStorageAccount cloudStorageAccount; CloudBlobClient serviceClient;
 	 * StorageCredentialsAccountAndKey credentials; String blobURL =
 	 * storageAccount.getBlobEndPointURL();
-	 * 
+	 *
 	 * credentials = new StorageCredentialsAccountAndKey(
 	 * storageAccount.getStorageAccName(),
 	 * storageAccount.getStorageAccountKey());
-	 * 
+	 *
 	 * if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Utils.DEF_BLOB_URL)) {
 	 * cloudStorageAccount = new CloudStorageAccount(credentials); } else {
 	 * cloudStorageAccount = new CloudStorageAccount(credentials, new URI(
 	 * blobURL), null, null); }
-	 * 
+	 *
 	 * serviceClient = cloudStorageAccount.createCloudBlobClient(); if
 	 * (!allowRetry && serviceClient != null) { // Setting no retry policy
 	 * RetryNoRetry rnr = new RetryNoRetry();
 	 * serviceClient.setRetryPolicyFactory(rnr); }
-	 * 
+	 *
 	 * if (serviceClient != null) { for (CloudBlobContainer blobContainer :
 	 * serviceClient .listContainers()) { if (containerList == null) {
 	 * containerList = new ArrayList<String>(); }
 	 * containerList.add(blobContainer.getName()); } } return containerList; }
-	 * 
+	 *
 	 * public static List<String> getContainerBlobList( StorageAccountInfo
 	 * storageAccountInfo, String containerName) throws URISyntaxException,
 	 * StorageException {
-	 * 
+	 *
 	 * if (storageAccountInfo == null || (containerName == null ||
 	 * containerName.trim().length() == 0)) { return null; }
-	 * 
+	 *
 	 * List<String> blobList = new ArrayList<String>();
-	 * 
+	 *
 	 * CloudBlobContainer cloudBlobContainer = getBlobContainerReference(
 	 * storageAccountInfo.getStorageAccName(),
 	 * storageAccountInfo.getStorageAccountKey(),
 	 * storageAccountInfo.getBlobEndPointURL(), containerName, false, false,
 	 * null);
-	 * 
+	 *
 	 * Iterable<ListBlobItem> blobItems = null; if (cloudBlobContainer != null
 	 * && cloudBlobContainer.exists()) { blobItems =
 	 * cloudBlobContainer.listBlobs(); }
-	 * 
+	 *
 	 * if (blobItems != null) { for (ListBlobItem blobItem : blobItems) { // If
 	 * the item is a blob, not a virtual directory if (blobItem instanceof
 	 * CloudBlob) { // Download the item and save it to a file with the same //
 	 * name CloudBlob blob = (CloudBlob) blobItem;
-	 * 
+	 *
 	 * // Filter blobs with name "$$$.$$$" if
 	 * (blob.getName().endsWith(EMPTY_FILE_NAME)) { continue; }
-	 * 
+	 *
 	 * blobList.add(blob.getName()); } else if (blobItem instanceof
 	 * CloudBlobDirectory) { CloudBlobDirectory blobDir = (CloudBlobDirectory)
 	 * blobItem; blobList.add(blobDir.getPrefix()); // list blobs again
 	 * getBlobDirectoryList(blobDir, blobList); } } } return blobList; }
-	 * 
+	 *
 	 * public static void getBlobDirectoryList(CloudBlobDirectory blobDirectory,
 	 * List<String> blobList) throws URISyntaxException, StorageException {
-	 * 
+	 *
 	 * Iterable<ListBlobItem> blobItems = blobDirectory.listBlobs(); if
 	 * (blobItems != null) { for (ListBlobItem blobItem : blobItems) { // If the
 	 * item is a blob, not a virtual directory if (blobItem instanceof
 	 * CloudBlob) { // Download the item and save it to a file with the same //
 	 * name CloudBlob blob = (CloudBlob) blobItem;
-	 * 
+	 *
 	 * // Filter blobs with name "$$$.$$$" if
 	 * (blob.getName().endsWith(EMPTY_FILE_NAME)) { continue; }
 	 * blobList.add(blob.getName()); } else if (blobItem instanceof
@@ -272,8 +354,8 @@ public class WAStorageClient {
 	 * blobItem; blobList.add(blobDir.getPrefix()); // list blobs again
 	 * getBlobDirectoryList(blobDir, blobList); } } } }
 	 */
-	
-	private static void upload(BuildListener listener, CloudBlockBlob blob, FilePath src) 
+
+	private static void upload(BuildListener listener, CloudBlockBlob blob, FilePath src)
 			throws StorageException, IOException, InterruptedException {
 		long startTime = System.currentTimeMillis();
 		InputStream inputStream = src.read();
@@ -293,7 +375,7 @@ public class WAStorageClient {
 
 	/**
 	 * Uploads files to Windows Azure Storage.
-	 * 
+	 *
 	 * @param listener
 	 * @param build
 	 * @param StorageAccountInfo
@@ -351,7 +433,7 @@ public class WAStorageClient {
 				excludesWithoutZip = excludeFP + "," + excludesWithoutZip;
 			}
 			String archiveIncludes = "";
-			
+
 			while (strTokens.hasMoreElements()) {
 				String fileName = strTokens.nextToken();
 
@@ -378,13 +460,13 @@ public class WAStorageClient {
 						fileName = fileName.substring(0, embVPSepIndex);
 					}
 				}
-				
+
 				archiveIncludes += "," + fileName;
-				
+
 				// List all the paths without the zip archives.
 				FilePath[] paths = workspacePath.list(fileName, excludesWithoutZip);
 				filesUploaded += paths.length;
-				
+
 				URI workspaceURI = workspacePath.toURI();
 
 				if (paths.length != 0) {
@@ -394,6 +476,8 @@ public class WAStorageClient {
 							URI srcURI = workspaceURI.relativize(src.toURI());
 							CloudBlockBlob blob = null;
 							String srcPrefix = srcURI.getPath();
+                            String last = srcPrefix.substring(srcPrefix
+                                    .lastIndexOf('/') + 1);
 							if (Utils.isNullOrEmpty(expVP)
 									&& Utils.isNullOrEmpty(embeddedVP)) {
 								blob = container.getBlockBlobReference(srcPrefix);
@@ -407,7 +491,9 @@ public class WAStorageClient {
 										prefix = expVP + embeddedVP;
 									}
 								}
-								blob = container.getBlockBlobReference(prefix + srcPrefix);
+								// src prefix should not be used anymore
+                                blob = container.getBlockBlobReference(prefix
+                                        + last);
 							}
 
 							upload(listener, blob, src);
@@ -417,7 +503,7 @@ public class WAStorageClient {
 					}
 				}
 			}
-			
+
 			if (filesUploaded != 0 && (uploadType != UploadType.INDIVIDUAL)) {
 				// Create a temp dir for the upload
 				FilePath tempPath = workspacePath.createTempDir(zipFolderName, null);
@@ -444,7 +530,7 @@ public class WAStorageClient {
 
 				tempPath.deleteRecursive();
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new WAStorageException(e.getMessage(), e.getCause());
@@ -454,7 +540,7 @@ public class WAStorageClient {
 
 	/**
 	 * Deletes contents of container
-	 * 
+	 *
 	 * @param container
 	 * @throws StorageException
 	 * @throws URISyntaxException
@@ -475,7 +561,7 @@ public class WAStorageClient {
 
 	/**
 	 * Deletes contents of virtual directory
-	 * 
+	 *
 	 * @param cloudBlobDirectory
 	 * @throws StorageException
 	 * @throws URISyntaxException
@@ -496,7 +582,7 @@ public class WAStorageClient {
 
 	/**
 	 * Downloads from Azure blob
-	 * 
+	 *
 	 * @param build
 	 * @param listener
 	 * @param strAcc
@@ -509,7 +595,7 @@ public class WAStorageClient {
 	 */
 	public static int download(AbstractBuild<?, ?> build,
 			BuildListener listener, StorageAccountInfo strAcc,
-			String expContainerName, String includePattern, String excludePattern, 
+			String expContainerName, String includePattern, String excludePattern,
 			String downloadDirLoc, boolean flattenDirectories)
 			throws WAStorageException {
 
@@ -543,7 +629,7 @@ public class WAStorageClient {
 							strAcc.getBlobEndPointURL(), expContainerName,
 							false, true, null);
 
-			filesDownloaded = downloadBlobs(container, includePattern, excludePattern, 
+			filesDownloaded = downloadBlobs(container, includePattern, excludePattern,
 					downloadDir, flattenDirectories, listener);
 
 		} catch (Exception e) {
@@ -553,8 +639,8 @@ public class WAStorageClient {
 		return filesDownloaded;
 
 	}
-	
-	private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns, 
+
+	private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns,
 			boolean isFullPath) {
 		if (!isFullPath) {
 			// If we don't have a full path, we can't check for exclusions
@@ -564,20 +650,20 @@ public class WAStorageClient {
 				return true;
 			}
 		} else {
-			if (isExactMatch(path, includePatterns) && 
+			if (isExactMatch(path, includePatterns) &&
 					(excludePatterns == null || !isExactMatch(path, excludePatterns))) {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Determines whether the path is an exact match to any of the provided patterns
 	 * @param path
 	 * @param patterns
-	 * @return 
+	 * @return
 	 */
 	private static boolean isExactMatch(String path, String[] patterns) {
 		AntPathMatcher matcher = new AntPathMatcher();
@@ -588,12 +674,12 @@ public class WAStorageClient {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Determines whether the path is a potential match to any of the provided patterns
 	 * @param path
 	 * @param patterns
-	 * @return 
+	 * @return
 	 */
 	private static boolean isPotentialMatch(String path, String[] patterns) {
 		AntPathMatcher matcher = new AntPathMatcher();
@@ -607,7 +693,7 @@ public class WAStorageClient {
 
 	/**
 	 * Downloads blobs from container
-	 * 
+	 *
 	 * @param container
 	 * @param includePattern
 	 * @param excludePattern
@@ -620,20 +706,20 @@ public class WAStorageClient {
 	 * @throws WAStorageException
 	 */
 	private static int downloadBlobs(CloudBlobContainer container,
-			String includePattern, String excludePattern, 
+			String includePattern, String excludePattern,
 			FilePath downloadDir, boolean flattenDirectories, BuildListener listener)
 			throws URISyntaxException, StorageException, IOException,
 			WAStorageException {
 
 		String[] includePatterns = includePattern.split(fpSeparator);
 		String[] excludePatterns = null;
-		
+
 		if (excludePattern != null) {
 			excludePatterns = excludePattern.split(fpSeparator);
 		}
-		
+
 		int filesDownloaded = 0;
-		
+
 		for (ListBlobItem blobItem : container.listBlobs()) {
 			// If the item is a blob, not a virtual directory
 			if (blobItem instanceof CloudBlob) {
@@ -649,17 +735,17 @@ public class WAStorageClient {
 
 			} else if (blobItem instanceof CloudBlobDirectory) {
 				CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-					filesDownloaded += downloadBlob(blobDirectory, includePatterns, 
+					filesDownloaded += downloadBlob(blobDirectory, includePatterns,
 						excludePatterns, downloadDir, flattenDirectories, listener);
 			}
 		}
-		
+
 		return filesDownloaded;
 	}
 
 	/**
 	 * Downloads blobs from virtual directory
-	 * 
+	 *
 	 * @param blobDirectory
 	 * @param downloadDir
 	 * @param listener
@@ -694,7 +780,7 @@ public class WAStorageClient {
 				}
 			} else if (blobItem instanceof CloudBlobDirectory) {
 				CloudBlobDirectory blobDir = (CloudBlobDirectory) blobItem;
-				filesDownloaded += downloadBlob(blobDir, includePatterns, excludePatterns, 
+				filesDownloaded += downloadBlob(blobDir, includePatterns, excludePatterns,
 						downloadDir, flattenDirectories, listener);
 			}
 		}
@@ -704,7 +790,7 @@ public class WAStorageClient {
 
 	/**
 	 * Blob download from storage
-	 * 
+	 *
 	 * @param blob
 	 * @param downloadDir
 	 * @param listener
@@ -756,7 +842,7 @@ public class WAStorageClient {
 		}
 
 	}
-	
+
 	/**
 	 * Generates SAS URL for blob in Azure storage account
 	 * @param storageAccountName
@@ -771,8 +857,8 @@ public class WAStorageClient {
 		URL blobURL = new  URL(saBlobEndPoint);
 		String saBlobURI = 	new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
 							.append(blobURL.getHost()).append("/").toString();
-		CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI), 
-				  new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)), 
+		CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI),
+				  new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)),
 				  new URI(getCustomURI(storageAccountName, TABLE, saBlobURI)));
 		// Create the blob client.
 		CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
@@ -787,7 +873,7 @@ public class WAStorageClient {
 		SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
 		GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		calendar.setTime(new Date());
-		
+
 		//policy.setSharedAccessStartTime(calendar.getTime());
 		calendar.add(Calendar.HOUR, 1);
 		policy.setSharedAccessExpiryTime(calendar.getTime());
@@ -806,7 +892,7 @@ public class WAStorageClient {
 	/**
 	 * Returns Blob requests options - primarily sets concurrentRequestCount to
 	 * number of available cores
-	 * 
+	 *
 	 * @return
 	 */
 	private static BlobRequestOptions getBlobRequestOptions() {
