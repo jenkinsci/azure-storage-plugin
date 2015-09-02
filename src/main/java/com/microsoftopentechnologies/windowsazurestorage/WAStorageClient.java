@@ -481,6 +481,8 @@ public class WAStorageClient {
 							URI srcURI = workspaceURI.relativize(src.toURI());
 							CloudBlockBlob blob = null;
 							String srcPrefix = srcURI.getPath();
+                            String last = srcPrefix.substring(srcPrefix
+                                    .lastIndexOf('/') + 1);
 							if (Utils.isNullOrEmpty(expVP)
 									&& Utils.isNullOrEmpty(embeddedVP)) {
 								blob = container.getBlockBlobReference(srcPrefix);
@@ -494,7 +496,9 @@ public class WAStorageClient {
 										prefix = expVP + embeddedVP;
 									}
 								}
-								blob = container.getBlockBlobReference(prefix + srcPrefix);
+								// src prefix should not be used anymore
+                                blob = container.getBlockBlobReference(prefix
+                                        + last);
 							}
 
 							upload(listener, blob, src);
