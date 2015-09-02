@@ -100,7 +100,7 @@ public class WAStorageClient {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new WAStorageException(Messages.Client_SA_val_fail());
+			throw new WAStorageException(Messages.Client_SA_val_fail(), e);
 		}
 		return true;
 	}
