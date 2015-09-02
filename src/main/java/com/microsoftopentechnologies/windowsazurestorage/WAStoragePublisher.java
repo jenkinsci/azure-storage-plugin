@@ -349,6 +349,9 @@ public class WAStoragePublisher extends Recorder {
 			BuildListener listener, StorageAccountInfo storageAccount,
 			String expContainerName) throws IOException, InterruptedException {
 
+        WAStorageClient.configureHttpProxySettingsWithOSFallback(listener
+                .getLogger());
+
 		// No need to upload artifacts if build failed and the job is
 		// set to not upload on success.
 		if ( (build.getResult() == Result.FAILURE || build.getResult() == Result.ABORTED) && uploadArtifactsOnlyIfSuccessful) {

@@ -194,6 +194,9 @@ public class AzureStorageBuilder extends Builder {
 	private boolean validateData(AbstractBuild build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName) {
 
+        WAStorageClient.configureHttpProxySettingsWithOSFallback(listener
+                .getLogger());
+
 		// No need to download artifacts if build failed
 		if (build.getResult() == Result.FAILURE) {
 			listener.getLogger().println(

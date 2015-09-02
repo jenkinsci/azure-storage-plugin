@@ -78,6 +78,93 @@ public class WAStorageClient {
 
 	private static final String fpSeparator = ",";
 
+    /**
+     * First checks if proxy configuration is defined in java properties. If
+     * not, checks the OS environment variables and uses them.
+     */
+    public static void configureHttpProxySettingsWithOSFallback(PrintStream o) {
+        o.println(" * Checking java proxy properties. Current values are :");
+        String http_proxyHost = System.getProperty("http.proxyHost");
+        o.println(" * - http.proxyHost : " + http_proxyHost);
+        String http_proxyPort = System.getProperty("http.proxyPort");
+        o.println(" * - http.proxyPort : " + http_proxyPort);
+        String http_nonProxyHosts = System.getProperty("http.nonProxyHosts");
+        o.println(" * - http.nonProxyHosts : " + http_nonProxyHosts);
+
+        String https_proxyHost = System.getProperty("https.proxyHost");
+        o.println(" * - https.proxyHost : " + https_proxyHost);
+        String https_proxyPort = System.getProperty("https.proxyPort");
+        o.println(" * - https.proxyPort : " + https_proxyPort);
+
+        o.println(" * ");
+
+        if (!Utils.isNullOrEmpty(http_proxyHost)
+                && !Utils.isNullOrEmpty(http_proxyPort)) {
+            o.println(" * HTTP PROXY configuration is not empty - using it");
+
+        } else {
+            o.println(" * HTTP PROXY SEEMS EMPTY. Falling back to OS environment variables. Current values are  :");
+
+            String http_proxy = System.getenv("http_proxy");
+            o.println(" * - http_proxy : " + http_proxy);
+            String https_proxy = System.getenv("https_proxy");
+            o.println(" * - https_proxy : " + https_proxy);
+            String no_proxy = System.getenv("no_proxy");
+            o.println(" * - no_proxy : " + no_proxy);
+
+            o.println(" * ");
+
+            if (!Utils.isNullOrEmpty(http_proxy)) {
+                try {
+                    URL url = new URL(http_proxy);
+                    http_proxyHost = url.getHost();
+                    o.println(" * >> Setting http.proxyHost to : "
+                            + http_proxyHost);
+                    http_proxyPort = url.getPort() > 0 ? url.getPort() + ""
+                            : "80";
+                    o.println(" * >> Setting http.proxyPort to : "
+                            + http_proxyPort);
+                    // set it!
+                    System.setProperty("http.proxyHost", http_proxyHost);
+                    System.setProperty("http.proxyPort", http_proxyPort);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                o.println(" * HTTP proxy configuration from OS env is empty, not using it");
+            }
+            if (!Utils.isNullOrEmpty(https_proxy)) {
+                try {
+                    URL url = new URL(https_proxy);
+                    https_proxyHost = url.getHost();
+                    o.println(" * >> Setting https.proxyHost to : "
+                            + https_proxyHost);
+                    https_proxyPort = url.getPort() > 0 ? url.getPort() + ""
+                            : "80";
+                    o.println(" * >> Setting https.proxyPort to : "
+                            + https_proxyPort);
+                    // set it!
+                    System.setProperty("https.proxyHost", https_proxyHost);
+                    System.setProperty("https.proxyPort", https_proxyPort);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                o.println(" * HTTPS proxy configuration from OS env empty, not using it");
+            }
+            if (!Utils.isNullOrEmpty(no_proxy)) {
+                // in java hosts should be separated with '|' while on linux it
+                // is ','.
+                no_proxy = no_proxy.replace(',', '|');
+                no_proxy = no_proxy.replace(';', '|');
+                o.println(" * >> Setting http.nonProxyHosts to : " + no_proxy);
+                System.setProperty("http.nonProxyHosts", no_proxy);
+            } else {
+                o.println(" * HTTP no-proxy hosts configuration from OS env empty, not using it");
+            }
+        }
+    }
+
 	/**
 	 * This method validates Storage Account credentials by checking for a dummy
 	 * conatiner existence.
