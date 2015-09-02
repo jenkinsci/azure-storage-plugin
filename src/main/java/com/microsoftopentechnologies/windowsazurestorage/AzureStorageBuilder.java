@@ -1,12 +1,12 @@
 /*
  Copyright 2014 Microsoft Open Technologies, Inc.
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,27 +15,30 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.Result;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
-import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Builder;
-import hudson.util.ListBoxModel;
-
+import java.io.File;
 import java.util.Locale;
 
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.BuildListener;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
+import hudson.model.Result;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Builder;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
 public class AzureStorageBuilder extends Builder {
 
@@ -83,7 +86,7 @@ public class AzureStorageBuilder extends Builder {
 	public void setIncludeFilesPattern(String excludeFilesPattern) {
 		this.includeFilesPattern = excludeFilesPattern;
 	}
-
+	
 	public String getExcludeFilesPattern() {
 		return excludeFilesPattern;
 	}
@@ -99,19 +102,19 @@ public class AzureStorageBuilder extends Builder {
 	public void setDownloadDirLoc(String downloadDirLoc) {
 		this.downloadDirLoc = downloadDirLoc;
 	}
-
+	
 	public boolean isIncludeArchiveZips() {
 		return includeArchiveZips;
 	}
-
+	
 	public void setIncludeArchiveZips(final boolean includeArchiveZips) {
 		this.includeArchiveZips = includeArchiveZips;
 	}
-
+	
 	public boolean isFlattenDirectories() {
 		return flattenDirectories;
 	}
-
+	
 	public void setFlattenDirectories(final boolean flattenDirectories){
 		this.flattenDirectories = flattenDirectories;
 	}
@@ -137,15 +140,15 @@ public class AzureStorageBuilder extends Builder {
 
 			// Resolve include patterns
 			String expIncludePattern = Utils.replaceTokens(build, listener, includeFilesPattern);
-
+			
 			// Resolve exclude patterns
 			String expExcludePattern = Utils.replaceTokens(build, listener, excludeFilesPattern);
-
+			
 			// If the include is empty, make **/*
 			if (Utils.isNullOrEmpty(expIncludePattern)) {
 				expIncludePattern = "**/*";
 			}
-
+			
 			// Exclude archive.zip by default.
 			if (!includeArchiveZips) {
 				if (expExcludePattern != null) {
@@ -166,7 +169,7 @@ public class AzureStorageBuilder extends Builder {
 			}
 
 			int filesDownloaded = WAStorageClient.download(build, listener,
-					strAcc, expContainerName, expIncludePattern, expExcludePattern,
+					strAcc, expContainerName, expIncludePattern, expExcludePattern, 
 					downloadDir, flattenDirectories);
 
 			if (filesDownloaded == 0) { // Mark build unstable if no files are
@@ -190,9 +193,6 @@ public class AzureStorageBuilder extends Builder {
 
 	private boolean validateData(AbstractBuild build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName) {
-
-        WAStorageClient.configureHttpProxySettingsWithOSFallback(listener
-                .getLogger());
 
 		// No need to download artifacts if build failed
 		if (build.getResult() == Result.FAILURE) {
@@ -222,8 +222,6 @@ public class AzureStorageBuilder extends Builder {
 					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
 		} catch (Exception e) {
 			listener.getLogger().println(Messages.Client_SA_val_fail());
-            if (e.getCause() != null)
-                listener.getLogger().println(e.getCause().getMessage());
 			listener.getLogger().println(strAcc.getStorageAccName());
 			listener.getLogger().println(strAcc.getBlobEndPointURL());
 			build.setResult(Result.UNSTABLE);
@@ -257,7 +255,7 @@ public class AzureStorageBuilder extends Builder {
 		 * try { return WAStorageClient.getContainersList(
 		 * getStorageAccount(StorageAccountName), false); } catch (Exception e)
 		 * { e.printStackTrace(); return null; } }
-		 *
+		 * 
 		 * private List<String> getBlobsList(String StorageAccountName, String
 		 * containerName) { try { return WAStorageClient.getContainerBlobList(
 		 * getStorageAccount(StorageAccountName), containerName); } catch
@@ -278,30 +276,30 @@ public class AzureStorageBuilder extends Builder {
 
 		/*
 		 * public ComboBoxModel doFillContainerNameItems(
-		 *
+		 * 
 		 * @QueryParameter String storageAccName) { ComboBoxModel m = new
 		 * ComboBoxModel();
-		 *
+		 * 
 		 * List<String> containerList = getContainersList(storageAccName); if
 		 * (containerList != null) { m.addAll(containerList); } return m; }
-		 *
+		 * 
 		 * public ComboBoxModel doFillBlobNameItems(
-		 *
+		 * 
 		 * @QueryParameter String storageAccName,
-		 *
+		 * 
 		 * @QueryParameter String containerName) { ComboBoxModel m = new
 		 * ComboBoxModel();
-		 *
+		 * 
 		 * List<String> blobList = getBlobsList(storageAccName, containerName);
 		 * if (blobList != null) { m.addAll(blobList); } return m; }
-		 *
+		 * 
 		 * public AutoCompletionCandidates
 		 * doAutoCompleteBlobName(@QueryParameter String storageAccName,
-		 *
+		 * 
 		 * @QueryParameter String containerName) { List<String> blobList =
 		 * getBlobsList(storageAccName, containerName); AutoCompletionCandidates
 		 * autoCand = null;
-		 *
+		 * 
 		 * if (blobList != null ) { autoCand = new AutoCompletionCandidates();
 		 * autoCand.add(blobList.toArray(new String[blobList.size()])); } return
 		 * autoCand; }
@@ -343,7 +341,7 @@ public class AzureStorageBuilder extends Builder {
 
 		/**
 		 * Returns storage account object
-		 *
+		 * 
 		 * @return StorageAccount
 		 */
 		public StorageAccountInfo getStorageAccount(String storageAccountName) {
