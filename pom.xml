@@ -41,9 +41,9 @@
     
   <dependencies>
 	<dependency>
-		<groupId>com.microsoft.windowsazure.storage</groupId>
-		<artifactId>microsoft-windowsazure-storage-sdk</artifactId>
-		<version>0.6.0</version>
+		<groupId>com.microsoft.azure</groupId>
+		<artifactId>azure-storage</artifactId>
+		<version>4.0.0</version>
 	</dependency>
 	<dependency>
 		<groupId>commons-lang</groupId>
