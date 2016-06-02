@@ -24,10 +24,8 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.matrix.MatrixBuild;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.AutoCompletionCandidates;
-import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleBuild;
 import hudson.model.Job;
@@ -263,45 +261,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 			run.setResult(Result.UNSTABLE);
 		}
 
-		return true;
-	}
-
-	private boolean validateData(AbstractBuild build, BuildListener listener,
-			StorageAccountInfo strAcc, String expContainerName) {
-
-		// No need to download artifacts if build failed
-		if (build.getResult() == Result.FAILURE) {
-			listener.getLogger().println(
-					Messages.AzureStorageBuilder_build_failed_err());
-			return false;
-		}
-
-		if (strAcc == null) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_storage_account_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Validate container name
-		if (!Utils.validateContainerName(expContainerName)) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_container_name_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Check if storage account credentials are valid
-		try {
-			WAStorageClient.validateStorageAccount(strAcc.getStorageAccName(),
-					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
-		} catch (Exception e) {
-			listener.getLogger().println(Messages.Client_SA_val_fail());
-			listener.getLogger().println(strAcc.getStorageAccName());
-			listener.getLogger().println(strAcc.getBlobEndPointURL());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
 		return true;
 	}
 

@@ -22,10 +22,8 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
-import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -356,68 +354,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 
 	public BuildStepMonitor getRequiredMonitorService() {
 		return BuildStepMonitor.STEP;
-	}
-
-	private boolean validateData(AbstractBuild<?, ?> build,
-			BuildListener listener, StorageAccountInfo storageAccount,
-			String expContainerName) throws IOException, InterruptedException {
-
-		// No need to upload artifacts if build failed and the job is
-		// set to not upload on success.
-		if ( (build.getResult() == Result.FAILURE || build.getResult() == Result.ABORTED) && uploadArtifactsOnlyIfSuccessful) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_build_failed_err());
-			return false;
-		}
-
-		if (storageAccount == null) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_storage_account_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Validate container name
-		if (!Utils.validateContainerName(expContainerName)) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_container_name_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Validate files path
-		if (Utils.isNullOrEmpty(filesPath)) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_filepath_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-		
-		if (getArtifactUploadType() == UploadType.INVALID) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_uploadtype_invalid());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Check if storage account credentials are valid
-		try {
-			WAStorageClient.validateStorageAccount(
-					storageAccount.getStorageAccName(),
-					storageAccount.getStorageAccountKey(),
-					storageAccount.getBlobEndPointURL());
-		} catch (Exception e) {
-			listener.getLogger().println(Messages.Client_SA_val_fail());
-			listener.getLogger().println(
-					"Storage Account name --->"
-							+ storageAccount.getStorageAccName() + "<----");
-			listener.getLogger().println(
-					"Blob end point url --->"
-							+ storageAccount.getBlobEndPointURL() + "<----");
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-		return true;
 	}
 
 	@Extension

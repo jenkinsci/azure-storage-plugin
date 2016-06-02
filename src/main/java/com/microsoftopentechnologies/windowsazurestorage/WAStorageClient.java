@@ -37,9 +37,7 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.util.DirScanner.*;
 import hudson.util.DirScanner.Glob;
-import hudson.remoting.VirtualChannel;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,8 +58,6 @@ import org.apache.commons.lang.time.DurationFormatUtils;
 import org.springframework.util.AntPathMatcher;
 
 public class WAStorageClient {
-	private static final Logger LOGGER = Logger.getLogger(WAStorageClient.class.getName());
-
 	/*
 	 * A random name for container name to test validity of storage account
 	 * details
@@ -848,7 +844,6 @@ public class WAStorageClient {
                 // Download the item and save it to a file with the same
                 // name
                 CloudBlob blob = (CloudBlob) blobItem;
-                String blobPath = blob.getUri().getPath();
 			if (blobPathMatches(blob.getName(), includePatterns, excludePatterns, true)) {
 					downloadBlob(blob, downloadDir, flattenDirectories, listener);
 					filesDownloaded++;
