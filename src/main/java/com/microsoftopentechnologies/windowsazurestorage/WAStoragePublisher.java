@@ -254,7 +254,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 	 * Returns storage account object based on the name selected in job
 	 * configuration
 	 * 
-	 * @return StorageAccount
+	 * @return storageAcc StorageAccountInfo
 	 */
 	public StorageAccountInfo getStorageAccount() {
 		StorageAccountInfo storageAcc = null;
@@ -378,12 +378,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		/**
 		 * Validates storage account details.
 		 * 
-		 * @param storageAccountName
-		 * @param blobEndPointURL
-		 * @param storageAccountKey
-		 * @return
-		 * @throws IOException
-		 * @throws ServletException
+		 * @param was_storageAccName storage account name
+         * @param was_storageAccountKey storage account key
+         * @param was_blobEndPointURL blob endpoint URL
+         * @return FormValidation.ok form validation
+         * @throws IOException throws exception
+         * @throws ServletException throws exception
 		 */
 		public FormValidation doCheckAccount(
 				@QueryParameter String was_storageAccName,
@@ -418,8 +418,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		 * @param val
 		 *            name of the container
 		 * @return FormValidation result
-		 * @throws IOException
-		 * @throws ServletException
+		 * @throws IOException throws exception
+		 * @throws ServletException throws exception
 		 */
 		public FormValidation doCheckName(@QueryParameter String val)
 				throws IOException, ServletException {
