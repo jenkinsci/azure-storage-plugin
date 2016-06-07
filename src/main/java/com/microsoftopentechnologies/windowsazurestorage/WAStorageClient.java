@@ -595,7 +595,7 @@ public class WAStorageClient {
 			if (Utils.isNullOrEmpty(downloadDirLoc)) {
 				downloadDir = workspacePath;
 			} else {
-                downloadDir = new FilePath(workspacePath, downloadDirLoc);
+				downloadDir = new FilePath(workspacePath, downloadDirLoc);
 			}
 
 			if (!downloadDir.exists()) {

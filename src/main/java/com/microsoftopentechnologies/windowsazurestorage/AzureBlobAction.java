@@ -14,7 +14,6 @@ import org.kohsuke.stapler.StaplerResponse;
 
 
 public class AzureBlobAction implements RunAction {
-	private final Run build;
 	private final String storageAccountName;
 	private final String containerName;
 	private final boolean allowAnonymousAccess;
@@ -24,7 +23,6 @@ public class AzureBlobAction implements RunAction {
 	public AzureBlobAction(Run build, String storageAccountName, String containerName,
 			List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
 			boolean allowAnonymousAccess) {
-		this.build = build;
 		this.storageAccountName = storageAccountName;
 		this.containerName = containerName;
 		this.individualBlobs = individualBlobs;
@@ -55,10 +53,6 @@ public class AzureBlobAction implements RunAction {
 	}
 
 	public void onLoad() {
-	}
-	
-	public Run<?,?> getBuild() {
-	      return build;
 	}
 	
 	public String getStorageAccountName() {

@@ -203,33 +203,37 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 
 			Job<?, ?> job = Jenkins.getInstance().getItemByFullName(projectName, Job.class);
 			// Resolve download location
-            BuildFilter filter = new BuildFilter();
-			Run source = getBuildSelector().getBuild(job, envVars, filter, run);
-			
+			if (job != null) {
+				BuildFilter filter = new BuildFilter();
+				Run source = getBuildSelector().getBuild(job, envVars, filter, run);
 
-			if (!Utils.isNullOrEmpty(containerName)) {
-				// Resolve download location
-				String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
-				int filesDownloaded = WAStorageClient.download(run, launcher, listener,
-						strAcc, expContainerName, expIncludePattern, expExcludePattern,
-						downloadDir, flattenDirectories);
+				if (!Utils.isNullOrEmpty(containerName)) {
+					// Resolve download location
+					String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
+					int filesDownloaded = WAStorageClient.download(run, launcher, listener,
+							strAcc, expContainerName, expIncludePattern, expExcludePattern,
+							downloadDir, flattenDirectories);
 
-				if (filesDownloaded == 0) { // Mark build unstable if no files are
-					// downloaded
-					listener.getLogger().println(
-							Messages.AzureStorageBuilder_nofiles_downloaded());
-					run.setResult(Result.UNSTABLE);
-				} else {
-					listener.getLogger()
-							.println(
-									Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
+					if (filesDownloaded == 0) { // Mark build unstable if no files are
+						// downloaded
+						listener.getLogger().println(
+								Messages.AzureStorageBuilder_nofiles_downloaded());
+						run.setResult(Result.UNSTABLE);
+					} else {
+						listener.getLogger()
+								.println(
+										Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
+					}
+				} else if (source instanceof FreeStyleBuild) {
+					downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
+				} else if (source instanceof MatrixBuild) {
+					for (Run r : ((MatrixBuild) source).getExactRuns()) {
+						downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
+					}
 				}
-			} else if (source instanceof FreeStyleBuild) {
-				downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
-			} else if (source instanceof MatrixBuild) {
-				for (Run r : ((MatrixBuild) source).getExactRuns()) {
-					downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
-				}
+			} else {
+				listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(projectName));
+				run.setResult(Result.UNSTABLE);
 			}
 		}
 		catch (Exception e) {
