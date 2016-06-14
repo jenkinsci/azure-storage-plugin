@@ -184,7 +184,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 			// Resolve exclude patterns
 			String expExcludePattern = Util.replaceMacro(excludeFilesPattern, envVars);
 			
-			projectName = Util.replaceMacro(projectName, envVars);
+			String expProjectName = Util.replaceMacro(projectName, envVars);
 			
 			// If the include is empty, make **/*
 			if (Utils.isNullOrEmpty(expIncludePattern)) {
@@ -201,7 +201,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 				}
 			}
 
-			Job<?, ?> job = Jenkins.getInstance().getItemByFullName(projectName, Job.class);
+			Job<?, ?> job = Jenkins.getInstance().getItemByFullName(expProjectName, Job.class);
 			// Resolve download location
 			if (job != null) {
 				BuildFilter filter = new BuildFilter();
@@ -232,7 +232,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 					}
 				}
 			} else {
-				listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(projectName));
+				listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(expProjectName));
 				run.setResult(Result.UNSTABLE);
 			}
 		}
