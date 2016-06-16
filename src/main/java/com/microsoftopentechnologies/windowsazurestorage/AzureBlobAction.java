@@ -19,6 +19,7 @@ public class AzureBlobAction implements RunAction {
 	private final boolean allowAnonymousAccess;
 	private final AzureBlob zipArchiveBlob;
 	private final List<AzureBlob> individualBlobs;
+	private final Run build;
 
 	public AzureBlobAction(Run build, String storageAccountName, String containerName,
 			List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
@@ -28,6 +29,11 @@ public class AzureBlobAction implements RunAction {
 		this.individualBlobs = individualBlobs;
 		this.allowAnonymousAccess = allowAnonymousAccess;
 		this.zipArchiveBlob = zipArchiveBlob;
+		this.build = build;
+	}
+	
+	public Run<?,?> getBuild() {
+		return build;
 	}
 	
 	public String getDisplayName() {
