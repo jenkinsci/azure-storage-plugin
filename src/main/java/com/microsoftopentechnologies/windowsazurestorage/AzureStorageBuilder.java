@@ -42,6 +42,7 @@ import hudson.plugins.copyartifact.SavedBuildSelector;
 import hudson.plugins.copyartifact.SpecificBuildSelector;
 import hudson.plugins.copyartifact.StatusBuildSelector;
 import hudson.plugins.copyartifact.WorkspaceSelector;
+import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
@@ -284,8 +285,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 
 	@Extension
 	public static final class AzureStorageBuilderDesc extends
-			Descriptor<Builder> {
+			BuildStepDescriptor<Builder> {
 
+		@Override
 		public boolean isApplicable(
 				@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
 			return true;
