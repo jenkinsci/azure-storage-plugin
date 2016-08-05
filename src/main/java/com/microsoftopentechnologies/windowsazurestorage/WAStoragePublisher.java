@@ -314,9 +314,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		}
 		
 		if (!Utils.isNullOrEmpty(expVP) && manageArtifacts) {
-            expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + expContainerName + expVP;
+            expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + Utils.FWD_SLASH + expVP;
         } else if (Utils.isNullOrEmpty(expVP) && manageArtifacts) {
-            expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + expContainerName;
+            expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + Utils.FWD_SLASH;
 		}
 
 		try {
@@ -434,8 +434,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 					return FormValidation.error(Messages
 							.WAStoragePublisher_container_name_invalid());
 				}
-			}
-			return FormValidation.ok();
+			} else {
+				return FormValidation.error(Messages
+						.WAStoragePublisher_container_name_req());
+            }
 		}
 
 		public FormValidation doCheckPath(@QueryParameter String val) {

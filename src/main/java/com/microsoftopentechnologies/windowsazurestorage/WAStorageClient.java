@@ -323,10 +323,6 @@ public class WAStorageClient {
 
 			listener.getLogger().println(
 					Messages.WAStoragePublisher_uploading());
-			
-			if (manageArtifacts) {
-                expContainerName = "jobs";
-            }
 
 			CloudBlobContainer container = WAStorageClient
 					.getBlobContainerReference(strAcc.getStorageAccName(),
