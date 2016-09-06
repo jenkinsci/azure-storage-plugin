@@ -87,6 +87,9 @@ public class WAStoragePublisher extends Recorder {
 
 	/** File Path prefix */
 	private String virtualPath;
+
+	/** Content type for files */
+	private String contentType;
 	
 	public enum UploadType {
 		INDIVIDUAL,
@@ -94,7 +97,23 @@ public class WAStoragePublisher extends Recorder {
 		BOTH,
 		INVALID;
 	}
-	
+
+	/**
+	 *
+	 * @param storageAccName
+	 * @param filesPath
+	 * @param excludeFilesPath
+	 * @param containerName
+	 * @param cntPubAccess
+	 * @param virtualPath
+	 * @param cleanUpContainer
+	 * @param allowAnonymousAccess
+	 * @param uploadArtifactsOnlyIfSuccessful
+	 * @param doNotFailIfArchivingReturnsNothing
+	 * @param doNotUploadIndividualFiles
+	 * @param uploadZips
+	 * @param contentType
+	 */
 	@DataBoundConstructor
 	public WAStoragePublisher(final String storageAccName,
 			final String filesPath, final String excludeFilesPath, final String containerName,
@@ -103,7 +122,8 @@ public class WAStoragePublisher extends Recorder {
 			final boolean uploadArtifactsOnlyIfSuccessful,
 			final boolean doNotFailIfArchivingReturnsNothing,
 			final boolean doNotUploadIndividualFiles,
-			final boolean uploadZips) {
+			final boolean uploadZips,
+			final String contentType) {
 		super();
 		this.storageAccName = storageAccName;
 		this.filesPath = filesPath;
@@ -117,6 +137,7 @@ public class WAStoragePublisher extends Recorder {
 		this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
 		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
 		this.uploadZips = uploadZips;
+		this.contentType = contentType;
 	}
 
 	public String getFilesPath() {
@@ -158,7 +179,11 @@ public class WAStoragePublisher extends Recorder {
 	public boolean isDoNotUploadIndividualFiles() {
 		return doNotUploadIndividualFiles;
 	}
-	
+
+	public String getContentType() {
+		return contentType;
+	}
+
 	private UploadType computeArtifactUploadType(final boolean uploadZips, final boolean doNotUploadIndividualFiles) {
 		if (uploadZips && !doNotUploadIndividualFiles) {
 			return UploadType.BOTH;
@@ -313,7 +338,8 @@ public class WAStoragePublisher extends Recorder {
 			
 			int filesUploaded = WAStorageClient.upload(build, listener, strAcc,
 					expContainerName, cntPubAccess, cleanUpContainer, expFP,
-					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs);
+					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs,
+					contentType);
 
 			// Mark build unstable if no files are uploaded and the user
 			// doesn't want the build not to fail in that case.
@@ -429,9 +455,9 @@ public class WAStoragePublisher extends Recorder {
 		/**
 		 * Validates storage account details.
 		 * 
-		 * @param storageAccountName
-		 * @param blobEndPointURL
-		 * @param storageAccountKey
+		 * @param was_storageAccName
+		 * @param was_storageAccountKey
+		 * @param was_blobEndPointURL
 		 * @return
 		 * @throws IOException
 		 * @throws ServletException

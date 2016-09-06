@@ -24,6 +24,12 @@
 			</div>
 		</f:entry>
 		
+        <f:entry title="${%contentType}" field="contentType" help="/plugin/windows-azure-storage/help-contentType.html">
+            <div align="left">
+                <f:textbox />
+            </div>
+        </f:entry>
+
 		<f:entry field="cntPubAccess"  help="/plugin/windows-azure-storage/help-containerAccess.html">
 			<div align="left">
 				<f:checkbox title="${%containerAccess_title}" />
