@@ -13,12 +13,6 @@
 		<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
 	</f:entry>
 
-        <f:entry field="manageArtifacts" help="/plugin/windows-azure-storage/help-manageArtifacts.html">
-            <div align="left">
-                <f:checkbox title="${%manageArtifacts_title}" />
-            </div>
-        </f:entry>        
-
 	<f:advanced>
 		<f:entry title="${%excludeFilesPath_title}" field="excludeFilesPath" help="/plugin/windows-azure-storage/help-excludeFilesPath.html">
 			<f:textbox />

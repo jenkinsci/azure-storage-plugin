@@ -85,8 +85,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 
 	/** File Path prefix */
 	private String virtualPath;
-	
-	private boolean manageArtifacts;
 
 	private boolean doNotWaitForPreviousBuild;
 
@@ -106,7 +104,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			final boolean doNotFailIfArchivingReturnsNothing,
 			final boolean doNotUploadIndividualFiles,
 			final boolean uploadZips,
-			final boolean manageArtifacts,
 			final boolean doNotWaitForPreviousBuild) {
 		super();
 		this.storageAccName = storageAccName;
@@ -121,7 +118,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
 		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
 		this.uploadZips = uploadZips;
-		this.manageArtifacts = manageArtifacts;
 		this.doNotWaitForPreviousBuild = doNotWaitForPreviousBuild;
 	}
 
@@ -163,10 +159,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 	
 	public boolean isDoNotUploadIndividualFiles() {
 		return doNotUploadIndividualFiles;
-	}
-	
-	public boolean isManageArtifacts() {
-		return manageArtifacts;
 	}
 
 	public boolean isDoNotWaitForPreviousBuild() {
@@ -276,9 +268,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		}
 		return storageAcc;
 	}
-	public String buildFilePath(String jobName, String buildNumber) {
-		return jobName + Utils.FWD_SLASH + buildNumber + Utils.FWD_SLASH;
-	}
 
 	public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath ws, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
@@ -317,13 +306,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			expVP = expVP.trim() + Utils.FWD_SLASH;
 		}
 
-		if (Utils.isNullOrEmpty(expVP) && !manageArtifacts) {
-			expVP = null;
-		} else if(Utils.isNullOrEmpty(expVP) && manageArtifacts) {
-			expVP = buildFilePath(envVars.get("JOB_NAME"), envVars.get("BUILD_NUMBER"));
-		} else if (manageArtifacts) {
-			expVP = buildFilePath(envVars.get("JOB_NAME"), envVars.get("BUILD_NUMBER")) + expVP;
-		}
+		validateData(run, listener, strAcc, expContainerName);
 
 		try {
 			List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
@@ -354,6 +337,54 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		} catch (Exception e) {
 			e.printStackTrace(listener.error(Messages
 					.WAStoragePublisher_uploaded_err(strAcc.getStorageAccName())));
+			run.setResult(Result.UNSTABLE);
+		}
+	}
+
+	private void validateData(Run<?, ?> run,
+			TaskListener listener, StorageAccountInfo storageAccount,
+			String expContainerName) throws IOException, InterruptedException {
+
+		// No need to upload artifacts if build failed and the job is
+		// set to not upload on success.
+		if ( (run.getResult() == Result.FAILURE || run.getResult() == Result.ABORTED) && uploadArtifactsOnlyIfSuccessful) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_build_failed_err());
+		}
+
+		if (storageAccount == null) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_storage_account_err());
+			run.setResult(Result.UNSTABLE);
+		}
+
+		// Validate files path
+		if (Utils.isNullOrEmpty(filesPath)) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_filepath_err());
+			run.setResult(Result.UNSTABLE);
+		}
+
+		if (getArtifactUploadType() == UploadType.INVALID) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_uploadtype_invalid());
+			run.setResult(Result.UNSTABLE);
+		}
+
+		// Check if storage account credentials are valid
+		try {
+			WAStorageClient.validateStorageAccount(
+					storageAccount.getStorageAccName(),
+					storageAccount.getStorageAccountKey(),
+					storageAccount.getBlobEndPointURL());
+		} catch (Exception e) {
+			listener.getLogger().println(Messages.Client_SA_val_fail());
+			listener.getLogger().println(
+					"Storage Account name --->"
+							+ storageAccount.getStorageAccName() + "<----");
+			listener.getLogger().println(
+					"Blob end point url --->"
+							+ storageAccount.getBlobEndPointURL() + "<----");
 			run.setResult(Result.UNSTABLE);
 		}
 	}
@@ -508,13 +539,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			return Utils.getDefaultBlobURL();
 		}
 
-		/*
-		 * public List<String> getContainersList(String StorageAccountName) {
-		 * try { return WAStorageClient.getContainersList(
-		 * getStorageAccount(StorageAccountName), false); } catch (Exception e)
-		 * { e.printStackTrace(); return null; } }
-		 */
-
 		public ListBoxModel doFillStorageAccNameItems() {
 			ListBoxModel m = new ListBoxModel();
 			StorageAccountInfo[] StorageAccounts = getStorageAccounts();
@@ -526,17 +550,5 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			}
 			return m;
 		}
-
-		/*
-		 * public ComboBoxModel doFillContainerNameItems(
-		 * 
-		 * @QueryParameter String storageAccName) { ComboBoxModel m = new
-		 * ComboBoxModel();
-		 * 
-		 * List<String> containerList = getContainersList(storageAccName); if
-		 * (containerList != null) { for (String containerName :
-		 * getContainersList(storageAccName)) { m.add(containerName); } } return
-		 * m; }
-		 */
 	}
 }

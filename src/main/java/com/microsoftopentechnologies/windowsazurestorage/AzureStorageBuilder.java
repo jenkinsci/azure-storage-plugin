@@ -162,13 +162,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 		try {
 			final EnvVars envVars = run.getEnvironment(listener);
 
-			// Resolve container name
-			String expContainerName = Util.replaceMacro(containerName, envVars);
-			if (expContainerName != null) {
-				expContainerName = expContainerName.trim().toLowerCase(
-						Locale.ENGLISH);
-			}
-			
 			// Get storage account
 			strAcc = getDescriptor().getStorageAccount(storageAccName);
 
@@ -194,6 +187,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 					expExcludePattern = "archive.zip";
 				}
 			}
+
+			// Validate input data
+			validateData(run, listener, strAcc);
 
 			Job<?, ?> job = Jenkins.getInstance().getItemByFullName(expProjectName, Job.class);
 			if (job != null) {
@@ -227,8 +223,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 			final EnvVars envVars = run.getEnvironment(listener);
 			final AzureBlobAction action = source.getAction(AzureBlobAction.class);
 			List<AzureBlob> blob = action.getIndividualBlobs();
-			if(blob.isEmpty()) {
-				blob = Arrays.asList(action.getZipArchiveBlob());
+			if (action.getZipArchiveBlob() != null && includeArchiveZips) {
+				blob.addAll(Arrays.asList(action.getZipArchiveBlob()));
 			}
 
 			// Resolve download location
@@ -254,6 +250,33 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 		return true;
 	}
 
+	private void validateData(Run<?,?> run, TaskListener listener,
+			StorageAccountInfo strAcc) {
+
+		// No need to download artifacts if build failed
+		if (run.getResult() == Result.FAILURE) {
+			listener.getLogger().println(
+					Messages.AzureStorageBuilder_build_failed_err());
+		}
+
+		if (strAcc == null) {
+			listener.getLogger().println(
+					Messages.WAStoragePublisher_storage_account_err());
+			run.setResult(Result.UNSTABLE);
+		}
+
+		// Check if storage account credentials are valid
+		try {
+			WAStorageClient.validateStorageAccount(strAcc.getStorageAccName(),
+					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
+		} catch (Exception e) {
+			listener.getLogger().println(Messages.Client_SA_val_fail());
+			listener.getLogger().println(strAcc.getStorageAccName());
+			listener.getLogger().println(strAcc.getBlobEndPointURL());
+			run.setResult(Result.UNSTABLE);
+		}
+	}
+
 	public AzureStorageBuilderDesc getDescriptor() {
 		// see Descriptor javadoc for more about what a descriptor is.
 		return (AzureStorageBuilderDesc) super.getDescriptor();
@@ -272,19 +295,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 			super();
 			load();
 		}
-
-		// Can be used in future for dynamic display in UI
-		/*
-		 * private List<String> getContainersList(String StorageAccountName) {
-		 * try { return WAStorageClient.getContainersList(
-		 * getStorageAccount(StorageAccountName), false); } catch (Exception e)
-		 * { e.printStackTrace(); return null; } }
-		 * 
-		 * private List<String> getBlobsList(String StorageAccountName, String
-		 * containerName) { try { return WAStorageClient.getContainerBlobList(
-		 * getStorageAccount(StorageAccountName), containerName); } catch
-		 * (Exception e) { e.printStackTrace(); return null; } }
-		 */
 
 		public ListBoxModel doFillStorageAccNameItems() {
 			ListBoxModel m = new ListBoxModel();
@@ -307,37 +317,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 			}
 			return projectList;
 		}
-
-		/*
-		 * public ComboBoxModel doFillContainerNameItems(
-		 * 
-		 * @QueryParameter String storageAccName) { ComboBoxModel m = new
-		 * ComboBoxModel();
-		 * 
-		 * List<String> containerList = getContainersList(storageAccName); if
-		 * (containerList != null) { m.addAll(containerList); } return m; }
-		 * 
-		 * public ComboBoxModel doFillBlobNameItems(
-		 * 
-		 * @QueryParameter String storageAccName,
-		 * 
-		 * @QueryParameter String containerName) { ComboBoxModel m = new
-		 * ComboBoxModel();
-		 * 
-		 * List<String> blobList = getBlobsList(storageAccName, containerName);
-		 * if (blobList != null) { m.addAll(blobList); } return m; }
-		 * 
-		 * public AutoCompletionCandidates
-		 * doAutoCompleteBlobName(@QueryParameter String storageAccName,
-		 * 
-		 * @QueryParameter String containerName) { List<String> blobList =
-		 * getBlobsList(storageAccName, containerName); AutoCompletionCandidates
-		 * autoCand = null;
-		 * 
-		 * if (blobList != null ) { autoCand = new AutoCompletionCandidates();
-		 * autoCand.add(blobList.toArray(new String[blobList.size()])); } return
-		 * autoCand; }
-		 */
 
 		/* public FormValidation doCheckIsDirectory(@QueryParameter String val) {
 			// If null or if file does not exists don't display any validation
