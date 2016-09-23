@@ -8,7 +8,7 @@ import junit.framework.TestCase;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils; 
 
 public class WindowsAzureStorageTest extends TestCase {
-	
+
 	@Test
 	public void testContainerName() throws Exception {
 		
