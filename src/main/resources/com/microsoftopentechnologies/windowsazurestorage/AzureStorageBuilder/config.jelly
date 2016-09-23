@@ -4,10 +4,6 @@
 	<f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
 		<f:select  />
 	</f:entry>
-	
-	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
-		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
-	</f:entry>
         
         <f:entry title="${%projectName_title}" field="projectName" name="projectName" help="/plugin/windows-azure-storage/help-builderProjectName.html">
             <f:textbox />
