@@ -14,21 +14,21 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoft.windowsazure.storage.CloudStorageAccount;
-import com.microsoft.windowsazure.storage.RetryNoRetry;
-import com.microsoft.windowsazure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.windowsazure.storage.StorageException;
-import com.microsoft.windowsazure.storage.blob.BlobContainerPermissions;
-import com.microsoft.windowsazure.storage.blob.BlobContainerPublicAccessType;
-import com.microsoft.windowsazure.storage.blob.BlobRequestOptions;
-import com.microsoft.windowsazure.storage.blob.CloudBlob;
-import com.microsoft.windowsazure.storage.blob.CloudBlobClient;
-import com.microsoft.windowsazure.storage.blob.CloudBlobContainer;
-import com.microsoft.windowsazure.storage.blob.CloudBlobDirectory;
-import com.microsoft.windowsazure.storage.blob.CloudBlockBlob;
-import com.microsoft.windowsazure.storage.blob.ListBlobItem;
-import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPermissions;
-import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPolicy;
+import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.RetryNoRetry;
+import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
+import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.blob.BlobContainerPermissions;
+import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
+import com.microsoft.azure.storage.blob.BlobRequestOptions;
+import com.microsoft.azure.storage.blob.CloudBlob;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlobDirectory;
+import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
+import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.UploadType;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -148,7 +148,8 @@ public class WAStorageClient {
 		if (!allowRetry) {
 			// Setting no retry policy
 			RetryNoRetry rnr = new RetryNoRetry();
-			serviceClient.setRetryPolicyFactory(rnr);
+			// serviceClient.setRetryPolicyFactory(rnr);
+			serviceClient.getDefaultRequestOptions().setRetryPolicyFactory(rnr);
 		}
 
 		container = serviceClient.getContainerReference(containerName);
