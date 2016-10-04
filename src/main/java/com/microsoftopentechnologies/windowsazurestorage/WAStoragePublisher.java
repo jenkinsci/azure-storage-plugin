@@ -277,13 +277,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 
 		// Resolve container name
 		String expContainerName = Util.replaceMacro(containerName, envVars);
-		if (!Utils.isNullOrEmpty(expContainerName)) {
-			expContainerName = Utils.FWD_SLASH + expContainerName.trim().toLowerCase(
-					Locale.ENGLISH) + Utils.FWD_SLASH;
-		} else {
-			expContainerName = expContainerName.trim().toLowerCase(
-						Locale.ENGLISH) + Utils.FWD_SLASH;
+
+		if (Utils.isNullOrEmpty(expContainerName)) {
+			throw new IOException("Container name is null or empty");
 		}
+
+		expContainerName = expContainerName.trim().toLowerCase(Locale.ENGLISH);
 
 		// Resolve file path
 		String expFP = Util.replaceMacro(filesPath, envVars);
