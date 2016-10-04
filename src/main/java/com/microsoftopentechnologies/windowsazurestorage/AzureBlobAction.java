@@ -87,10 +87,10 @@ public class AzureBlobAction implements RunAction {
 		return desc;
 	}
 	
-	private String getSASURL(StorageAccountInfo accountInfo) throws Exception {
+	private String getSASURL(StorageAccountInfo accountInfo, String blobName) throws Exception {
 		try {
 			return WAStorageClient.generateSASURL(accountInfo.getStorageAccName(), accountInfo.getStorageAccountKey(), 
-					containerName, accountInfo.getBlobEndPointURL());
+					containerName, blobName, accountInfo.getBlobEndPointURL());
 		} catch (Exception e) {
 			//TODO: handle this in a better way
 			e.printStackTrace();
@@ -125,7 +125,7 @@ public class AzureBlobAction implements RunAction {
 		if (zipArchiveBlob != null) {
 			if (zipArchiveBlob.getBlobName().equals(blobName)) {
 				try {
-					response.sendRedirect2(zipArchiveBlob.getBlobURL()+"?"+getSASURL(accountInfo));
+					response.sendRedirect2(zipArchiveBlob.getBlobURL()+"?"+getSASURL(accountInfo, blobName));
 				} catch(Exception e) {
 					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
 				}
@@ -136,7 +136,7 @@ public class AzureBlobAction implements RunAction {
 		for (AzureBlob blob : individualBlobs) {
 			if (blob.getBlobName().equals(blobName)) {
 				try {
-					response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo));
+					response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo, blobName));
 				} catch(Exception e) {
 					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
 				}
