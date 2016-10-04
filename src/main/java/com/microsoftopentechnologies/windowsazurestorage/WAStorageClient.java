@@ -583,7 +583,7 @@ public class WAStorageClient {
 	 * @return SAS URL
 	 * @throws Exception
 	 */
-	public static String generateSASURL(String storageAccountName, String storageAccountKey, String containerName, String saBlobEndPoint) throws Exception {
+	public static String generateSASURL(String storageAccountName, String storageAccountKey, String containerName, String blobName, String saBlobEndPoint) throws Exception {
 		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
 		URL blobURL = new  URL(saBlobEndPoint);
 		String saBlobURI = 	new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
@@ -605,17 +605,12 @@ public class WAStorageClient {
 		GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		calendar.setTime(new Date());
 		
-		//policy.setSharedAccessStartTime(calendar.getTime());
 		calendar.add(Calendar.HOUR, 1);
 		policy.setSharedAccessExpiryTime(calendar.getTime());
 		policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
 
-		BlobContainerPermissions containerPermissions = new BlobContainerPermissions();
-		containerPermissions.getSharedAccessPolicies().put("jenkins"+System.currentTimeMillis(), policy);
-		container.uploadPermissions(containerPermissions);
-
-		// Create a shared access signature for the container.
-		String sas = container.generateSharedAccessSignature(policy, null);
+		CloudBlob blob = container.getBlockBlobReference(blobName);
+		String sas = blob.generateSharedAccessSignature(policy, null);
 
 		return sas;
 	}
