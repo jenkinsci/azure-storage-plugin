@@ -47,7 +47,7 @@ public class Utils {
 	 * 
 	 * @param containerName
 	 *            Name of the Windows Azure storage container
-	 * @return true if conatiner name is valid else returns false
+	 * @return true if container name is valid else returns false
 	 */
 	public static boolean validateContainerName(final String containerName) {
 		boolean isValid = false;
