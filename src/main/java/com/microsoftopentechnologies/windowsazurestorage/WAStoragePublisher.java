@@ -225,7 +225,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		this.uploadZips = uploadZips;
 	}
 	
-	public void setDoNotUploadIndividualFiles() {
+	public void setDoNotUploadIndividualFiles(final boolean doNotUploadIndividualFiles) {
 		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
 	}
 
@@ -269,6 +269,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		return storageAcc;
 	}
 
+	@Override
 	public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath ws, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
 		// Get storage account and set formatted blob endpoint url.
@@ -380,10 +381,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 
 		// Check if storage account credentials are valid
 		try {
-			WAStorageClient.validateStorageAccount(
-					storageAccount.getStorageAccName(),
-					storageAccount.getStorageAccountKey(),
-					storageAccount.getBlobEndPointURL());
+			WAStorageClient.validateStorageAccount(storageAccount);
 		} catch (Exception e) {
 			listener.getLogger().println(Messages.Client_SA_val_fail());
 			listener.getLogger().println(
@@ -450,8 +448,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			try {
 				// Get formatted blob end point URL.
 				was_blobEndPointURL = Utils.getBlobEP(was_blobEndPointURL);
-				WAStorageClient.validateStorageAccount(was_storageAccName,
-						was_storageAccountKey, was_blobEndPointURL);
+				StorageAccountInfo storageAccount = new StorageAccountInfo
+				    (was_storageAccName, was_storageAccountKey, was_blobEndPointURL);
+				WAStorageClient.validateStorageAccount(storageAccount);
 			} catch (Exception e) {
 				return FormValidation.error("Error : " + e.getMessage());
 			}
@@ -508,10 +507,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		}
 
 		@SuppressWarnings("rawtypes")
+		@Override
 		public boolean isApplicable(Class<? extends AbstractProject> jobType) {
 			return true;
 		}
 
+		@Override
 		public String getDisplayName() {
 			return Messages.WAStoragePublisher_displayName();
 		}
@@ -528,10 +529,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			}
 
 			StorageAccountInfo storageAccountInfo = null;
-			StorageAccountInfo[] storageAccounts = getStorageAccounts();
+			StorageAccountInfo[] storageAccountList = getStorageAccounts();
 
-			if (storageAccounts != null) {
-				for (StorageAccountInfo sa : storageAccounts) {
+			if (storageAccountList != null) {
+				for (StorageAccountInfo sa : storageAccountList) {
 					if (sa.getStorageAccName().equals(name)) {
 						storageAccountInfo = sa;
 						storageAccountInfo.setBlobEndPointURL(

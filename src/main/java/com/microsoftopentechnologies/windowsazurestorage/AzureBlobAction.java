@@ -39,14 +39,17 @@ public class AzureBlobAction implements RunAction {
 		return build;
 	}
 
+	@Override
 	public String getDisplayName() {
 		return "Azure Artifacts";
 	}
 
+	@Override
 	public String getIconFileName() {
 		return "/plugin/windows-azure-storage/images/24x24/Azure.png";
 	}
 
+	@Override
 	public String getUrlName() {
 		return "Azure";
 	}
@@ -56,12 +59,15 @@ public class AzureBlobAction implements RunAction {
 		return zipArchiveBlob;
 	}
 
+	@Override
 	public void onAttached(Run arg0) {
 	}
 
+	@Override
 	public void onBuildComplete() {
 	}
 
+	@Override
 	public void onLoad() {
 	}
 	
@@ -85,17 +91,6 @@ public class AzureBlobAction implements RunAction {
 	private WAStoragePublisher.WAStorageDescriptor getWAStorageDescriptor() {
 		WAStoragePublisher.WAStorageDescriptor desc = Jenkins.getInstance().getDescriptorByType(WAStoragePublisher.WAStorageDescriptor.class);
 		return desc;
-	}
-	
-	private String getSASURL(StorageAccountInfo accountInfo, String blobName) throws Exception {
-		try {
-			return WAStorageClient.generateSASURL(accountInfo.getStorageAccName(), accountInfo.getStorageAccountKey(), 
-					containerName, blobName, accountInfo.getBlobEndPointURL());
-		} catch (Exception e) {
-			//TODO: handle this in a better way
-			e.printStackTrace();
-			return "";
-		}
 	}
 	
 	public void doProcessDownloadRequest(final StaplerRequest request, final StaplerResponse response) throws IOException, ServletException {
@@ -122,21 +117,21 @@ public class AzureBlobAction implements RunAction {
 		String blobName = queryPath.substring(1);
 		
 		// Check the archive blob if it is non-null
-		if (zipArchiveBlob != null) {
-			if (zipArchiveBlob.getBlobName().equals(blobName)) {
-				try {
-					response.sendRedirect2(zipArchiveBlob.getBlobURL()+"?"+getSASURL(accountInfo, blobName));
-				} catch(Exception e) {
-					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
-				}
-				return;
+		if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
+			try {
+				response.sendRedirect2(zipArchiveBlob.getBlobURL()+"?"
+					+WAStorageClient.generateSASURL(accountInfo, containerName, blobName));
+			} catch(Exception e) {
+				response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
 			}
+			return;
 		}
 		
 		for (AzureBlob blob : individualBlobs) {
 			if (blob.getBlobName().equals(blobName)) {
 				try {
-					response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo, blobName));
+					response.sendRedirect2(blob.getBlobURL()+"?"
+						+WAStorageClient.generateSASURL(accountInfo, containerName, blobName));
 				} catch(Exception e) {
 					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
 				}
@@ -148,10 +143,7 @@ public class AzureBlobAction implements RunAction {
 	}
 	
 	public boolean isAnonymousAccess(Authentication auth) {
-		if (auth != null && auth.getName() != null && "anonymous".equals(auth.getName())) {
-			return true;
-		}
-		return false;
+		return auth != null && auth.getName() != null && "anonymous".equals(auth.getName());
 	}
 
 	public Api getApi() {

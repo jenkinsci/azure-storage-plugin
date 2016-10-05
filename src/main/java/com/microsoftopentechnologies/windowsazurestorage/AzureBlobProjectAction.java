@@ -12,14 +12,17 @@ public class AzureBlobProjectAction implements Action {
 		this.project = project;
 	}
 
+	@Override
 	public String getDisplayName() {
 		return "Azure Last Successful Artifacts";
 	}
 
+	@Override
 	public String getIconFileName() {
 		return null;
 	}
 
+	@Override
 	public String getUrlName() {
 		return null;
 	}
@@ -43,7 +46,7 @@ public class AzureBlobProjectAction implements Action {
 		}
 		
 		List<AzureBlobAction> actions = build.getActions(AzureBlobAction.class);
-		if (actions == null || actions.size() == 0) {
+		if (actions == null || actions.isEmpty()) {
 			return null;
 		}
 		return actions.get(actions.size() - 1);
