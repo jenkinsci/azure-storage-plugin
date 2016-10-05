@@ -268,8 +268,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 
 		// Check if storage account credentials are valid
 		try {
-			WAStorageClient.validateStorageAccount(strAcc.getStorageAccName(),
-					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
+			WAStorageClient.validateStorageAccount(strAcc);
 		} catch (Exception e) {
 			listener.getLogger().println(Messages.Client_SA_val_fail());
 			listener.getLogger().println(strAcc.getStorageAccName());
@@ -278,6 +277,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 		}
 	}
 
+	@Override
 	public AzureStorageBuilderDesc getDescriptor() {
 		// see Descriptor javadoc for more about what a descriptor is.
 		return (AzureStorageBuilderDesc) super.getDescriptor();

@@ -79,24 +79,19 @@ public class WAStorageClient {
 	 * This method validates Storage Account credentials by checking for a dummy
 	 * conatiner existence.
 	 * 
-	 * @param storageAccountName
-	 * @param storageAccountKey
-	 * @param blobEndPointURL
+	 * @param storageAccount
 	 * @return true if valid
 	 * @throws WAStorageException
 	 */
 	public static boolean validateStorageAccount(
-			final String storageAccountName, final String storageAccountKey,
-			final String blobEndPointURL) throws WAStorageException {
+			final StorageAccountInfo storageAccount) throws WAStorageException {
 		try {
 			// Get container reference
 			CloudBlobContainer container = getBlobContainerReference(
-					storageAccountName, storageAccountKey, blobEndPointURL,
-					TEST_CNT_NAME, false, false, null);
+					storageAccount, TEST_CNT_NAME, false, false, null);
 			container.exists();
 
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new WAStorageException(Messages.Client_SA_val_fail());
 		}
 		return true;
@@ -123,18 +118,18 @@ public class WAStorageClient {
 	 * @throws URISyntaxException
 	 * @throws StorageException
 	 */
-	private static CloudBlobContainer getBlobContainerReference(String accName,
-			String key, String blobURL, String containerName,
+	private static CloudBlobContainer getBlobContainerReference(StorageAccountInfo storageAccount, String containerName,
 			boolean createCnt, boolean allowRetry, Boolean cntPubAccess)
 			throws URISyntaxException, StorageException {
 
 		CloudStorageAccount cloudStorageAccount;
 		CloudBlobClient serviceClient;
 		CloudBlobContainer container;
-		CloudBlockBlob blob;
 		StorageCredentialsAccountAndKey credentials;
+		String accName = storageAccount.getStorageAccName();
+		String blobURL = storageAccount.getBlobEndPointURL();
 
-		credentials = new StorageCredentialsAccountAndKey(accName, key);
+		credentials = new StorageCredentialsAccountAndKey(accName, storageAccount.getStorageAccountKey());
 
 		if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Utils.DEF_BLOB_URL)) {
 			cloudStorageAccount = new CloudStorageAccount(credentials);
@@ -191,7 +186,7 @@ public class WAStorageClient {
 		}
 	}
 	
-	private static void upload(TaskListener listener, Launcher launcher, CloudBlockBlob blob, FilePath src) 
+	private static void upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
 			throws StorageException, IOException, InterruptedException {
 		long startTime = System.currentTimeMillis();
 		InputStream inputStream = src.read();
@@ -250,9 +245,7 @@ public class WAStorageClient {
 					Messages.WAStoragePublisher_uploading());
 
 			CloudBlobContainer container = WAStorageClient
-					.getBlobContainerReference(strAcc.getStorageAccName(),
-							strAcc.getStorageAccountKey(),
-							strAcc.getBlobEndPointURL(), expContainerName,
+					.getBlobContainerReference(strAcc, expContainerName,
 							true, true, cntPubAccess);
 
 			// Delete previous contents if cleanup is needed
@@ -313,7 +306,7 @@ public class WAStorageClient {
 						String md5hex = DigestUtils.md5Hex(inputStream);
 						long sizeInBytes = src.length();
 
-						CloudBlockBlob blob = null;
+						CloudBlockBlob blob;
 						String srcPrefix = srcURI.getPath();
 						if (Utils.isNullOrEmpty(expVP)
 								&& Utils.isNullOrEmpty(embeddedVP)) {
@@ -331,7 +324,7 @@ public class WAStorageClient {
 							blob = container.getBlockBlobReference(prefix + srcPrefix);
 						}
 
-						upload(listener, launcher, blob, src);
+						upload(listener, blob, src);
 						individualBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
 					}
 				}
@@ -360,7 +353,7 @@ public class WAStorageClient {
 
 				CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
 
-				upload(listener, launcher, blob, zipPath);
+				upload(listener, blob, zipPath);
 				// Make sure to note the new blob as an archive blob,
 				// so that it can be specially marked on the azure storage page.
 				archiveBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
@@ -369,7 +362,6 @@ public class WAStorageClient {
 			}
 			
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new WAStorageException(e.getMessage(), e.getCause());
 		}
 		return filesUploaded;
@@ -438,7 +430,7 @@ public class WAStorageClient {
 			throws WAStorageException {
 
 		int filesDownloaded = 0;
-		FilePath downloadDir = null;
+		FilePath downloadDir;
 
 		for (AzureBlob blob : blobs) {
 			try {
@@ -461,9 +453,7 @@ public class WAStorageClient {
 				String filePath = blobURL.getFile();
 
 				CloudBlobContainer container = WAStorageClient
-						.getBlobContainerReference(strAcc.getStorageAccName(),
-								strAcc.getStorageAccountKey(),
-								strAcc.getBlobEndPointURL(), filePath.split("/")[1],
+						.getBlobContainerReference(strAcc, filePath.split("/")[1],
 								false, true, null);
 
 				String[] includePatterns = includePattern.split(fpSeparator);
@@ -478,7 +468,6 @@ public class WAStorageClient {
 				}
 
 			} catch (Exception e) {
-				e.printStackTrace();
 				throw new WAStorageException(e.getMessage(), e.getCause());
 			}
 		}
@@ -559,7 +548,6 @@ public class WAStorageClient {
 							+ downloadDir + " in "
 							+ getTime(endTime - startTime));
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new WAStorageException(e.getMessage(), e.getCause());
 		} finally {
 			try {
@@ -576,16 +564,16 @@ public class WAStorageClient {
 	
 	/**
 	 * Generates SAS URL for blob in Azure storage account
-	 * @param storageAccountName
-	 * @param storageAccountKey
-	 * @param containerName
-	 * @param strBlobURL
+	 * @param storageAccount
+	 * @param blobName
+	 * @param containerName container name
 	 * @return SAS URL
 	 * @throws Exception
 	 */
-	public static String generateSASURL(String storageAccountName, String storageAccountKey, String containerName, String blobName, String saBlobEndPoint) throws Exception {
-		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
-		URL blobURL = new  URL(saBlobEndPoint);
+	public static String generateSASURL(StorageAccountInfo storageAccount, String containerName, String blobName) throws Exception {
+		String storageAccountName = storageAccount.getStorageAccName();
+		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
+		URL blobURL = new  URL(storageAccount.getBlobEndPointURL());
 		String saBlobURI = 	new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
 							.append(blobURL.getHost()).append("/").toString();
 		CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI), 
@@ -623,16 +611,7 @@ public class WAStorageClient {
 	 */
 	private static BlobRequestOptions getBlobRequestOptions() {
 		BlobRequestOptions options = new BlobRequestOptions();
-
-		int concurrentRequestCount = 1;
-
-		try {
-			concurrentRequestCount = Runtime.getRuntime().availableProcessors();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		options.setConcurrentRequestCount(concurrentRequestCount);
+		options.setConcurrentRequestCount(Runtime.getRuntime().availableProcessors());
 
 		return options;
 	}
