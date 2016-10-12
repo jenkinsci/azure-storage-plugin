@@ -2,6 +2,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.WAStorageDescriptor;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import hudson.model.Api;
 import hudson.model.Run;
 import hudson.model.RunAction;
 import java.io.IOException;
@@ -11,8 +12,10 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
-
+@ExportedBean
 public class AzureBlobAction implements RunAction {
 	private final Run build;
 	private final String storageAccountName;
@@ -24,14 +27,18 @@ public class AzureBlobAction implements RunAction {
 	public AzureBlobAction(Run build, String storageAccountName, String containerName,
 			List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
 			boolean allowAnonymousAccess) {
-		this.build = build;
 		this.storageAccountName = storageAccountName;
 		this.containerName = containerName;
 		this.individualBlobs = individualBlobs;
 		this.allowAnonymousAccess = allowAnonymousAccess;
 		this.zipArchiveBlob = zipArchiveBlob;
+		this.build = build;
 	}
-	
+
+	public Run<?,?> getBuild() {
+		return build;
+	}
+
 	public String getDisplayName() {
 		return "Azure Artifacts";
 	}
@@ -44,6 +51,7 @@ public class AzureBlobAction implements RunAction {
 		return "Azure";
 	}
 	
+	@Exported
 	public AzureBlob getZipArchiveBlob() {
 		return zipArchiveBlob;
 	}
@@ -57,10 +65,6 @@ public class AzureBlobAction implements RunAction {
 	public void onLoad() {
 	}
 	
-	public Run<?,?> getBuild() {
-	      return build;
-	}
-	
 	public String getStorageAccountName() {
 		return storageAccountName;
 	}
@@ -69,6 +73,7 @@ public class AzureBlobAction implements RunAction {
 		return containerName;
 	}
 	
+	@Exported
 	public List<AzureBlob> getIndividualBlobs() {
 		return individualBlobs;
 	}
@@ -147,5 +152,9 @@ public class AzureBlobAction implements RunAction {
 			return true;
 		}
 		return false;
+	}
+
+	public Api getApi() {
+		return new Api(this);
 	}
 }

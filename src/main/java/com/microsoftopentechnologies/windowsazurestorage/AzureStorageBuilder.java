@@ -45,6 +45,7 @@ import hudson.plugins.copyartifact.WorkspaceSelector;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import jenkins.model.Jenkins;
@@ -200,32 +201,15 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 				BuildFilter filter = new BuildFilter();
 				Run source = getBuildSelector().getBuild(job, envVars, filter, run);
 
-
-				if (!Utils.isNullOrEmpty(containerName)) {
-					// Resolve download location
-					String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
-					int filesDownloaded = WAStorageClient.download(run, launcher, listener,
-							strAcc, expContainerName, expIncludePattern, expExcludePattern,
-							downloadDir, flattenDirectories);
-
-					if (filesDownloaded == 0) { // Mark build unstable if no files are
-						// downloaded
-						listener.getLogger().println(
-								Messages.AzureStorageBuilder_nofiles_downloaded());
-						run.setResult(Result.UNSTABLE);
-					} else {
-						listener.getLogger()
-								.println(
-										Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
-					}
-				} else if (source instanceof FreeStyleBuild) {
-					downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
-				} else if (source instanceof MatrixBuild) {
+				if (source instanceof MatrixBuild) {
 					for (Run r : ((MatrixBuild) source).getExactRuns()) {
 						downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
 					}
+				} else {
+					downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
 				}
-			} else {
+			} 
+			else {
 				listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(expProjectName));
 				run.setResult(Result.UNSTABLE);
 			}
@@ -243,6 +227,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 			final EnvVars envVars = run.getEnvironment(listener);
 			final AzureBlobAction action = source.getAction(AzureBlobAction.class);
 			List<AzureBlob> blob = action.getIndividualBlobs();
+			if(blob.isEmpty()) {
+				blob = Arrays.asList(action.getZipArchiveBlob());
+			}
 
 			// Resolve download location
 			String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
@@ -253,13 +240,11 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 
 			if (filesDownloaded == 0) { // Mark build unstable if no files are
 				// downloaded
-				listener.getLogger().println(
-						Messages.AzureStorageBuilder_nofiles_downloaded());
+				listener.getLogger().println(Messages.AzureStorageBuilder_nofiles_downloaded());
 				run.setResult(Result.UNSTABLE);
 			} else {
 				listener.getLogger()
-						.println(
-								Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
+						.println(Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
 			}
 
 		} catch (Exception e) {

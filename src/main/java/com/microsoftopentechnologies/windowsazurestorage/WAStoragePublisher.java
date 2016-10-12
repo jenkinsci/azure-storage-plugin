@@ -87,7 +87,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 	private String virtualPath;
 	
 	private boolean manageArtifacts;
-	
+
+	private boolean doNotWaitForPreviousBuild;
+
 	public enum UploadType {
 		INDIVIDUAL,
 		ZIP,
@@ -104,7 +106,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			final boolean doNotFailIfArchivingReturnsNothing,
 			final boolean doNotUploadIndividualFiles,
 			final boolean uploadZips,
-			final boolean manageArtifacts) {
+			final boolean manageArtifacts,
+			final boolean doNotWaitForPreviousBuild) {
 		super();
 		this.storageAccName = storageAccName;
 		this.filesPath = filesPath;
@@ -119,6 +122,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
 		this.uploadZips = uploadZips;
 		this.manageArtifacts = manageArtifacts;
+		this.doNotWaitForPreviousBuild = doNotWaitForPreviousBuild;
 	}
 
 	public String getFilesPath() {
@@ -162,9 +166,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 	}
 	
 	public boolean isManageArtifacts() {
-        return manageArtifacts;
-    }
-	
+		return manageArtifacts;
+	}
+
+	public boolean isDoNotWaitForPreviousBuild() {
+		return doNotWaitForPreviousBuild;
+	}
+
 	private UploadType computeArtifactUploadType(final boolean uploadZips, final boolean doNotUploadIndividualFiles) {
 		if (uploadZips && !doNotUploadIndividualFiles) {
 			return UploadType.BOTH;
@@ -261,14 +269,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		for (StorageAccountInfo sa : getDescriptor().getStorageAccounts()) {
 			if (sa.getStorageAccName().equals(storageAccName)) {
 				storageAcc = sa;
-				if (storageAcc != null) {
-					storageAcc.setBlobEndPointURL(Utils.getBlobEP(
-							storageAcc.getBlobEndPointURL()));
-				}
+				storageAcc.setBlobEndPointURL(Utils.getBlobEP(
+					storageAcc.getBlobEndPointURL()));
 				break;
 			}
 		}
 		return storageAcc;
+	}
+	public String buildFilePath(String jobName, String buildNumber) {
+		return jobName + Utils.FWD_SLASH + buildNumber + Utils.FWD_SLASH;
 	}
 
 	public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath ws, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
@@ -278,16 +287,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		final EnvVars envVars = run.getEnvironment(listener);
 
 		// Resolve container name
-		 String expContainerName = Util.replaceMacro(containerName, envVars);
-        	 if (!Utils.isNullOrEmpty(expContainerName)) {
-            		expContainerName = Utils.FWD_SLASH + expContainerName.trim().toLowerCase(
-                    		Locale.ENGLISH) + Utils.FWD_SLASH;
-        	} else if (Utils.isNullOrEmpty(expContainerName) && !manageArtifacts) {
-            		expContainerName = "default" + expContainerName.trim().toLowerCase(
-                    		Locale.ENGLISH) + Utils.FWD_SLASH;
-        	} else {
-			expContainerName = expContainerName.trim().toLowerCase(
+		String expContainerName = Util.replaceMacro(containerName, envVars);
+		if (!Utils.isNullOrEmpty(expContainerName)) {
+			expContainerName = Utils.FWD_SLASH + expContainerName.trim().toLowerCase(
 					Locale.ENGLISH) + Utils.FWD_SLASH;
+		} else {
+			expContainerName = expContainerName.trim().toLowerCase(
+						Locale.ENGLISH) + Utils.FWD_SLASH;
 		}
 
 		// Resolve file path
@@ -306,17 +312,17 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 
 		// Resolve virtual path
 		String expVP = Util.replaceMacro(virtualPath, envVars);
-        	if (Utils.isNullOrEmpty(expVP) && !manageArtifacts) {
-			expVP = null;
-		}
-		if (!Utils.isNullOrEmpty(expVP) && !expVP.endsWith(Utils.FWD_SLASH)) {
+
+		if (!(Utils.isNullOrEmpty(expVP) || expVP.endsWith(Utils.FWD_SLASH))) {
 			expVP = expVP.trim() + Utils.FWD_SLASH;
 		}
-		
-		if (!Utils.isNullOrEmpty(expVP) && manageArtifacts) {
-            		expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + expContainerName + expVP;
-        	} else if (Utils.isNullOrEmpty(expVP) && manageArtifacts) {
-            		expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + expContainerName;
+
+		if (Utils.isNullOrEmpty(expVP) && !manageArtifacts) {
+			expVP = null;
+		} else if(Utils.isNullOrEmpty(expVP) && manageArtifacts) {
+			expVP = buildFilePath(envVars.get("JOB_NAME"), envVars.get("BUILD_NUMBER"));
+		} else if (manageArtifacts) {
+			expVP = buildFilePath(envVars.get("JOB_NAME"), envVars.get("BUILD_NUMBER")) + expVP;
 		}
 
 		try {
@@ -325,7 +331,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 			
 			int filesUploaded = WAStorageClient.upload(run, launcher, listener, strAcc,
 					expContainerName, cntPubAccess, cleanUpContainer, expFP,
-					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs, manageArtifacts);
+					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs);
 
 			// Mark build unstable if no files are uploaded and the user
 			// doesn't want the build not to fail in that case.
@@ -352,8 +358,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 		}
 	}
 
+	@Override
 	public BuildStepMonitor getRequiredMonitorService() {
-		return BuildStepMonitor.STEP;
+		return doNotWaitForPreviousBuild ? BuildStepMonitor.NONE : BuildStepMonitor.STEP;
 	}
 
 	@Extension
@@ -434,8 +441,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 					return FormValidation.error(Messages
 							.WAStoragePublisher_container_name_invalid());
 				}
-			}
-			return FormValidation.ok();
+			} else {
+				return FormValidation.error(Messages
+						.WAStoragePublisher_container_name_req());
+            }
 		}
 
 		public FormValidation doCheckPath(@QueryParameter String val) {
@@ -486,15 +495,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 				for (StorageAccountInfo sa : storageAccounts) {
 					if (sa.getStorageAccName().equals(name)) {
 						storageAccountInfo = sa;
-
-						if (storageAccountInfo != null) {
-							storageAccountInfo.setBlobEndPointURL(
-								Utils.getBlobEP(storageAccountInfo.getBlobEndPointURL())
-							);
-						}
+						storageAccountInfo.setBlobEndPointURL(
+							Utils.getBlobEP(storageAccountInfo.getBlobEndPointURL()));
 						break;
 					}
-
 				}
 			}
 			return storageAccountInfo;
