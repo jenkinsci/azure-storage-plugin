@@ -39,12 +39,17 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.DirScanner.Glob;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import org.apache.commons.codec.digest.DigestUtils;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
@@ -284,6 +289,7 @@ public class WAStorageClient {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Uploads files to Windows Azure Storage.
 	 * 
 	 * @param listener
@@ -303,12 +309,31 @@ public class WAStorageClient {
 	 * @return filesUploaded number of files that are uploaded.
 	 * @throws WAStorageException
 	 * @throws Exception
+=======
+     * Uploads files to Windows Azure Storage.
+     * 
+     * @param run environment of build
+     * @param listener logging
+     * @param launcher env vars for remote builds
+     * @param strAcc storage account information.
+     * @param expContainerName container name.
+     * @param cntPubAccess denotes if container is publicly accessible.
+     * @param expFP File Path in ant glob syntax relative to CI tool workspace.
+     * @param expVP Virtual Path of blob container.
+     * @param excludeFP File Path in ant glob syntax to exclude from upload
+     * @param uploadType upload file type
+     * @param individualBlobs blobs from build
+     * @param archiveBlobs blobs from build in archive files
+     * @param cleanUpContainer if container is cleaned
+     * @return filesUploaded number of files that are uploaded.
+     * @throws WAStorageException throws exception
+>>>>>>> 22d2ec7... remove unneeded manageArtifacts flag and fix excessive if statements
 	 */
 	public static int upload(Run<?, ?> run, Launcher launcher, TaskListener listener,
 			StorageAccountInfo strAcc, String expContainerName,
 			boolean cntPubAccess, boolean cleanUpContainer, String expFP,
 			String expVP, String excludeFP, UploadType uploadType,
-			List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs, boolean manageArtifacts) throws WAStorageException {
+			List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs) throws WAStorageException {
 
 		int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
@@ -324,10 +349,6 @@ public class WAStorageClient {
 
 			listener.getLogger().println(
 					Messages.WAStoragePublisher_uploading());
-			
-			if (manageArtifacts) {
-                		expContainerName = "jobs";
-            		}
 
 			CloudBlobContainer container = WAStorageClient
 					.getBlobContainerReference(strAcc.getStorageAccName(),
@@ -354,26 +375,21 @@ public class WAStorageClient {
 
 				String embeddedVP = null;
 
-				if (fileName != null) {
+				if (fileName != null && fileName.contains("::")) {
 					int embVPSepIndex = fileName.indexOf("::");
 
 					// Separate fileName and Virtual directory name
-					if (embVPSepIndex != -1) {
-						if (fileName.length() > embVPSepIndex + 1) {
-							embeddedVP = fileName.substring(embVPSepIndex + 2,
-									fileName.length());
+					if (fileName.length() > embVPSepIndex + 1) {
+						embeddedVP = fileName.substring(embVPSepIndex + 2,
+							fileName.length());
 
-							if (Utils.isNullOrEmpty(embeddedVP)) {
-								embeddedVP = null;
-							}
-
-							if (embeddedVP != null
-									&& !embeddedVP.endsWith(Utils.FWD_SLASH)) {
-								embeddedVP = embeddedVP + Utils.FWD_SLASH;
-							}
+						if (Utils.isNullOrEmpty(embeddedVP)) {
+							embeddedVP = null;
+						} else if(!embeddedVP.endsWith(Utils.FWD_SLASH)) {
+							embeddedVP = embeddedVP + Utils.FWD_SLASH;
 						}
-						fileName = fileName.substring(0, embVPSepIndex);
 					}
+					fileName = fileName.substring(0, embVPSepIndex);
 				}
 				
 				archiveIncludes += "," + fileName;
@@ -384,33 +400,35 @@ public class WAStorageClient {
 				
 				URI workspaceURI = workspacePath.toURI();
 
-				if (paths.length != 0) {
-					if (uploadType != UploadType.ZIP) {
-						for (FilePath src : paths) {
-							// Remove the workspace bit of this path
-							URI srcURI = workspaceURI.relativize(src.toURI());
-							CloudBlockBlob blob = null;
-							String srcPrefix = srcURI.getPath();
-							if (Utils.isNullOrEmpty(expVP)
-									&& Utils.isNullOrEmpty(embeddedVP)) {
-								blob = container.getBlockBlobReference(srcPrefix);
-							} else {
-								String prefix = expVP;
+				if (paths.length != 0 && uploadType != UploadType.ZIP) {
+					for (FilePath src : paths) {
+						// Remove the workspace bit of this path
+						URI srcURI = workspaceURI.relativize(src.toURI());
 
-								if (!Utils.isNullOrEmpty(embeddedVP)) {
-									if (Utils.isNullOrEmpty(expVP)) {
-										prefix = embeddedVP;
-									} else {
-										prefix = expVP + embeddedVP;
-									}
+						InputStream inputStream = src.read();
+						String md5hex = DigestUtils.md5Hex(inputStream);
+						long sizeInBytes = src.length();
+
+						CloudBlockBlob blob = null;
+						String srcPrefix = srcURI.getPath();
+						if (Utils.isNullOrEmpty(expVP)
+								&& Utils.isNullOrEmpty(embeddedVP)) {
+							blob = container.getBlockBlobReference(srcPrefix);
+						} else {
+							String prefix = expVP;
+
+							if (!Utils.isNullOrEmpty(embeddedVP)) {
+								if (Utils.isNullOrEmpty(expVP)) {
+									prefix = embeddedVP;
+								} else {
+									prefix = expVP + embeddedVP;
 								}
-								blob = container.getBlockBlobReference(prefix + srcPrefix);
 							}
-
-							upload(listener, launcher, blob, src);
-
-							individualBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://")));
+							blob = container.getBlockBlobReference(prefix + srcPrefix);
 						}
+
+						upload(listener, launcher, blob, src);
+						individualBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
 					}
 				}
 			}
@@ -427,6 +445,10 @@ public class WAStorageClient {
 				// When uploading the zip, do not add in the tempDir to the block
 				// blob reference.
 				String blobURI = zipPath.getName();
+ 
+				InputStream inputStream = zipPath.read();
+				String md5hex = DigestUtils.md5Hex(inputStream);
+				long sizeInBytes = zipPath.length();
 
 				if (!Utils.isNullOrEmpty(expVP)) {
 					blobURI = expVP + blobURI;
@@ -437,7 +459,7 @@ public class WAStorageClient {
 				upload(listener, launcher, blob, zipPath);
 				// Make sure to note the new blob as an archive blob,
 				// so that it can be specially marked on the azure storage page.
-				archiveBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://")));
+				archiveBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
 
 				tempPath.deleteRecursive();
 			}
@@ -463,8 +485,7 @@ public class WAStorageClient {
 			if (blobItem instanceof CloudBlob) {
 				((CloudBlob) blobItem).delete();
 			}
-
-			if (blobItem instanceof CloudBlobDirectory) {
+			else if (blobItem instanceof CloudBlobDirectory) {
 				deleteContents((CloudBlobDirectory) blobItem);
 			}
 		}
@@ -485,7 +506,7 @@ public class WAStorageClient {
 				((CloudBlob) blobItem).delete();
 			}
 
-			if (blobItem instanceof CloudBlobDirectory) {
+			else if (blobItem instanceof CloudBlobDirectory) {
 				deleteContents((CloudBlobDirectory) blobItem);
 			}
 		}
@@ -623,13 +644,11 @@ public class WAStorageClient {
 	
 	private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns, 
 			boolean isFullPath) {
-		if (!isFullPath) {
+		if (!isFullPath && isPotentialMatch(path, includePatterns)) {
 			// If we don't have a full path, we can't check for exclusions
 			// yet.  Consider include: **/*, exclude **/foo.txt.  Both would match
 			// any dir.
-			if (isPotentialMatch(path, includePatterns)) {
-				return true;
-			}
+			return true;
 		} else if (isExactMatch(path, includePatterns)
                 && (excludePatterns == null || !isExactMatch(path, excludePatterns))) {
 			return true;
@@ -646,8 +665,8 @@ public class WAStorageClient {
 	 */
 	private static boolean isExactMatch(String path, String[] patterns) {
 		AntPathMatcher matcher = new AntPathMatcher();
-		for (int i=0; i < patterns.length; i++) {
-			if (matcher.match(patterns[i], path)) {
+		for (String pattern : patterns) {
+			if (matcher.match(pattern, path)) {
 				return true;
 			}
 		}
@@ -662,8 +681,8 @@ public class WAStorageClient {
 	 */
 	private static boolean isPotentialMatch(String path, String[] patterns) {
 		AntPathMatcher matcher = new AntPathMatcher();
-		for (int i=0; i < patterns.length; i++) {
-			if (matcher.matchStart(patterns[i], path)) {
+		for (String pattern : patterns) {
+			if (matcher.matchStart(pattern, path)) {
 				return true;
 			}
 		}
