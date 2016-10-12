@@ -69,5 +69,11 @@
 				<f:checkbox title="${%doNotUploadIndividualFiles_title}"/>
 			</div>
 		</f:entry>
+
+		<f:entry field="doNotWaitForPreviousBuild" help="/plugin/windows-azure-storage/help-doNotWaitForPreviousBuild.html">
+			<div align="left">
+				<f:checkbox title="${%doNotWaitForPreviousBuild_title}"/>
+			</div>
+		</f:entry>
 	</f:advanced>
 </j:jelly>
