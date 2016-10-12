@@ -15,42 +15,40 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import hudson.Launcher;
-import hudson.Extension;
-import hudson.util.CopyOnWriteList;
-import hudson.util.EnumConverter;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import hudson.model.AbstractBuild;
-import hudson.model.Action;
-import hudson.model.BuildListener;
-import hudson.model.Result;
-import hudson.model.AbstractProject;
-import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Publisher;
-import hudson.tasks.Recorder;
-import net.sf.json.JSONObject;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.Stapler;
-
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-
-import javax.servlet.ServletException;
-
-import java.io.OutputStream;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.Util;
+import hudson.model.AbstractProject;
+import hudson.model.Action;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
+import hudson.tasks.Recorder;
+import hudson.util.CopyOnWriteList;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import javax.annotation.Nonnull;
+import javax.servlet.ServletException;
+import jenkins.tasks.SimpleBuildStep;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
-public class WAStoragePublisher extends Recorder {
+public class WAStoragePublisher extends Recorder implements SimpleBuildStep{
 
 	/** Windows Azure Storage Account Name. */
 	private String storageAccName;
@@ -88,6 +86,8 @@ public class WAStoragePublisher extends Recorder {
 	/** File Path prefix */
 	private String virtualPath;
 	
+	private boolean manageArtifacts;
+	
 	public enum UploadType {
 		INDIVIDUAL,
 		ZIP,
@@ -103,7 +103,8 @@ public class WAStoragePublisher extends Recorder {
 			final boolean uploadArtifactsOnlyIfSuccessful,
 			final boolean doNotFailIfArchivingReturnsNothing,
 			final boolean doNotUploadIndividualFiles,
-			final boolean uploadZips) {
+			final boolean uploadZips,
+			final boolean manageArtifacts) {
 		super();
 		this.storageAccName = storageAccName;
 		this.filesPath = filesPath;
@@ -117,6 +118,7 @@ public class WAStoragePublisher extends Recorder {
 		this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
 		this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
 		this.uploadZips = uploadZips;
+		this.manageArtifacts = manageArtifacts;
 	}
 
 	public String getFilesPath() {
@@ -158,6 +160,10 @@ public class WAStoragePublisher extends Recorder {
 	public boolean isDoNotUploadIndividualFiles() {
 		return doNotUploadIndividualFiles;
 	}
+	
+	public boolean isManageArtifacts() {
+        return manageArtifacts;
+    }
 	
 	private UploadType computeArtifactUploadType(final boolean uploadZips, final boolean doNotUploadIndividualFiles) {
 		if (uploadZips && !doNotUploadIndividualFiles) {
@@ -265,55 +271,61 @@ public class WAStoragePublisher extends Recorder {
 		return storageAcc;
 	}
 
-	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
-			BuildListener listener) throws InterruptedException, IOException {
+	public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath ws, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
 		// Get storage account and set formatted blob endpoint url.
 		StorageAccountInfo strAcc = getStorageAccount();
+		final EnvVars envVars = run.getEnvironment(listener);
 
 		// Resolve container name
-		String expContainerName = Utils.replaceTokens(build, listener,
-				containerName);
-		if (expContainerName != null) {
+		 String expContainerName = Util.replaceMacro(containerName, envVars);
+        	 if (!Utils.isNullOrEmpty(expContainerName)) {
+            		expContainerName = Utils.FWD_SLASH + expContainerName.trim().toLowerCase(
+                    		Locale.ENGLISH) + Utils.FWD_SLASH;
+        	} else if (Utils.isNullOrEmpty(expContainerName) && !manageArtifacts) {
+            		expContainerName = "default" + expContainerName.trim().toLowerCase(
+                    		Locale.ENGLISH) + Utils.FWD_SLASH;
+        	} else {
 			expContainerName = expContainerName.trim().toLowerCase(
-					Locale.ENGLISH);
+					Locale.ENGLISH) + Utils.FWD_SLASH;
 		}
 
 		// Resolve file path
-		String expFP = Utils.replaceTokens(build, listener, filesPath);
+		String expFP = Util.replaceMacro(filesPath, envVars);
 
 		if (expFP != null) {
 			expFP = expFP.trim();
 		}
 		
 		// Resolve exclude paths
-		String excludeFP = Utils.replaceTokens(build, listener, excludeFilesPath);
+		String excludeFP = Util.replaceMacro(excludeFilesPath, envVars);
 
 		if (excludeFP != null) {
 			excludeFP = excludeFP.trim();
 		}
 
 		// Resolve virtual path
-		String expVP = Utils.replaceTokens(build, listener, virtualPath);
-		if (Utils.isNullOrEmpty(expVP)) {
+		String expVP = Util.replaceMacro(virtualPath, envVars);
+        	if (Utils.isNullOrEmpty(expVP) && !manageArtifacts) {
 			expVP = null;
 		}
 		if (!Utils.isNullOrEmpty(expVP) && !expVP.endsWith(Utils.FWD_SLASH)) {
 			expVP = expVP.trim() + Utils.FWD_SLASH;
 		}
-
-		// Validate input data
-		if (!validateData(build, listener, strAcc, expContainerName)) {
-			return true; // returning true so that build can continue.
+		
+		if (!Utils.isNullOrEmpty(expVP) && manageArtifacts) {
+            		expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + expContainerName + expVP;
+        	} else if (Utils.isNullOrEmpty(expVP) && manageArtifacts) {
+            		expVP = envVars.get("JOB_NAME") + Utils.FWD_SLASH + envVars.get("BUILD_NUMBER") + expContainerName;
 		}
 
 		try {
 			List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
 			List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
 			
-			int filesUploaded = WAStorageClient.upload(build, listener, strAcc,
+			int filesUploaded = WAStorageClient.upload(run, launcher, listener, strAcc,
 					expContainerName, cntPubAccess, cleanUpContainer, expFP,
-					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs);
+					expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs, manageArtifacts);
 
 			// Mark build unstable if no files are uploaded and the user
 			// doesn't want the build not to fail in that case.
@@ -321,7 +333,7 @@ public class WAStoragePublisher extends Recorder {
 				listener.getLogger().println(
 						Messages.WAStoragePublisher_nofiles_uploaded());
 				if (!doNotFailIfArchivingReturnsNothing) {
-					build.setResult(Result.UNSTABLE);
+					run.setResult(Result.UNSTABLE);
 				}
 			} else {
 				AzureBlob zipArchiveBlob = null;
@@ -330,81 +342,18 @@ public class WAStoragePublisher extends Recorder {
 				}
 				listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
 				
-				build.getActions().add(new AzureBlobAction(build, strAcc.getStorageAccName(), 
+				run.getActions().add(new AzureBlobAction(run, strAcc.getStorageAccName(), 
 						expContainerName, individualBlobs, zipArchiveBlob, allowAnonymousAccess));
 			}
 		} catch (Exception e) {
 			e.printStackTrace(listener.error(Messages
 					.WAStoragePublisher_uploaded_err(strAcc.getStorageAccName())));
-			build.setResult(Result.UNSTABLE);
+			run.setResult(Result.UNSTABLE);
 		}
-		return true;
 	}
 
 	public BuildStepMonitor getRequiredMonitorService() {
 		return BuildStepMonitor.STEP;
-	}
-
-	private boolean validateData(AbstractBuild<?, ?> build,
-			BuildListener listener, StorageAccountInfo storageAccount,
-			String expContainerName) throws IOException, InterruptedException {
-
-		// No need to upload artifacts if build failed and the job is
-		// set to not upload on success.
-		if ( (build.getResult() == Result.FAILURE || build.getResult() == Result.ABORTED) && uploadArtifactsOnlyIfSuccessful) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_build_failed_err());
-			return false;
-		}
-
-		if (storageAccount == null) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_storage_account_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Validate container name
-		if (!Utils.validateContainerName(expContainerName)) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_container_name_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Validate files path
-		if (Utils.isNullOrEmpty(filesPath)) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_filepath_err());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-		
-		if (getArtifactUploadType() == UploadType.INVALID) {
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_uploadtype_invalid());
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-
-		// Check if storage account credentials are valid
-		try {
-			WAStorageClient.validateStorageAccount(
-					storageAccount.getStorageAccName(),
-					storageAccount.getStorageAccountKey(),
-					storageAccount.getBlobEndPointURL());
-		} catch (Exception e) {
-			listener.getLogger().println(Messages.Client_SA_val_fail());
-			listener.getLogger().println(
-					"Storage Account name --->"
-							+ storageAccount.getStorageAccName() + "<----");
-			listener.getLogger().println(
-					"Blob end point url --->"
-							+ storageAccount.getBlobEndPointURL() + "<----");
-			build.setResult(Result.UNSTABLE);
-			return false;
-		}
-		return true;
 	}
 
 	@Extension
@@ -485,10 +434,8 @@ public class WAStoragePublisher extends Recorder {
 					return FormValidation.error(Messages
 							.WAStoragePublisher_container_name_invalid());
 				}
-			} else {
-				return FormValidation.error(Messages
-						.WAStoragePublisher_container_name_req());
 			}
+			return FormValidation.ok();
 		}
 
 		public FormValidation doCheckPath(@QueryParameter String val) {
