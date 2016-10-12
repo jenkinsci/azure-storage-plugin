@@ -27,28 +27,19 @@ import hudson.matrix.MatrixBuild;
 import hudson.model.AbstractProject;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Descriptor;
-import hudson.model.FreeStyleBuild;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.plugins.copyartifact.BuildFilter;
 import hudson.plugins.copyartifact.BuildSelector;
-import hudson.plugins.copyartifact.DownstreamBuildSelector;
-import hudson.plugins.copyartifact.LastCompletedBuildSelector;
-import hudson.plugins.copyartifact.ParameterizedBuildSelector;
-import hudson.plugins.copyartifact.PermalinkBuildSelector;
-import hudson.plugins.copyartifact.SavedBuildSelector;
-import hudson.plugins.copyartifact.SpecificBuildSelector;
 import hudson.plugins.copyartifact.StatusBuildSelector;
-import hudson.plugins.copyartifact.WorkspaceSelector;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
@@ -58,15 +49,15 @@ import org.kohsuke.stapler.StaplerRequest;
 
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 
-	private String storageAccName;
-	private String containerName;
-	private String includeFilesPattern;
-	private String excludeFilesPattern;
-	private String downloadDirLoc;
-	private boolean flattenDirectories;
-	private boolean includeArchiveZips;
-	private BuildSelector buildSelector;
-	private String projectName;
+	private final String storageAccName;
+	private final String containerName;
+	private final String includeFilesPattern;
+	private final String excludeFilesPattern;
+	private final String downloadDirLoc;
+	private final boolean flattenDirectories;
+	private final boolean includeArchiveZips;
+	private final BuildSelector buildSelector;
+	private final String projectName;
 
 	@DataBoundConstructor
 	public AzureStorageBuilder(String storageAccName, String containerName, BuildSelector buildSelector,
@@ -94,70 +85,46 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep{
 		return storageAccName;
 	}
 
-	public void setStorageAccName(String storageAccName) {
-		this.storageAccName = storageAccName;
-	}
-
 	public String getContainerName() {
 		return containerName;
-	}
-
-	public void setContainerName(String containerName) {
-		this.containerName = containerName;
 	}
 	
 	public String getProjectName() {
 		return projectName;
 	}
 
-	public void setProjectName(String projectName) {
-		this.projectName = projectName;
-	}
-
 	public String getIncludeFilesPattern() {
 		return includeFilesPattern;
-	}
-
-	public void setIncludeFilesPattern(String excludeFilesPattern) {
-		this.includeFilesPattern = excludeFilesPattern;
 	}
 	
 	public String getExcludeFilesPattern() {
 		return excludeFilesPattern;
 	}
 
-	public void setExcludeFilesPattern(String excludeFilesPattern) {
-		this.excludeFilesPattern = excludeFilesPattern;
-	}
-
 	public String getDownloadDirLoc() {
 		return downloadDirLoc;
-	}
-
-	public void setDownloadDirLoc(String downloadDirLoc) {
-		this.downloadDirLoc = downloadDirLoc;
 	}
 	
 	public boolean isIncludeArchiveZips() {
 		return includeArchiveZips;
 	}
 	
-	public void setIncludeArchiveZips(final boolean includeArchiveZips) {
-		this.includeArchiveZips = includeArchiveZips;
-	}
-	
 	public boolean isFlattenDirectories() {
 		return flattenDirectories;
-	}
-	
-	public void setFlattenDirectories(final boolean flattenDirectories){
-		this.flattenDirectories = flattenDirectories;
 	}
 
 	public BuildStepMonitor getRequiredMonitorService() {
 		return BuildStepMonitor.NONE;
 	}
 
+	/**
+	 *
+	 * @param run environment of build
+	 * @param filePath filepath
+	 * @param launcher env var for remote builds
+	 * @param listener logging
+	 */
+	@Override
 	public void perform(Run<?,?> run, FilePath filePath, Launcher launcher, TaskListener listener) {
 		StorageAccountInfo strAcc = null;
 		try {
