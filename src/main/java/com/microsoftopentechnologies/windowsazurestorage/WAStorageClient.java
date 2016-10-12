@@ -39,17 +39,12 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.DirScanner.Glob;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.MessageDigest;
-import org.apache.commons.codec.digest.DigestUtils;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
@@ -60,6 +55,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.springframework.util.AntPathMatcher;
 
@@ -239,7 +235,6 @@ public class WAStorageClient {
 						Messages.AzureStorageBuilder_ws_na());
 				return filesUploaded;
 			}
-			StringTokenizer strTokens = new StringTokenizer(expFP, fpSeparator);
 
 			listener.getLogger().println(
 					Messages.WAStoragePublisher_uploading());
@@ -262,6 +257,7 @@ public class WAStorageClient {
 			}
 			String archiveIncludes = "";
 			
+			StringTokenizer strTokens = new StringTokenizer(expFP, fpSeparator);
 			while (strTokens.hasMoreElements()) {
 				String fileName = strTokens.nextToken();
 
@@ -430,22 +426,14 @@ public class WAStorageClient {
 			throws WAStorageException {
 
 		int filesDownloaded = 0;
-		FilePath downloadDir;
 
 		for (AzureBlob blob : blobs) {
 			try {
 				Map<String, String> envVars = run.getEnvironment(listener);
 				FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
 
-				if (Utils.isNullOrEmpty(downloadDirLoc)) {
-					downloadDir = workspacePath;
-				} else {
-					downloadDir = new FilePath(workspacePath, downloadDirLoc);
-				}
+				FilePath downloadDir = getDownloadDir(workspacePath, downloadDirLoc);
 
-				if (!downloadDir.exists()) {
-					downloadDir.mkdirs();
-				}
 				listener.getLogger().println(
 						Messages.AzureStorageBuilder_downloading());
 
@@ -456,14 +444,7 @@ public class WAStorageClient {
 						.getBlobContainerReference(strAcc, filePath.split("/")[1],
 								false, true, null);
 
-				String[] includePatterns = includePattern.split(fpSeparator);
-				String[] excludePatterns = null;
-
-				if (excludePattern != null) {
-					excludePatterns = excludePattern.split(fpSeparator);
-				}
-
-				if (blobPathMatches(blob.getBlobName(), includePatterns, excludePatterns)) {
+				if (shouldDownload(includePattern, excludePattern, blob.getBlobName())) {
 					filesDownloaded += downloadBlobs(container, blob, downloadDir, flattenDirectories, listener);
 				}
 
@@ -472,6 +453,33 @@ public class WAStorageClient {
 			}
 		}
 		return filesDownloaded;
+	}
+
+	private static boolean shouldDownload(String includePattern, String excludePattern, String blobName) {
+		String[] includePatterns = includePattern.split(fpSeparator);
+		String[] excludePatterns = null;
+
+		if (excludePattern != null) {
+		    excludePatterns = excludePattern.split(fpSeparator);
+		}
+
+		return blobPathMatches(blobName, includePatterns, excludePatterns);
+	}
+
+	private static FilePath getDownloadDir(FilePath workspacePath, String downloadDirLoc) {
+		FilePath downloadDir;
+		if (Utils.isNullOrEmpty(downloadDirLoc)) {
+		    downloadDir = workspacePath;
+		} else {
+		    downloadDir = new FilePath(workspacePath, downloadDirLoc);
+		}
+		try {
+		    if (!downloadDir.exists()) {
+			downloadDir.mkdirs();
+		    }
+		} catch (Exception e) { }
+
+		return downloadDir;
 	}
 
 	private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns) {
@@ -557,9 +565,7 @@ public class WAStorageClient {
 			} catch (IOException e) {
 
 			}
-
 		}
-
 	}
 	
 	/**
@@ -589,6 +595,13 @@ public class WAStorageClient {
 					+ " does not exist in storage account " + storageAccountName);
 		}
 
+		CloudBlob blob = container.getBlockBlobReference(blobName);
+		String sas = blob.generateSharedAccessSignature(generatePolicy(), null);
+
+		return sas;
+	}
+
+	public static SharedAccessBlobPolicy generatePolicy() {
 		SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
 		GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		calendar.setTime(new Date());
@@ -597,10 +610,7 @@ public class WAStorageClient {
 		policy.setSharedAccessExpiryTime(calendar.getTime());
 		policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
 
-		CloudBlob blob = container.getBlockBlobReference(blobName);
-		String sas = blob.generateSharedAccessSignature(policy, null);
-
-		return sas;
+		return policy;
 	}
 
 	/**

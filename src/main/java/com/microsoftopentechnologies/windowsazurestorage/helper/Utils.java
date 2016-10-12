@@ -50,26 +50,18 @@ public class Utils {
 	 * @return true if container name is valid else returns false
 	 */
 	public static boolean validateContainerName(final String containerName) {
-		boolean isValid = false;
-
 		if (containerName != null) {
 			String lcContainerName = containerName.trim().toLowerCase(
 					Locale.ENGLISH);
 			if (lcContainerName.matches(VAL_CNT_NAME)) {
-				isValid = true;
+				return true;
 			}
 		}
-		return isValid;
+		return false;
 	}
 
 	public static boolean validateBlobName(final String blobName) {
-		boolean isValid = false;
-
-		if (blobName != null
-				&& (blobName.length() > 0 && blobName.length() <= 1024)) {
-			isValid = true;
-		}
-		return isValid;
+		return blobName != null && (blobName.length() > 0 && blobName.length() <= 1024);
 	}
 
 	/**
@@ -79,48 +71,7 @@ public class Utils {
 	 * @return true if null or empty string
 	 */
 	public static boolean isNullOrEmpty(final String name) {
-		boolean isValid = false;
-		if (name == null || name.matches("\\s*")) {
-			isValid = true;
-		}
-		return isValid;
-	}
-
-	/**
-	 * Utility method to replace system environment variables in text
-	 * 
-	 * @param build
-	 * @param listener
-	 * @param text
-	 * @return
-	 * @throws InterruptedException
-	 * @throws IOException
-	 */
-
-	public static String replaceTokens(AbstractBuild<?, ?> build,
-			BuildListener listener, String text) throws IOException,
-			InterruptedException {
-		String newText = null;
-		if (!isNullOrEmpty(text)) {
-			Map<String, String> envVars = build.getEnvironment(listener);
-			newText = Util.replaceMacro(text, envVars);
-		}
-		return newText;
-	}
-
-	/**
-	 * This method find tokens in the form of $TOKEN or ${TOKEN} and removes
-	 * them
-	 * 
-	 * @param text
-	 *            may contains tokens that are to be replaced
-	 * @return String replaced text
-	 */
-	public static String removeTokens(String text) {
-		if (isNullOrEmpty(text)) {
-			return null;
-		}
-		return text.replaceAll(TOKEN_FORMAT, "");
+		return name == null || name.matches("\\s*");
 	}
 
 	/**
@@ -157,7 +108,7 @@ public class Utils {
 		}
 
 		// prepend http protocol if missing
-		if (blobURL.indexOf(PRT_SEP) == -1) { 
+		if (!blobURL.contains(PRT_SEP)) { 
 			blobURL = new StringBuilder()
 				.append(HTTP_PRT)
 				.append(blobURL)
