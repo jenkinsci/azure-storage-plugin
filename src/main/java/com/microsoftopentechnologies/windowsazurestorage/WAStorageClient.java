@@ -60,574 +60,568 @@ import org.apache.commons.lang.time.DurationFormatUtils;
 import org.springframework.util.AntPathMatcher;
 
 public class WAStorageClient {
-	/*
+
+    /*
 	 * A random name for container name to test validity of storage account
 	 * details
-	 */
-	private static final String TEST_CNT_NAME = "testcheckfromjenkins";
-	private static final String BLOB = "blob";
-	private static final String QUEUE = "queue";
-	private static final String TABLE = "table";
+     */
+    private static final String TEST_CNT_NAME = "testcheckfromjenkins";
+    private static final String BLOB = "blob";
+    private static final String QUEUE = "queue";
+    private static final String TABLE = "table";
 
-	private static final String fpSeparator = ",";
+    private static final String fpSeparator = ",";
 
-	/**
-	 * This method validates Storage Account credentials by checking for a dummy
-	 * conatiner existence.
-	 * 
-	 * @param storageAccount
-	 * @return true if valid
-	 * @throws WAStorageException
-	 */
-	public static boolean validateStorageAccount(
-			final StorageAccountInfo storageAccount) throws WAStorageException {
-		try {
-			// Get container reference
-			CloudBlobContainer container = getBlobContainerReference(
-					storageAccount, TEST_CNT_NAME, false, false, null);
-			container.exists();
+    /**
+     * This method validates Storage Account credentials by checking for a dummy
+     * conatiner existence.
+     *
+     * @param storageAccount
+     * @return true if valid
+     * @throws WAStorageException
+     */
+    public static boolean validateStorageAccount(
+	    final StorageAccountInfo storageAccount) throws WAStorageException {
+	try {
+	    // Get container reference
+	    CloudBlobContainer container = getBlobContainerReference(
+		    storageAccount, TEST_CNT_NAME, false, false, null);
+	    container.exists();
 
-		} catch (Exception e) {
-			throw new WAStorageException(Messages.Client_SA_val_fail());
-		}
-		return true;
+	} catch (Exception e) {
+	    throw new WAStorageException(Messages.Client_SA_val_fail());
+	}
+	return true;
+    }
+
+    /**
+     * Returns reference of Windows Azure cloud blob container.
+     *
+     * @param accName storage account name
+     * @param key storage account primary access key
+     * @param blobURL blob service endpoint url
+     * @param containerName name of the container
+     * @param createCnt Indicates if container needs to be created
+     * @param allowRetry sets retry policy
+     * @param cntPubAccess Permissions for container
+     * @return reference of CloudBlobContainer
+     * @throws URISyntaxException
+     * @throws StorageException
+     */
+    private static CloudBlobContainer getBlobContainerReference(StorageAccountInfo storageAccount, String containerName,
+	    boolean createCnt, boolean allowRetry, Boolean cntPubAccess)
+	    throws URISyntaxException, StorageException {
+
+	CloudStorageAccount cloudStorageAccount;
+	CloudBlobClient serviceClient;
+	CloudBlobContainer container;
+	StorageCredentialsAccountAndKey credentials;
+	String accName = storageAccount.getStorageAccName();
+	String blobURL = storageAccount.getBlobEndPointURL();
+
+	credentials = new StorageCredentialsAccountAndKey(accName, storageAccount.getStorageAccountKey());
+
+	if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Utils.DEF_BLOB_URL)) {
+	    cloudStorageAccount = new CloudStorageAccount(credentials);
+	} else {
+	    cloudStorageAccount = new CloudStorageAccount(credentials, new URI(
+		    blobURL), new URI(getCustomURI(accName, QUEUE, blobURL)),
+		    new URI(getCustomURI(accName, TABLE, blobURL)));
 	}
 
-	/**
-	 * Returns reference of Windows Azure cloud blob container.
-	 * 
-	 * @param accName
-	 *            storage account name
-	 * @param key
-	 *            storage account primary access key
-	 * @param blobURL
-	 *            blob service endpoint url
-	 * @param containerName
-	 *            name of the container
-	 * @param createCnt
-	 *            Indicates if container needs to be created
-	 * @param allowRetry
-	 *            sets retry policy
-	 * @param cntPubAccess
-	 *            Permissions for container
-	 * @return reference of CloudBlobContainer
-	 * @throws URISyntaxException
-	 * @throws StorageException
-	 */
-	private static CloudBlobContainer getBlobContainerReference(StorageAccountInfo storageAccount, String containerName,
-			boolean createCnt, boolean allowRetry, Boolean cntPubAccess)
-			throws URISyntaxException, StorageException {
-
-		CloudStorageAccount cloudStorageAccount;
-		CloudBlobClient serviceClient;
-		CloudBlobContainer container;
-		StorageCredentialsAccountAndKey credentials;
-		String accName = storageAccount.getStorageAccName();
-		String blobURL = storageAccount.getBlobEndPointURL();
-
-		credentials = new StorageCredentialsAccountAndKey(accName, storageAccount.getStorageAccountKey());
-
-		if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Utils.DEF_BLOB_URL)) {
-			cloudStorageAccount = new CloudStorageAccount(credentials);
-		} else {
-			cloudStorageAccount = new CloudStorageAccount(credentials, new URI(
-					blobURL), new URI(getCustomURI(accName, QUEUE, blobURL)),
-					new URI(getCustomURI(accName, TABLE, blobURL)));
-		}
-
-		serviceClient = cloudStorageAccount.createCloudBlobClient();
-		if (!allowRetry) {
-			// Setting no retry policy
-			RetryNoRetry rnr = new RetryNoRetry();
-			// serviceClient.setRetryPolicyFactory(rnr);
-			serviceClient.getDefaultRequestOptions().setRetryPolicyFactory(rnr);
-		}
-
-		container = serviceClient.getContainerReference(containerName);
-
-		boolean cntExists = container.exists();
-
-		if (createCnt && !cntExists) {
-			container.createIfNotExists();
-		}
-
-		// Apply permissions only if container is created newly
-		if (!cntExists && cntPubAccess != null) {
-			// Set access permissions on container.
-			BlobContainerPermissions cntPerm;
-			cntPerm = new BlobContainerPermissions();
-			if (cntPubAccess) {
-				cntPerm.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
-			} else {
-				cntPerm.setPublicAccess(BlobContainerPublicAccessType.OFF);
-			}
-			container.uploadPermissions(cntPerm);
-		}
-
-		return container;
+	serviceClient = cloudStorageAccount.createCloudBlobClient();
+	if (!allowRetry) {
+	    // Setting no retry policy
+	    RetryNoRetry rnr = new RetryNoRetry();
+	    // serviceClient.setRetryPolicyFactory(rnr);
+	    serviceClient.getDefaultRequestOptions().setRetryPolicyFactory(rnr);
 	}
 
-	// Returns custom URL for queue and table.
-	private static String getCustomURI(String storageAccountName, String type,
-			String blobURL) {
+	container = serviceClient.getContainerReference(containerName);
 
-		if (QUEUE.equalsIgnoreCase(type)) {
-			return blobURL.replace(storageAccountName + "." + BLOB,
-					storageAccountName + "." + type);
-		} else if (TABLE.equalsIgnoreCase(type)) {
-			return blobURL.replace(storageAccountName + "." + BLOB,
-					storageAccountName + "." + type);
-		} else {
-			return null;
-		}
-	}
-	
-	private static void upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
-			throws StorageException, IOException, InterruptedException {
-		long startTime = System.currentTimeMillis();
-		InputStream inputStream = src.read();
-		try {
-			blob.upload(inputStream, src.length(), null,
-					getBlobRequestOptions(), null);
-		} finally {
-			try {
-				inputStream.close();
-			} catch (IOException e) {
+	boolean cntExists = container.exists();
 
-			}
-		}
-		long endTime = System.currentTimeMillis();
-		listener.getLogger().println("Uploaded blob with uri "+ blob.getUri() + " in " + getTime(endTime - startTime));
+	if (createCnt && !cntExists) {
+	    container.createIfNotExists();
 	}
 
-	/**
-	 * Uploads files to Windows Azure Storage.
-	 * 
-	 * @param run environment of build
-	 * @param listener logging
-	 * @param launcher env vars for remote builds
-	 * @param strAcc storage account information.
-	 * @param expContainerName container name.
-	 * @param cntPubAccess denotes if container is publicly accessible.
-	 * @param expFP File Path in ant glob syntax relative to CI tool workspace.
-	 * @param expVP Virtual Path of blob container.
-	 * @param excludeFP File Path in ant glob syntax to exclude from upload
-	 * @param uploadType upload file type
-	 * @param individualBlobs blobs from build
-	 * @param archiveBlobs blobs from build in archive files
-	 * @param cleanUpContainer if container is cleaned
-	 * @return filesUploaded number of files that are uploaded.
-	 * @throws WAStorageException throws exception
-	 */
-	public static int upload(Run<?, ?> run, Launcher launcher, TaskListener listener,
-			StorageAccountInfo strAcc, String expContainerName,
-			boolean cntPubAccess, boolean cleanUpContainer, String expFP,
-			String expVP, String excludeFP, UploadType uploadType,
-			List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs) throws WAStorageException {
+	// Apply permissions only if container is created newly
+	if (!cntExists && cntPubAccess != null) {
+	    // Set access permissions on container.
+	    BlobContainerPermissions cntPerm;
+	    cntPerm = new BlobContainerPermissions();
+	    if (cntPubAccess) {
+		cntPerm.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
+	    } else {
+		cntPerm.setPublicAccess(BlobContainerPublicAccessType.OFF);
+	    }
+	    container.uploadPermissions(cntPerm);
+	}
 
-		int filesUploaded = 0; // Counter to track no. of files that are uploaded
+	return container;
+    }
 
-		try {
-			Map<String, String> envVars = run.getEnvironment(listener);
-			FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
-			if (workspacePath == null) {
-				listener.getLogger().println(
-						Messages.AzureStorageBuilder_ws_na());
-				return filesUploaded;
-			}
+    // Returns custom URL for queue and table.
+    private static String getCustomURI(String storageAccountName, String type,
+	    String blobURL) {
 
-			listener.getLogger().println(
-					Messages.WAStoragePublisher_uploading());
+	if (QUEUE.equalsIgnoreCase(type)) {
+	    return blobURL.replace(storageAccountName + "." + BLOB,
+		    storageAccountName + "." + type);
+	} else if (TABLE.equalsIgnoreCase(type)) {
+	    return blobURL.replace(storageAccountName + "." + BLOB,
+		    storageAccountName + "." + type);
+	} else {
+	    return null;
+	}
+    }
 
-			CloudBlobContainer container = WAStorageClient
-					.getBlobContainerReference(strAcc, expContainerName,
-							true, true, cntPubAccess);
+    private static void upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
+	    throws StorageException, IOException, InterruptedException {
+	long startTime = System.currentTimeMillis();
+	InputStream inputStream = src.read();
+	try {
+	    blob.upload(inputStream, src.length(), null,
+		    getBlobRequestOptions(), null);
+	} finally {
+	    try {
+		inputStream.close();
+	    } catch (IOException e) {
 
-			// Delete previous contents if cleanup is needed
-			if (cleanUpContainer) {
-				deleteContents(container);
-			}
+	    }
+	}
+	long endTime = System.currentTimeMillis();
+	listener.getLogger().println("Uploaded blob with uri " + blob.getUri() + " in " + getTime(endTime - startTime));
+    }
 
-			final String zipFolderName = "artifactsArchive";
-			final String zipName = "archive.zip";
-			// Make sure we exclude the tempPath from archiving.
-			String excludesWithoutZip = "**/" + zipFolderName + "*/" + zipName;
-			if (excludeFP != null) {
-				excludesWithoutZip = excludeFP + "," + excludesWithoutZip;
-			}
-			String archiveIncludes = "";
-			
-			StringTokenizer strTokens = new StringTokenizer(expFP, fpSeparator);
-			while (strTokens.hasMoreElements()) {
-				String fileName = strTokens.nextToken();
+    /**
+     * Uploads files to Windows Azure Storage.
+     *
+     * @param run environment of build
+     * @param listener logging
+     * @param launcher env vars for remote builds
+     * @param strAcc storage account information.
+     * @param expContainerName container name.
+     * @param cntPubAccess denotes if container is publicly accessible.
+     * @param expFP File Path in ant glob syntax relative to CI tool workspace.
+     * @param expVP Virtual Path of blob container.
+     * @param excludeFP File Path in ant glob syntax to exclude from upload
+     * @param uploadType upload file type
+     * @param individualBlobs blobs from build
+     * @param archiveBlobs blobs from build in archive files
+     * @param cleanUpContainer if container is cleaned
+     * @return filesUploaded number of files that are uploaded.
+     * @throws WAStorageException throws exception
+     */
+    public static int upload(Run<?, ?> run, Launcher launcher, TaskListener listener,
+	    StorageAccountInfo strAcc, String expContainerName,
+	    boolean cntPubAccess, boolean cleanUpContainer, String expFP,
+	    String expVP, String excludeFP, UploadType uploadType,
+	    List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs) throws WAStorageException {
 
-				String embeddedVP = null;
+	int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
-				if (fileName != null && fileName.contains("::")) {
-					int embVPSepIndex = fileName.indexOf("::");
-
-					// Separate fileName and Virtual directory name
-					if (fileName.length() > embVPSepIndex + 1) {
-						embeddedVP = fileName.substring(embVPSepIndex + 2,
-							fileName.length());
-
-						if (Utils.isNullOrEmpty(embeddedVP)) {
-							embeddedVP = null;
-						} else if(!embeddedVP.endsWith(Utils.FWD_SLASH)) {
-							embeddedVP = embeddedVP + Utils.FWD_SLASH;
-						}
-					}
-					fileName = fileName.substring(0, embVPSepIndex);
-				}
-				
-				archiveIncludes += "," + fileName;
-				
-				// List all the paths without the zip archives.
-				FilePath[] paths = workspacePath.list(fileName, excludesWithoutZip);
-				filesUploaded += paths.length;
-				
-				URI workspaceURI = workspacePath.toURI();
-
-				if (uploadType == UploadType.INVALID) {
-					// no files are uploaded
-					return 0;
-				}
-
-				if (paths.length != 0 && uploadType != UploadType.ZIP) {
-					for (FilePath src : paths) {
-						// Remove the workspace bit of this path
-						URI srcURI = workspaceURI.relativize(src.toURI());
-
-						InputStream inputStream = src.read();
-						String md5hex = DigestUtils.md5Hex(inputStream);
-						long sizeInBytes = src.length();
-
-						CloudBlockBlob blob;
-						String srcPrefix = srcURI.getPath();
-						if (Utils.isNullOrEmpty(expVP)
-								&& Utils.isNullOrEmpty(embeddedVP)) {
-							blob = container.getBlockBlobReference(srcPrefix);
-						} else {
-							String prefix = expVP;
-
-							if (!Utils.isNullOrEmpty(embeddedVP)) {
-								if (Utils.isNullOrEmpty(expVP)) {
-									prefix = embeddedVP;
-								} else {
-									prefix = expVP + embeddedVP;
-								}
-							}
-							blob = container.getBlockBlobReference(prefix + srcPrefix);
-						}
-
-						upload(listener, blob, src);
-						individualBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
-					}
-				}
-			}
-			
-			if (filesUploaded != 0 && (uploadType != UploadType.INDIVIDUAL)) {
-				// Create a temp dir for the upload
-				FilePath tempPath = workspacePath.createTempDir(zipFolderName, null);
-
-				Glob globScanner = new Glob(archiveIncludes, excludesWithoutZip);
-
-				FilePath zipPath = tempPath.child(zipName);
-				workspacePath.zip(zipPath.write(), globScanner);
-
-				// When uploading the zip, do not add in the tempDir to the block
-				// blob reference.
-				String blobURI = zipPath.getName();
- 
-				InputStream inputStream = zipPath.read();
-				String md5hex = DigestUtils.md5Hex(inputStream);
-				long sizeInBytes = zipPath.length();
-
-				if (!Utils.isNullOrEmpty(expVP)) {
-					blobURI = expVP + blobURI;
-				}
-
-				CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
-
-				upload(listener, blob, zipPath);
-				// Make sure to note the new blob as an archive blob,
-				// so that it can be specially marked on the azure storage page.
-				archiveBlobs.add(new AzureBlob(blob.getName(),blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
-
-				tempPath.deleteRecursive();
-			}
-			
-		} catch (Exception e) {
-			throw new WAStorageException(e.getMessage(), e.getCause());
-		}
+	try {
+	    Map<String, String> envVars = run.getEnvironment(listener);
+	    FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
+	    if (workspacePath == null) {
+		listener.getLogger().println(
+			Messages.AzureStorageBuilder_ws_na());
 		return filesUploaded;
-	}
+	    }
 
-	/**
-	 * Deletes contents of container
-	 * 
-	 * @param container
-	 * @throws StorageException
-	 * @throws URISyntaxException
-	 */
-	private static void deleteContents(CloudBlobContainer container)
-			throws StorageException, URISyntaxException {
+	    listener.getLogger().println(
+		    Messages.WAStoragePublisher_uploading());
 
-		for (ListBlobItem blobItem : container.listBlobs()) {
-			if (blobItem instanceof CloudBlob) {
-				((CloudBlob) blobItem).delete();
+	    CloudBlobContainer container = WAStorageClient
+		    .getBlobContainerReference(strAcc, expContainerName,
+			    true, true, cntPubAccess);
+
+	    // Delete previous contents if cleanup is needed
+	    if (cleanUpContainer) {
+		deleteContents(container);
+	    }
+
+	    final String zipFolderName = "artifactsArchive";
+	    final String zipName = "archive.zip";
+	    // Make sure we exclude the tempPath from archiving.
+	    String excludesWithoutZip = "**/" + zipFolderName + "*/" + zipName;
+	    if (excludeFP != null) {
+		excludesWithoutZip = excludeFP + "," + excludesWithoutZip;
+	    }
+	    String archiveIncludes = "";
+
+	    StringTokenizer strTokens = new StringTokenizer(expFP, fpSeparator);
+	    while (strTokens.hasMoreElements()) {
+		String fileName = strTokens.nextToken();
+
+		String embeddedVP = null;
+
+		if (fileName != null && fileName.contains("::")) {
+		    int embVPSepIndex = fileName.indexOf("::");
+
+		    // Separate fileName and Virtual directory name
+		    if (fileName.length() > embVPSepIndex + 1) {
+			embeddedVP = fileName.substring(embVPSepIndex + 2,
+				fileName.length());
+
+			if (Utils.isNullOrEmpty(embeddedVP)) {
+			    embeddedVP = null;
+			} else if (!embeddedVP.endsWith(Utils.FWD_SLASH)) {
+			    embeddedVP = embeddedVP + Utils.FWD_SLASH;
 			}
-			else if (blobItem instanceof CloudBlobDirectory) {
-				deleteContents((CloudBlobDirectory) blobItem);
-			}
-		}
-	}
-
-	/**
-	 * Deletes contents of virtual directory
-	 * 
-	 * @param cloudBlobDirectory
-	 * @throws StorageException
-	 * @throws URISyntaxException
-	 */
-	private static void deleteContents(CloudBlobDirectory cloudBlobDirectory)
-			throws StorageException, URISyntaxException {
-
-		for (ListBlobItem blobItem : cloudBlobDirectory.listBlobs()) {
-			if (blobItem instanceof CloudBlob) {
-				((CloudBlob) blobItem).delete();
-			}
-
-			else if (blobItem instanceof CloudBlobDirectory) {
-				deleteContents((CloudBlobDirectory) blobItem);
-			}
-		}
-	}
-
-	/**
-	 * Downloads from Azure blob
-	 *
-	 * @param run environment of build
-	 * @param launcher env vars for remote builds
-	 * @param listener logging
-	 * @param strAcc storage account
-	 * @param blobs blobs from build
-	 * @param includePattern pattern to download
-	 * @param excludePattern pattern to not download
-	 * @param downloadDirLoc dir to download to
-	 * @param flattenDirectories if directories are flattened
-	 * @return filesDownloaded number of files that are downloaded
-	 * @throws WAStorageException throws exception
-	 */
-	public static int download(Run<?, ?> run, Launcher launcher,
-			TaskListener listener, StorageAccountInfo strAcc,
-			List<AzureBlob> blobs, String includePattern, String excludePattern,
-			String downloadDirLoc, boolean flattenDirectories)
-			throws WAStorageException {
-
-		int filesDownloaded = 0;
-
-		for (AzureBlob blob : blobs) {
-			try {
-				Map<String, String> envVars = run.getEnvironment(listener);
-				FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
-
-				FilePath downloadDir = getDownloadDir(workspacePath, downloadDirLoc);
-
-				listener.getLogger().println(
-						Messages.AzureStorageBuilder_downloading());
-
-				URL blobURL = new URL(blob.getBlobURL());
-				String filePath = blobURL.getFile();
-
-				CloudBlobContainer container = WAStorageClient
-						.getBlobContainerReference(strAcc, filePath.split("/")[1],
-								false, true, null);
-
-				if (shouldDownload(includePattern, excludePattern, blob.getBlobName())) {
-					filesDownloaded += downloadBlobs(container, blob, downloadDir, flattenDirectories, listener);
-				}
-
-			} catch (Exception e) {
-				throw new WAStorageException(e.getMessage(), e.getCause());
-			}
-		}
-		return filesDownloaded;
-	}
-
-	private static boolean shouldDownload(String includePattern, String excludePattern, String blobName) {
-		String[] includePatterns = includePattern.split(fpSeparator);
-		String[] excludePatterns = null;
-
-		if (excludePattern != null) {
-		    excludePatterns = excludePattern.split(fpSeparator);
-		}
-
-		return blobPathMatches(blobName, includePatterns, excludePatterns);
-	}
-
-	private static FilePath getDownloadDir(FilePath workspacePath, String downloadDirLoc) {
-		FilePath downloadDir;
-		if (Utils.isNullOrEmpty(downloadDirLoc)) {
-		    downloadDir = workspacePath;
-		} else {
-		    downloadDir = new FilePath(workspacePath, downloadDirLoc);
-		}
-		try {
-		    if (!downloadDir.exists()) {
-			downloadDir.mkdirs();
 		    }
-		} catch (Exception e) { }
-
-		return downloadDir;
-	}
-
-	private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns) {
-		return isExactMatch(path, includePatterns) && (excludePatterns == null || !isExactMatch(path, excludePatterns));
-	}
-	
-	/**
-	 * Determines whether the path is an exact match to any of the provided patterns
-	 * @param path
-	 * @param patterns
-	 * @return 
-	 */
-	private static boolean isExactMatch(String path, String[] patterns) {
-		AntPathMatcher matcher = new AntPathMatcher();
-		for (String pattern : patterns) {
-			if (matcher.match(pattern, path)) {
-				return true;
-			}
+		    fileName = fileName.substring(0, embVPSepIndex);
 		}
-		return false;
-	}
 
-	private static int downloadBlobs(CloudBlobContainer container, AzureBlob blob, FilePath downloadDir, boolean flattenDirectories, TaskListener listener) {
-		int filesDownloaded = 0;
-		try {
-			CloudBlockBlob cbb = container.getBlockBlobReference(blob.getBlobName());
-			downloadBlob(cbb, downloadDir, flattenDirectories, listener);
-			filesDownloaded++;
-		} catch (URISyntaxException ex) {
-			Logger.getLogger(WAStorageClient.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (StorageException ex) {
-			Logger.getLogger(WAStorageClient.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (WAStorageException ex) {
-			listener.getLogger().println("blob " + blob.getBlobName() + " was not found");
+		archiveIncludes += "," + fileName;
+
+		// List all the paths without the zip archives.
+		FilePath[] paths = workspacePath.list(fileName, excludesWithoutZip);
+		filesUploaded += paths.length;
+
+		URI workspaceURI = workspacePath.toURI();
+
+		if (uploadType == UploadType.INVALID) {
+		    // no files are uploaded
+		    return 0;
 		}
-		return filesDownloaded;
-	}
 
-	/**
-	 * Blob download from storage
-	 * 
-	 * @param blob
-	 * @param downloadDir
-	 * @param listener
-	 * @throws URISyntaxException
-	 * @throws StorageException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	private static void downloadBlob(CloudBlob blob, FilePath downloadDir, boolean flattenDirectories,
-			TaskListener listener) throws WAStorageException {
-		OutputStream fos = null;
-		try {
-			FilePath downloadFile = new FilePath(downloadDir, blob.getName());
+		if (paths.length != 0 && uploadType != UploadType.ZIP) {
+		    for (FilePath src : paths) {
+			// Remove the workspace bit of this path
+			URI srcURI = workspaceURI.relativize(src.toURI());
 
-			// That filepath will contain all the directories and explicit virtual
-			// paths, so if the user wanted it flattened, grab just the file name and
-			// recreate the file path
+			InputStream inputStream = src.read();
+			String md5hex = DigestUtils.md5Hex(inputStream);
+			long sizeInBytes = src.length();
 
-			if (flattenDirectories) {
-				downloadFile = new FilePath(downloadDir, downloadFile.getName());
-			}
+			CloudBlockBlob blob;
+			String srcPrefix = srcURI.getPath();
+			if (Utils.isNullOrEmpty(expVP)
+				&& Utils.isNullOrEmpty(embeddedVP)) {
+			    blob = container.getBlockBlobReference(srcPrefix);
+			} else {
+			    String prefix = expVP;
 
-			fos = downloadFile.write();
-
-			long startTime = System.currentTimeMillis();
-
-			blob.download(fos, null, getBlobRequestOptions(), null);
-
-			long endTime = System.currentTimeMillis();
-
-			listener.getLogger().println(
-					"blob " + blob.getName() + " is downloaded to "
-							+ downloadDir + " in "
-							+ getTime(endTime - startTime));
-		} catch (Exception e) {
-			throw new WAStorageException(e.getMessage(), e.getCause());
-		} finally {
-			try {
-				if (fos != null) {
-					fos.close();
+			    if (!Utils.isNullOrEmpty(embeddedVP)) {
+				if (Utils.isNullOrEmpty(expVP)) {
+				    prefix = embeddedVP;
+				} else {
+				    prefix = expVP + embeddedVP;
 				}
-			} catch (IOException e) {
-
+			    }
+			    blob = container.getBlockBlobReference(prefix + srcPrefix);
 			}
-		}
-	}
-	
-	/**
-	 * Generates SAS URL for blob in Azure storage account
-	 * @param storageAccount
-	 * @param blobName
-	 * @param containerName container name
-	 * @return SAS URL
-	 * @throws Exception
-	 */
-	public static String generateSASURL(StorageAccountInfo storageAccount, String containerName, String blobName) throws Exception {
-		String storageAccountName = storageAccount.getStorageAccName();
-		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
-		URL blobURL = new  URL(storageAccount.getBlobEndPointURL());
-		String saBlobURI = 	new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
-							.append(blobURL.getHost()).append("/").toString();
-		CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI), 
-				  new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)), 
-				  new URI(getCustomURI(storageAccountName, TABLE, saBlobURI)));
-		// Create the blob client.
-		CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-		CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
-		// At this point need to throw an error back since container itself did not exist.
-		if (!container.exists()) {
-			throw new Exception("WAStorageClient: generateSASURL: Container " + containerName
-					+ " does not exist in storage account " + storageAccountName);
+			upload(listener, blob, src);
+			individualBlobs.add(new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
+		    }
+		}
+	    }
+
+	    if (filesUploaded != 0 && (uploadType != UploadType.INDIVIDUAL)) {
+		// Create a temp dir for the upload
+		FilePath tempPath = workspacePath.createTempDir(zipFolderName, null);
+
+		Glob globScanner = new Glob(archiveIncludes, excludesWithoutZip);
+
+		FilePath zipPath = tempPath.child(zipName);
+		workspacePath.zip(zipPath.write(), globScanner);
+
+		// When uploading the zip, do not add in the tempDir to the block
+		// blob reference.
+		String blobURI = zipPath.getName();
+
+		InputStream inputStream = zipPath.read();
+		String md5hex = DigestUtils.md5Hex(inputStream);
+		long sizeInBytes = zipPath.length();
+
+		if (!Utils.isNullOrEmpty(expVP)) {
+		    blobURI = expVP + blobURI;
 		}
 
-		CloudBlob blob = container.getBlockBlobReference(blobName);
-		String sas = blob.generateSharedAccessSignature(generatePolicy(), null);
+		CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
 
-		return sas;
+		upload(listener, blob, zipPath);
+		// Make sure to note the new blob as an archive blob,
+		// so that it can be specially marked on the azure storage page.
+		archiveBlobs.add(new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
+
+		tempPath.deleteRecursive();
+	    }
+
+	} catch (Exception e) {
+	    throw new WAStorageException(e.getMessage(), e.getCause());
+	}
+	return filesUploaded;
+    }
+
+    /**
+     * Deletes contents of container
+     *
+     * @param container
+     * @throws StorageException
+     * @throws URISyntaxException
+     */
+    private static void deleteContents(CloudBlobContainer container)
+	    throws StorageException, URISyntaxException {
+
+	for (ListBlobItem blobItem : container.listBlobs()) {
+	    if (blobItem instanceof CloudBlob) {
+		((CloudBlob) blobItem).delete();
+	    } else if (blobItem instanceof CloudBlobDirectory) {
+		deleteContents((CloudBlobDirectory) blobItem);
+	    }
+	}
+    }
+
+    /**
+     * Deletes contents of virtual directory
+     *
+     * @param cloudBlobDirectory
+     * @throws StorageException
+     * @throws URISyntaxException
+     */
+    private static void deleteContents(CloudBlobDirectory cloudBlobDirectory)
+	    throws StorageException, URISyntaxException {
+
+	for (ListBlobItem blobItem : cloudBlobDirectory.listBlobs()) {
+	    if (blobItem instanceof CloudBlob) {
+		((CloudBlob) blobItem).delete();
+	    } else if (blobItem instanceof CloudBlobDirectory) {
+		deleteContents((CloudBlobDirectory) blobItem);
+	    }
+	}
+    }
+
+    /**
+     * Downloads from Azure blob
+     *
+     * @param run environment of build
+     * @param launcher env vars for remote builds
+     * @param listener logging
+     * @param strAcc storage account
+     * @param blobs blobs from build
+     * @param includePattern pattern to download
+     * @param excludePattern pattern to not download
+     * @param downloadDirLoc dir to download to
+     * @param flattenDirectories if directories are flattened
+     * @return filesDownloaded number of files that are downloaded
+     * @throws WAStorageException throws exception
+     */
+    public static int download(Run<?, ?> run, Launcher launcher,
+	    TaskListener listener, StorageAccountInfo strAcc,
+	    List<AzureBlob> blobs, String includePattern, String excludePattern,
+	    String downloadDirLoc, boolean flattenDirectories)
+	    throws WAStorageException {
+
+	int filesDownloaded = 0;
+
+	for (AzureBlob blob : blobs) {
+	    try {
+		Map<String, String> envVars = run.getEnvironment(listener);
+		FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
+
+		FilePath downloadDir = getDownloadDir(workspacePath, downloadDirLoc);
+
+		listener.getLogger().println(
+			Messages.AzureStorageBuilder_downloading());
+
+		URL blobURL = new URL(blob.getBlobURL());
+		String filePath = blobURL.getFile();
+
+		CloudBlobContainer container = WAStorageClient
+			.getBlobContainerReference(strAcc, filePath.split("/")[1],
+				false, true, null);
+
+		if (shouldDownload(includePattern, excludePattern, blob.getBlobName())) {
+		    filesDownloaded += downloadBlobs(container, blob, downloadDir, flattenDirectories, listener);
+		}
+
+	    } catch (Exception e) {
+		throw new WAStorageException(e.getMessage(), e.getCause());
+	    }
+	}
+	return filesDownloaded;
+    }
+
+    private static boolean shouldDownload(String includePattern, String excludePattern, String blobName) {
+	String[] includePatterns = includePattern.split(fpSeparator);
+	String[] excludePatterns = null;
+
+	if (excludePattern != null) {
+	    excludePatterns = excludePattern.split(fpSeparator);
 	}
 
-	public static SharedAccessBlobPolicy generatePolicy() {
-		SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
-		GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-		calendar.setTime(new Date());
-		
-		calendar.add(Calendar.HOUR, 1);
-		policy.setSharedAccessExpiryTime(calendar.getTime());
-		policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
+	return blobPathMatches(blobName, includePatterns, excludePatterns);
+    }
 
-		return policy;
+    private static FilePath getDownloadDir(FilePath workspacePath, String downloadDirLoc) {
+	FilePath downloadDir;
+	if (Utils.isNullOrEmpty(downloadDirLoc)) {
+	    downloadDir = workspacePath;
+	} else {
+	    downloadDir = new FilePath(workspacePath, downloadDirLoc);
+	}
+	try {
+	    if (!downloadDir.exists()) {
+		downloadDir.mkdirs();
+	    }
+	} catch (Exception e) {
 	}
 
-	/**
-	 * Returns Blob requests options - primarily sets concurrentRequestCount to
-	 * number of available cores
-	 * 
-	 * @return
-	 */
-	private static BlobRequestOptions getBlobRequestOptions() {
-		BlobRequestOptions options = new BlobRequestOptions();
-		options.setConcurrentRequestCount(Runtime.getRuntime().availableProcessors());
+	return downloadDir;
+    }
 
-		return options;
+    private static boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns) {
+	return isExactMatch(path, includePatterns) && (excludePatterns == null || !isExactMatch(path, excludePatterns));
+    }
+
+    /**
+     * Determines whether the path is an exact match to any of the provided
+     * patterns
+     *
+     * @param path
+     * @param patterns
+     * @return
+     */
+    private static boolean isExactMatch(String path, String[] patterns) {
+	AntPathMatcher matcher = new AntPathMatcher();
+	for (String pattern : patterns) {
+	    if (matcher.match(pattern, path)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
+    private static int downloadBlobs(CloudBlobContainer container, AzureBlob blob, FilePath downloadDir, boolean flattenDirectories, TaskListener listener) {
+	int filesDownloaded = 0;
+	try {
+	    CloudBlockBlob cbb = container.getBlockBlobReference(blob.getBlobName());
+	    downloadBlob(cbb, downloadDir, flattenDirectories, listener);
+	    filesDownloaded++;
+	} catch (URISyntaxException ex) {
+	    Logger.getLogger(WAStorageClient.class.getName()).log(Level.SEVERE, null, ex);
+	} catch (StorageException ex) {
+	    Logger.getLogger(WAStorageClient.class.getName()).log(Level.SEVERE, null, ex);
+	} catch (WAStorageException ex) {
+	    listener.getLogger().println("blob " + blob.getBlobName() + " was not found");
+	}
+	return filesDownloaded;
+    }
+
+    /**
+     * Blob download from storage
+     *
+     * @param blob
+     * @param downloadDir
+     * @param listener
+     * @throws URISyntaxException
+     * @throws StorageException
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private static void downloadBlob(CloudBlob blob, FilePath downloadDir, boolean flattenDirectories,
+	    TaskListener listener) throws WAStorageException {
+	OutputStream fos = null;
+	try {
+	    FilePath downloadFile = new FilePath(downloadDir, blob.getName());
+
+	    // That filepath will contain all the directories and explicit virtual
+	    // paths, so if the user wanted it flattened, grab just the file name and
+	    // recreate the file path
+	    if (flattenDirectories) {
+		downloadFile = new FilePath(downloadDir, downloadFile.getName());
+	    }
+
+	    fos = downloadFile.write();
+
+	    long startTime = System.currentTimeMillis();
+
+	    blob.download(fos, null, getBlobRequestOptions(), null);
+
+	    long endTime = System.currentTimeMillis();
+
+	    listener.getLogger().println(
+		    "blob " + blob.getName() + " is downloaded to "
+		    + downloadDir + " in "
+		    + getTime(endTime - startTime));
+	} catch (Exception e) {
+	    throw new WAStorageException(e.getMessage(), e.getCause());
+	} finally {
+	    try {
+		if (fos != null) {
+		    fos.close();
+		}
+	    } catch (IOException e) {
+
+	    }
+	}
+    }
+
+    /**
+     * Generates SAS URL for blob in Azure storage account
+     *
+     * @param storageAccount
+     * @param blobName
+     * @param containerName container name
+     * @return SAS URL
+     * @throws Exception
+     */
+    public static String generateSASURL(StorageAccountInfo storageAccount, String containerName, String blobName) throws Exception {
+	String storageAccountName = storageAccount.getStorageAccName();
+	StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
+	URL blobURL = new URL(storageAccount.getBlobEndPointURL());
+	String saBlobURI = new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
+		.append(blobURL.getHost()).append("/").toString();
+	CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI),
+		new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)),
+		new URI(getCustomURI(storageAccountName, TABLE, saBlobURI)));
+	// Create the blob client.
+	CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
+	CloudBlobContainer container = blobClient.getContainerReference(containerName);
+
+	// At this point need to throw an error back since container itself did not exist.
+	if (!container.exists()) {
+	    throw new Exception("WAStorageClient: generateSASURL: Container " + containerName
+		    + " does not exist in storage account " + storageAccountName);
 	}
 
-	public static String getTime(long timeInMills) {
-		return DurationFormatUtils.formatDuration(timeInMills, "HH:mm:ss.S")
-				+ " (HH:mm:ss.S)";
-	}
+	CloudBlob blob = container.getBlockBlobReference(blobName);
+	String sas = blob.generateSharedAccessSignature(generatePolicy(), null);
+
+	return sas;
+    }
+
+    public static SharedAccessBlobPolicy generatePolicy() {
+	SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
+	GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+	calendar.setTime(new Date());
+
+	calendar.add(Calendar.HOUR, 1);
+	policy.setSharedAccessExpiryTime(calendar.getTime());
+	policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
+
+	return policy;
+    }
+
+    /**
+     * Returns Blob requests options - primarily sets concurrentRequestCount to
+     * number of available cores
+     *
+     * @return
+     */
+    private static BlobRequestOptions getBlobRequestOptions() {
+	BlobRequestOptions options = new BlobRequestOptions();
+	options.setConcurrentRequestCount(Runtime.getRuntime().availableProcessors());
+
+	return options;
+    }
+
+    public static String getTime(long timeInMills) {
+	return DurationFormatUtils.formatDuration(timeInMills, "HH:mm:ss.S")
+		+ " (HH:mm:ss.S)";
+    }
 }
