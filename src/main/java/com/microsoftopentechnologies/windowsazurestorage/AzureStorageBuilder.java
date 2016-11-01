@@ -26,6 +26,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureTelemetryHelper;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 
 import hudson.Extension;
@@ -126,6 +127,7 @@ public class AzureStorageBuilder extends Builder {
 	public boolean perform(AbstractBuild build, Launcher launcher,
 			BuildListener listener) {
 		StorageAccountInfo strAcc = null;
+                AzureTelemetryHelper telemetry = new AzureTelemetryHelper();
 		try {
 			// Get storage account
 			strAcc = getDescriptor().getStorageAccount(storageAccName);
@@ -158,7 +160,7 @@ public class AzureStorageBuilder extends Builder {
 					expExcludePattern = "archive.zip";
 				}
 			}
-
+                        
 			// Resolve download location
 			String downloadDir = Utils.replaceTokens(build, listener,
 					downloadDirLoc);
@@ -182,11 +184,16 @@ public class AzureStorageBuilder extends Builder {
 						.println(
 								Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
 			}
+                        telemetry.createEvent("AzureJenkinsStorageDownloading", Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
+                        
 		} catch (Exception e) {
 			e.printStackTrace(listener.error(Messages
 					.AzureStorageBuilder_download_err(strAcc
 							.getStorageAccName())));
 			build.setResult(Result.UNSTABLE);
+                        telemetry.createErrorEvent("AzureJenkinsStorageDownloadingError", Messages
+					.AzureStorageBuilder_download_err(strAcc
+							.getStorageAccName()) );
 		}
 		return true;
 	}
@@ -194,6 +201,8 @@ public class AzureStorageBuilder extends Builder {
 	private boolean validateData(AbstractBuild build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName) {
 
+                AzureTelemetryHelper telemetry = new AzureTelemetryHelper();
+                
 		// No need to download artifacts if build failed
 		if (build.getResult() == Result.FAILURE) {
 			listener.getLogger().println(
@@ -220,11 +229,13 @@ public class AzureStorageBuilder extends Builder {
 		try {
 			WAStorageClient.validateStorageAccount(strAcc.getStorageAccName(),
 					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
+                        telemetry.createErrorEvent("AzureJenkinsStorageAccountValidationSucess", "Sucessfully validated "+strAcc.getStorageAccName());
 		} catch (Exception e) {
 			listener.getLogger().println(Messages.Client_SA_val_fail());
 			listener.getLogger().println(strAcc.getStorageAccName());
 			listener.getLogger().println(strAcc.getBlobEndPointURL());
 			build.setResult(Result.UNSTABLE);
+                        telemetry.createErrorEvent("AzureJenkinsStorageAccountValidationFailed", Messages.Client_SA_val_fail());
 			return false;
 		}
 		return true;

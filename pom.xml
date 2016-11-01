@@ -1,90 +1,129 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.jenkins-ci.plugins</groupId>
-    <artifactId>plugin</artifactId>
-    <version>1.466</version>
-  </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.466</version>
+    </parent>
 
 
-  <artifactId>windows-azure-storage</artifactId>
-  <version>0.3.2-SNAPSHOT</version>
-  <packaging>hpi</packaging>
-  <name>Windows Azure Storage plugin</name>
-  <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Windows+Azure+Storage+Plugin</url>
+    <artifactId>windows-azure-storage</artifactId>
+    <version>0.3.2-SNAPSHOT</version>
+    <packaging>hpi</packaging>
+    <name>Windows Azure Storage plugin</name>
+    <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Windows+Azure+Storage+Plugin</url>
   
-  <properties>
+    <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  </properties>
+    </properties>
     
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0 (the "License")</name>
-      <comments>Licensed under the Apache License, Version 2.0 (the "License").</comments>
-    </license>
-  </licenses>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0 (the "License")</name>
+            <comments>Licensed under the Apache License, Version 2.0 (the "License").</comments>
+        </license>
+    </licenses>
   
-  <developers>
-    	<developer>
-      		<id>martinsawicki</id>
-      		<name>Martin Sawicki</name>
-      		<email>marcins@microsoft.com</email>
-    	</developer>
-		<developer>
-      		<id>snallami</id>
-      		<name>Suresh Nallamilli</name>
-      		<email>snallami@gmail.com</email>
-    	</developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>martinsawicki</id>
+            <name>Martin Sawicki</name>
+            <email>marcins@microsoft.com</email>
+        </developer>
+        <developer>
+            <id>snallami</id>
+            <name>Suresh Nallamilli</name>
+            <email>snallami@gmail.com</email>
+        </developer>
+    </developers>
     
-  <dependencies>
-	<dependency>
-		<groupId>com.microsoft.windowsazure.storage</groupId>
-		<artifactId>microsoft-windowsazure-storage-sdk</artifactId>
-		<version>0.6.0</version>
-	</dependency>
-	<dependency>
-		<groupId>commons-lang</groupId>
-		<artifactId>commons-lang</artifactId>
-		<version>2.3</version>
-	</dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-context</artifactId>
-      <version>4.1.6.RELEASE</version>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>com.microsoft.windowsazure.storage</groupId>
+            <artifactId>microsoft-windowsazure-storage-sdk</artifactId>
+            <version>0.6.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>4.1.6.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>applicationinsights-web</artifactId>
+            <!-- or applicationinsights-core for bare API -->
+            <!--<version>[1.0,)</version>-->
+            <version>1.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>applicationinsights-core</artifactId>
+            <!-- or applicationinsights-core for bare API -->
+            <!--<version>[1.0,)</version> -->
+            <version>1.0.6</version>
+        </dependency>
+    </dependencies>
    
-   <scm>
-		<connection>scm:git:ssh://github.com/jenkinsci/windows-azure-storage-plugin.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/windows-azure-storage-plugin.git</developerConnection>
-		<url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
-     <tag>HEAD</tag>
-  </scm>
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/windows-azure-storage-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/windows-azure-storage-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
   
-  <repositories>
-    <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
-    </repository>
-  </repositories>
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
-    </pluginRepository>
-  </pluginRepositories>
+        <repository>
+            <id>central</id>
+            <name>Central</name>
+            <url>http://repo1.maven.org/maven2</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
   
-  <build>
-	<plugins>
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>2.5</version>
-         </plugin>
-	</plugins>
-  </build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>Using env.test.properties</echo>
+                                <copy file="${basedir}/src/ApplicationInsights.xml" tofile="${basedir}/target/classes/ApplicationInsights.xml"/>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
