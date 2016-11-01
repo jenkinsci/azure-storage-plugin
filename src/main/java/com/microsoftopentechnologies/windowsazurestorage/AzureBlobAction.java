@@ -18,7 +18,7 @@ import hudson.model.Run;
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher;
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.WAStorageDescriptor;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureTelemetryHelper;
 
 public class AzureBlobAction implements RunAction {
 	private final AbstractBuild build;
@@ -103,9 +103,12 @@ public class AzureBlobAction implements RunAction {
 	public void doProcessDownloadRequest(final StaplerRequest request, final StaplerResponse response) throws IOException, ServletException {
 		WAStorageDescriptor storageDesc = getWAStorageDescriptor();
 		StorageAccountInfo accountInfo  = storageDesc.getStorageAccount(storageAccountName);
+                AzureTelemetryHelper telemetry = new AzureTelemetryHelper();
+                String telemetryEvent = "DownloadingRequest";
 		
 		if (accountInfo == null) {
 			response.sendError(500, "Azure Storage account global configuration is missing");
+                        telemetry.createErrorEvent(telemetryEvent, "Azure Storage account global configuration is missing" );
 			return;
 		}
 		
@@ -127,9 +130,11 @@ public class AzureBlobAction implements RunAction {
 		if (zipArchiveBlob != null) {
 			if (zipArchiveBlob.getBlobName().equals(blobName)) {
 				try {
+                                        telemetry.createEvent(telemetryEvent, accountInfo.getStorageAccName()+" downloaded archive "+zipArchiveBlob.getBlobName());
 					response.sendRedirect2(zipArchiveBlob.getBlobURL()+"?"+getSASURL(accountInfo));
 				} catch(Exception e) {
 					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
+                                        telemetry.createErrorEvent(telemetryEvent, "Error occurred while downloading artifact "+e.getMessage());
 				}
 				return;
 			}
@@ -138,15 +143,19 @@ public class AzureBlobAction implements RunAction {
 		for (AzureBlob blob : individualBlobs) {
 			if (blob.getBlobName().equals(blobName)) {
 				try {
-					response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo));
+                                    telemetry.createEvent(telemetryEvent, accountInfo.getStorageAccName()+" downloaded blob "+ blob.getBlobName());
+                                    response.sendRedirect2(blob.getBlobURL()+"?"+getSASURL(accountInfo));
 				} catch(Exception e) {
-					response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
+                                    telemetry.createErrorEvent(telemetryEvent, "Error occurred while downloading artifact "+e.getMessage());
+				    response.sendError(500, "Error occurred while downloading artifact "+e.getMessage());
 				}
 				return;
 			}
 		}
 		
-		response.sendError(404, "Azure artifact is not available");
+		
+                telemetry.createErrorEvent(telemetryEvent, "Azure artifact is not available");
+                response.sendError(404, "Azure artifact is not available");
 	}
 	
 	public boolean isAnonymousAccess(Authentication auth) {

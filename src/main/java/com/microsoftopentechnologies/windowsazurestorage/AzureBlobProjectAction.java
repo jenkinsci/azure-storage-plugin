@@ -4,6 +4,7 @@ import java.util.List;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Run;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureTelemetryHelper;
 
 public class AzureBlobProjectAction implements Action {
 	private final AbstractProject<?, ?> project;

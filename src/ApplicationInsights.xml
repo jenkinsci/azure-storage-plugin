@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<ApplicationInsights xmlns="http://schemas.microsoft.com/ApplicationInsights/2013/Settings" schemaVersion="2014-05-30">
+  <InstrumentationKey>3aa27b91-92fd-4d2d-be8a-0ca67c842560</InstrumentationKey>
+  <ContextInitializers>
+  </ContextInitializers>
+  <TelemetryInitializers>
+    <Add type="com.microsoft.applicationinsights.web.extensibility.initializers.WebOperationIdTelemetryInitializer"/>
+    <Add type="com.microsoft.applicationinsights.web.extensibility.initializers.WebOperationNameTelemetryInitializer"/>
+	<Add type="com.microsoft.applicationinsights.web.extensibility.initializers.WebSessionTelemetryInitializer"/>
+	<Add type="com.microsoft.applicationinsights.web.extensibility.initializers.WebUserTelemetryInitializer"/>
+	<Add type="com.microsoft.applicationinsights.web.extensibility.initializers.WebUserAgentTelemetryInitializer"/>
+  </TelemetryInitializers>
+  <TelemetryModules>
+    <Add type="com.microsoft.applicationinsights.web.extensibility.modules.WebRequestTrackingTelemetryModule"/>
+    <Add type="com.microsoft.applicationinsights.web.extensibility.modules.WebSessionTrackingTelemetryModule"/>
+    <Add type="com.microsoft.applicationinsights.web.extensibility.modules.WebUserTrackingTelemetryModule"/>	
+  </TelemetryModules>
+  <Channel>
+    <!-- 
+      Setting DeveloperMode to true will enable immediate transmission of the telemetry events, which can be helpful during the development process.
+      Make sure to turn this off on production servers due to performance considerations.
+    -->
+    <DeveloperMode>true</DeveloperMode>
+  </Channel>
+  <DisableTelemetry>false</DisableTelemetry>
+</ApplicationInsights>
