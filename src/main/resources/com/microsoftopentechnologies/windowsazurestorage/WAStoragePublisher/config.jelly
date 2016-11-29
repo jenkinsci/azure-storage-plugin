@@ -12,7 +12,7 @@
 	<f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
 		<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
 	</f:entry>
-		
+
 	<f:advanced>
 		<f:entry title="${%excludeFilesPath_title}" field="excludeFilesPath" help="/plugin/windows-azure-storage/help-excludeFilesPath.html">
 			<f:textbox />
@@ -61,6 +61,12 @@
 		<f:entry field="doNotUploadIndividualFiles" help="/plugin/windows-azure-storage/help-doNotUploadIndividualFiles.html">
 			<div align="left">
 				<f:checkbox title="${%doNotUploadIndividualFiles_title}"/>
+			</div>
+		</f:entry>
+
+		<f:entry field="doNotWaitForPreviousBuild" help="/plugin/windows-azure-storage/help-doNotWaitForPreviousBuild.html">
+			<div align="left">
+				<f:checkbox title="${%doNotWaitForPreviousBuild_title}"/>
 			</div>
 		</f:entry>
 	</f:advanced>

@@ -4,15 +4,17 @@
 	<f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
 		<f:select  />
 	</f:entry>
-	
-	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
-		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
-	</f:entry>
+        
+        <f:entry title="${%projectName_title}" field="projectName" name="projectName" help="/plugin/windows-azure-storage/help-builderProjectName.html">
+            <f:textbox />
+        </f:entry>
   
 	<f:entry title="${%includePattern_title}" field="includeFilesPattern" help="/plugin/windows-azure-storage/help-includePattern.html">
 		<f:textbox />
 	</f:entry>
 	
+        <f:dropdownDescriptorSelector field="buildSelector" name="buildSelector" title="Build to download" descriptors="${descriptor.availableBuildSelectorList}" />
+        
 	<f:advanced>
 		<f:entry title="${%excludePattern_title}" field="excludeFilesPattern" help="/plugin/windows-azure-storage/help-excludePattern.html">
 			<f:textbox />
