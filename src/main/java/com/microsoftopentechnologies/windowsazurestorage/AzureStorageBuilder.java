@@ -194,6 +194,9 @@ public class AzureStorageBuilder extends Builder {
 	private boolean validateData(AbstractBuild build, BuildListener listener,
 			StorageAccountInfo strAcc, String expContainerName) {
 
+        WAStorageClient.configureHttpProxySettingsWithOSFallback(listener
+                .getLogger());
+
 		// No need to download artifacts if build failed
 		if (build.getResult() == Result.FAILURE) {
 			listener.getLogger().println(
@@ -222,6 +225,8 @@ public class AzureStorageBuilder extends Builder {
 					strAcc.getStorageAccountKey(), strAcc.getBlobEndPointURL());
 		} catch (Exception e) {
 			listener.getLogger().println(Messages.Client_SA_val_fail());
+            if (e.getCause() != null)
+                listener.getLogger().println(e.getCause().getMessage());
 			listener.getLogger().println(strAcc.getStorageAccName());
 			listener.getLogger().println(strAcc.getBlobEndPointURL());
 			build.setResult(Result.UNSTABLE);
