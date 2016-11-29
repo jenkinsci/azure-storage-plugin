@@ -43,21 +43,21 @@ import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.util.DirScanner.*;
 
-import com.microsoft.windowsazure.storage.CloudStorageAccount;
-import com.microsoft.windowsazure.storage.RetryNoRetry;
-import com.microsoft.windowsazure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.windowsazure.storage.StorageException;
-import com.microsoft.windowsazure.storage.blob.BlobContainerPermissions;
-import com.microsoft.windowsazure.storage.blob.BlobContainerPublicAccessType;
-import com.microsoft.windowsazure.storage.blob.BlobRequestOptions;
-import com.microsoft.windowsazure.storage.blob.CloudBlob;
-import com.microsoft.windowsazure.storage.blob.CloudBlobClient;
-import com.microsoft.windowsazure.storage.blob.CloudBlobContainer;
-import com.microsoft.windowsazure.storage.blob.CloudBlobDirectory;
-import com.microsoft.windowsazure.storage.blob.CloudBlockBlob;
-import com.microsoft.windowsazure.storage.blob.ListBlobItem;
-import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPermissions;
-import com.microsoft.windowsazure.storage.blob.SharedAccessBlobPolicy;
+import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.RetryNoRetry;
+import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
+import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.blob.BlobContainerPermissions;
+import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
+import com.microsoft.azure.storage.blob.BlobRequestOptions;
+import com.microsoft.azure.storage.blob.CloudBlob;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlobDirectory;
+import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
+import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.UploadType;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -294,9 +294,9 @@ public class WAStorageClient {
 	/**
 	 * Uploads files to Windows Azure Storage.
 	 * 
-	 * @param listener
 	 * @param build
-	 * @param StorageAccountInfo
+	 * @param listener
+	 * @param strAcc
 	 *            storage account information.
 	 * @param expContainerName
 	 *            container name.
@@ -308,15 +308,19 @@ public class WAStorageClient {
 	 *            Virtual Path of blob container.
 	 * @param excludeFP
 	 *            File Path in ant glob syntax to exclude from upload
+	 * @param uploadType
+	 * @param individualBlobs
+	 * @param archiveBlobs
+	 * @param contentType
 	 * @return filesUploaded number of files that are uploaded.
 	 * @throws WAStorageException
 	 * @throws Exception
 	 */
 	public static int upload(AbstractBuild<?, ?> build, BuildListener listener,
-			StorageAccountInfo strAcc, String expContainerName,
-			boolean cntPubAccess, boolean cleanUpContainer, String expFP,
-			String expVP, String excludeFP, UploadType uploadType,
-			List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs) throws WAStorageException {
+							 StorageAccountInfo strAcc, String expContainerName,
+							 boolean cntPubAccess, boolean cleanUpContainer, String expFP,
+							 String expVP, String excludeFP, UploadType uploadType,
+							 List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs, String contentType) throws WAStorageException {
 
 		int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
@@ -409,6 +413,9 @@ public class WAStorageClient {
 								}
 								blob = container.getBlockBlobReference(prefix + srcPrefix);
 							}
+							if (!Utils.isNullOrEmpty(contentType)) {
+								blob.getProperties().setContentType(contentType);
+							}
 
 							upload(listener, blob, src);
 
@@ -436,6 +443,9 @@ public class WAStorageClient {
 				}
 
 				CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
+				if (!Utils.isNullOrEmpty(contentType)) {
+					blob.getProperties().setContentType(contentType);
+				}
 
 				upload(listener, blob, zipPath);
 				// Make sure to note the new blob as an archive blob,
@@ -762,7 +772,7 @@ public class WAStorageClient {
 	 * @param storageAccountName
 	 * @param storageAccountKey
 	 * @param containerName
-	 * @param strBlobURL
+	 * @param saBlobEndPoint
 	 * @return SAS URL
 	 * @throws Exception
 	 */
