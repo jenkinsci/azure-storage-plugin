@@ -120,12 +120,12 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     /**
      *
      * @param run environment of build
-     * @param filePath filepath
+     * @param workspace filepath
      * @param launcher env var for remote builds
      * @param listener logging
      */
     @Override
-    public void perform(Run<?, ?> run, FilePath filePath, Launcher launcher, TaskListener listener) {
+    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
 	StorageAccountInfo strAcc = null;
 	try {
 	    final EnvVars envVars = run.getEnvironment(listener);
@@ -166,10 +166,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
 		if (source instanceof MatrixBuild) {
 		    for (Run r : ((MatrixBuild) source).getExactRuns()) {
-			downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
+			downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
 		    }
 		} else {
-		    downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc);
+		    downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
 		}
 	    } else {
 		listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(expProjectName));
@@ -183,7 +183,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 	}
     }
 
-    private boolean downloadArtifacts(Run<?, ?> source, Run<?, ?> run, Launcher launcher, String includeFilter, String excludeFilter, TaskListener listener, StorageAccountInfo strAcc) {
+    private boolean downloadArtifacts(Run<?, ?> source, Run<?, ?> run, Launcher launcher, String includeFilter, String excludeFilter, TaskListener listener, StorageAccountInfo strAcc, FilePath workspace) {
 	try {
 	    final EnvVars envVars = run.getEnvironment(listener);
 	    final AzureBlobAction action = source.getAction(AzureBlobAction.class);
@@ -197,7 +197,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
 	    int filesDownloaded = WAStorageClient.download(run, launcher, listener,
 		    strAcc, blob, includeFilter, excludeFilter,
-		    downloadDir, flattenDirectories);
+		    downloadDir, flattenDirectories, workspace);
 
 	    if (filesDownloaded == 0) { // Mark build unstable if no files are
 		// downloaded

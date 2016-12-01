@@ -217,13 +217,13 @@ public class WAStorageClient {
 	    StorageAccountInfo strAcc, String expContainerName,
 	    boolean cntPubAccess, boolean cleanUpContainer, String expFP,
 	    String expVP, String excludeFP, UploadType uploadType,
-	    List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs) throws WAStorageException {
+	    List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs, FilePath workspace) throws WAStorageException {
 
 	int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
 	try {
-	    Map<String, String> envVars = run.getEnvironment(listener);
-	    FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
+	    FilePath workspacePath = new FilePath(launcher.getChannel(), workspace.getRemote());
+
 	    if (workspacePath == null) {
 		listener.getLogger().println(
 			Messages.AzureStorageBuilder_ws_na());
@@ -407,21 +407,21 @@ public class WAStorageClient {
      * @param excludePattern pattern to not download
      * @param downloadDirLoc dir to download to
      * @param flattenDirectories if directories are flattened
+     * @param workspace workspace of build
      * @return filesDownloaded number of files that are downloaded
      * @throws WAStorageException throws exception
      */
     public static int download(Run<?, ?> run, Launcher launcher,
 	    TaskListener listener, StorageAccountInfo strAcc,
 	    List<AzureBlob> blobs, String includePattern, String excludePattern,
-	    String downloadDirLoc, boolean flattenDirectories)
+	    String downloadDirLoc, boolean flattenDirectories, FilePath workspace)
 	    throws WAStorageException {
 
 	int filesDownloaded = 0;
 
 	for (AzureBlob blob : blobs) {
 	    try {
-		Map<String, String> envVars = run.getEnvironment(listener);
-		FilePath workspacePath = new FilePath(launcher.getChannel(), new FilePath(new File(envVars.get("WORKSPACE"))).getRemote());
+		FilePath workspacePath = new FilePath(launcher.getChannel(), workspace.getRemote());
 
 		FilePath downloadDir = getDownloadDir(workspacePath, downloadDirLoc);
 
