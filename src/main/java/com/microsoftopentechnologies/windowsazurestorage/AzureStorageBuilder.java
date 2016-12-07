@@ -50,6 +50,7 @@ import org.kohsuke.stapler.StaplerRequest;
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     private final String storageAccName;
+    private final String downloadType;
     private final String containerName;
     private final String includeFilesPattern;
     private final String excludeFilesPattern;
@@ -60,10 +61,11 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private final String projectName;
 
     @DataBoundConstructor
-    public AzureStorageBuilder(String storageAccName, String containerName, BuildSelector buildSelector,
+    public AzureStorageBuilder(String storageAccName, String downloadType, String containerName, BuildSelector buildSelector,
 	    String includeFilesPattern, String excludeFilesPattern, String downloadDirLoc, boolean flattenDirectories,
 	    boolean includeArchiveZips, String projectName) {
 	this.storageAccName = storageAccName;
+	this.downloadType = downloadType;
 	this.containerName = containerName;
 	this.includeFilesPattern = includeFilesPattern;
 	this.excludeFilesPattern = excludeFilesPattern;
@@ -83,6 +85,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     public String getStorageAccName() {
 	return storageAccName;
+    }
+
+    public String getDownloadType() {
+        return downloadType;
     }
 
     public String getContainerName() {
@@ -141,6 +147,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
 	    String expProjectName = Util.replaceMacro(projectName, envVars);
 
+	    String expContainerName = Util.replaceMacro(containerName, envVars);
+
 	    // If the include is empty, make **/*
 	    if (Utils.isNullOrEmpty(expIncludePattern)) {
 		expIncludePattern = "**/*";
@@ -158,32 +166,47 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 	    // Validate input data
 	    validateData(run, listener, strAcc);
 
-	    Job<?, ?> job = Jenkins.getInstance().getItemByFullName(expProjectName, Job.class);
-	    if (job != null) {
-		// Resolve download location
-		BuildFilter filter = new BuildFilter();
-		Run source = getBuildSelector().getBuild(job, envVars, filter, run);
-
-		if (source instanceof MatrixBuild) {
-		    for (Run r : ((MatrixBuild) source).getExactRuns()) {
-			downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
-		    }
-		} else {
-		    downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
-		}
+	    int filesDownloaded = 0;
+	    if (downloadType.equals("Download from file path")) {
+		    filesDownloaded += WAStorageClient.download(run, launcher, listener,
+			    strAcc, expIncludePattern, expExcludePattern, Util.replaceMacro(downloadDirLoc, envVars),
+			    flattenDirectories, workspace, expContainerName);
 	    } else {
-		listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(expProjectName));
-		run.setResult(Result.UNSTABLE);
+		    Job<?, ?> job = Jenkins.getInstance().getItemByFullName(expProjectName, Job.class);
+		    if (job != null) {
+			// Resolve download location
+			BuildFilter filter = new BuildFilter();
+			Run source = getBuildSelector().getBuild(job, envVars, filter, run);
+
+			if (source instanceof MatrixBuild) {
+				for (Run r : ((MatrixBuild) source).getExactRuns()) {
+				    filesDownloaded += downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
+				}
+			} else {
+				filesDownloaded += downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
+			}
+		} else {
+		    listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(expProjectName));
+		    run.setResult(Result.UNSTABLE);
+		}
 	    }
+
+	    if (filesDownloaded == 0) { // Mark build unstable if no files are
+		    // downloaded
+		    listener.getLogger().println(Messages.AzureStorageBuilder_nofiles_downloaded());
+		    run.setResult(Result.UNSTABLE);
+	    } else {
+		    listener.getLogger().println(Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
+	    }
+
 	} catch (Exception e) {
-	    e.printStackTrace(listener.error(Messages
-		    .AzureStorageBuilder_download_err(strAcc
-			    .getStorageAccName())));
+	    e.printStackTrace(listener.error(Messages.AzureStorageBuilder_download_err(strAcc.getStorageAccName())));
 	    run.setResult(Result.UNSTABLE);
 	}
     }
 
-    private boolean downloadArtifacts(Run<?, ?> source, Run<?, ?> run, Launcher launcher, String includeFilter, String excludeFilter, TaskListener listener, StorageAccountInfo strAcc, FilePath workspace) {
+    private int downloadArtifacts(Run<?, ?> source, Run<?, ?> run, Launcher launcher, String includeFilter, String excludeFilter, TaskListener listener, StorageAccountInfo strAcc, FilePath workspace) {
+	int filesDownloaded = 0;
 	try {
 	    final EnvVars envVars = run.getEnvironment(listener);
 	    final AzureBlobAction action = source.getAction(AzureBlobAction.class);
@@ -194,25 +217,15 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
 	    // Resolve download location
 	    String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
-
-	    int filesDownloaded = WAStorageClient.download(run, launcher, listener,
+	    filesDownloaded = WAStorageClient.download(run, launcher, listener,
 		    strAcc, blob, includeFilter, excludeFilter,
 		    downloadDir, flattenDirectories, workspace);
-
-	    if (filesDownloaded == 0) { // Mark build unstable if no files are
-		// downloaded
-		listener.getLogger().println(Messages.AzureStorageBuilder_nofiles_downloaded());
-		run.setResult(Result.UNSTABLE);
-	    } else {
-		listener.getLogger()
-			.println(Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
-	    }
 
 	} catch (Exception e) {
 	    run.setResult(Result.UNSTABLE);
 	}
 
-	return true;
+	return filesDownloaded;
     }
 
     private void validateData(Run<?, ?> run, TaskListener listener,
@@ -274,6 +287,13 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 	    return m;
 	}
 
+	public ListBoxModel doFillDownloadTypeItems() {
+	    ListBoxModel m = new ListBoxModel();
+	    m.add("Download artifact from build");
+	    m.add("Download from file path");
+	    return m;
+	}
+
 	public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter String value) {
 	    AutoCompletionCandidates projectList = new AutoCompletionCandidates();
 	    for (AbstractProject<?, ?> project : Jenkins.getInstance().getItems(AbstractProject.class)) {
@@ -284,19 +304,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 	    return projectList;
 	}
 
-	/* public FormValidation doCheckIsDirectory(@QueryParameter String val) {
-			// If null or if file does not exists don't display any validation
-			// error.
-			File downloadDir = new File(val);
-			if (Utils.isNullOrEmpty(val) || !downloadDir.exists()) {
-				return FormValidation.ok();
-			} else if (downloadDir.exists() && !downloadDir.isDirectory()) {
-				return FormValidation.error(Messages
-						.AzureStorageBuilder_downloadDir_invalid());
-			} else {
-				return FormValidation.ok();
-			}
-		} */
 	public boolean configure(StaplerRequest req, JSONObject formData)
 		throws FormException {
 	    save();
@@ -320,6 +327,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 	/**
 	 * Returns storage account object
 	 *
+	 * @param storageAccountName
 	 * @return StorageAccount
 	 */
 	public StorageAccountInfo getStorageAccount(String storageAccountName) {
