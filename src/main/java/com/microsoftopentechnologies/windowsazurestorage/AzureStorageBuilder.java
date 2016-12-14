@@ -60,23 +60,44 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private final BuildSelector buildSelector;
     private final String projectName;
 
+    public static class DownloadType {
+        public final String type;
+        public final String containerName;
+        public final String projectName;
+        BuildSelector buildSelector;
+        
+        @DataBoundConstructor
+        public DownloadType(final String value, final String containerName, final String projectName, final BuildSelector buildSelector) {
+            this.type = value;
+            this.containerName = containerName;
+            this.projectName = projectName;
+            if (buildSelector == null) {
+                this.buildSelector = new StatusBuildSelector(true);
+            } else {
+                this.buildSelector = buildSelector;
+            }
+        }
+    }
+
     @DataBoundConstructor
-    public AzureStorageBuilder(String storageAccName, String downloadType, String containerName, BuildSelector buildSelector,
-	    String includeFilesPattern, String excludeFilesPattern, String downloadDirLoc, boolean flattenDirectories,
-	    boolean includeArchiveZips, String projectName) {
-	this.storageAccName = storageAccName;
-	this.downloadType = downloadType;
-	this.containerName = containerName;
-	this.includeFilesPattern = includeFilesPattern;
-	this.excludeFilesPattern = excludeFilesPattern;
-	this.downloadDirLoc = downloadDirLoc;
-	this.flattenDirectories = flattenDirectories;
-	this.includeArchiveZips = includeArchiveZips;
-	this.projectName = projectName;
-	if (buildSelector == null) {
-	    buildSelector = new StatusBuildSelector(true);
-	}
-	this.buildSelector = buildSelector;
+    public AzureStorageBuilder(
+            final String storageAccName,
+            final DownloadType downloadType,
+            final String includeFilesPattern,
+            final String excludeFilesPattern,
+            final String downloadDirLoc,
+            final boolean flattenDirectories,
+            final boolean includeArchiveZips) {
+        this.storageAccName = storageAccName;
+        this.downloadType = downloadType.type;
+        this.containerName = downloadType.containerName;
+        this.includeFilesPattern = includeFilesPattern;
+        this.excludeFilesPattern = excludeFilesPattern;
+        this.downloadDirLoc = downloadDirLoc;
+        this.flattenDirectories = flattenDirectories;
+        this.includeArchiveZips = includeArchiveZips;
+        this.projectName = downloadType.projectName;
+        this.buildSelector = downloadType.buildSelector;
     }
 
     public BuildSelector getBuildSelector() {
@@ -167,7 +188,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 	    validateData(run, listener, strAcc);
 
 	    int filesDownloaded = 0;
-	    if (downloadType.equals("Download from file path")) {
+	    if (downloadType == null || downloadType.equals("container")) { /*the null check is backward compatibility*/
 		    filesDownloaded += WAStorageClient.download(run, launcher, listener,
 			    strAcc, expIncludePattern, expExcludePattern, Util.replaceMacro(downloadDirLoc, envVars),
 			    flattenDirectories, workspace, expContainerName);
@@ -284,13 +305,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 		    m.add(storageAccount.getStorageAccName());
 		}
 	    }
-	    return m;
-	}
-
-	public ListBoxModel doFillDownloadTypeItems() {
-	    ListBoxModel m = new ListBoxModel();
-	    m.add("Download artifact from build");
-	    m.add("Download from file path");
 	    return m;
 	}
 
