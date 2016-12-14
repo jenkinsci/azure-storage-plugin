@@ -1,48 +1,58 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-	<f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
-		<f:select  />
-	</f:entry>
-
-    <f:entry title="${%downloadType_title}" field="downloadType" help="/plugin/windows-azure-storage/help-downloadType.html">
+    <f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-builderSelectstorageaccount.html">
         <f:select  />
     </f:entry>
-        
-        <f:entry title="${%projectName_title}" field="projectName" name="projectName" help="/plugin/windows-azure-storage/help-builderProjectName.html">
+
+    <f:section title="${%downloadType_title}">
+        <f:radioBlock name="downloadType" title="Download from container" value="container" checked="${instance.getDonwloadType() == null || instance.getDownloadType() == 'container'}">
+            <f:nested>
+
+                <f:entry title="${%containerName_title}" field="containerName" name="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
+                    <f:textbox />
+                </f:entry>
+
+            </f:nested>
+        </f:radioBlock>
+        <f:radioBlock name="downloadType" title="Download artifact from build" value="project" checked="${instance.getDownloadType() == 'project'}" >
+            <f:nested>
+
+                <f:entry title="${%projectName_title}" field="projectName" name="projectName" help="/plugin/windows-azure-storage/help-builderProjectName.html">
+                    <f:textbox />
+                </f:entry>
+                <f:dropdownDescriptorSelector field="buildSelector" name="buildSelector" title="Build to download" descriptors="${descriptor.availableBuildSelectorList}" />
+
+            </f:nested>
+        </f:radioBlock>
+    </f:section>
+
+    <f:section title="Artifacts">
+        <f:entry title="${%includePattern_title}" field="includeFilesPattern" help="/plugin/windows-azure-storage/help-includePattern.html">
             <f:textbox />
         </f:entry>
 
-    <f:entry title="${%containerName_title}" field="containerName" name="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
-        <f:textbox />
-    </f:entry>
-  
-	<f:entry title="${%includePattern_title}" field="includeFilesPattern" help="/plugin/windows-azure-storage/help-includePattern.html">
-		<f:textbox />
-	</f:entry>
-	
-        <f:dropdownDescriptorSelector field="buildSelector" name="buildSelector" title="Build to download" descriptors="${descriptor.availableBuildSelectorList}" />
-        
-	<f:advanced>
-		<f:entry title="${%excludePattern_title}" field="excludeFilesPattern" help="/plugin/windows-azure-storage/help-excludePattern.html">
-			<f:textbox />
-		</f:entry>
+        <f:advanced>
+            <f:entry title="${%excludePattern_title}" field="excludeFilesPattern" help="/plugin/windows-azure-storage/help-excludePattern.html">
+                <f:textbox />
+            </f:entry>
 
-		<f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
-			<f:textbox />
-		</f:entry>
+            <f:entry title="${%download_dir_location_title}" field="downloadDirLoc" help="/plugin/windows-azure-storage/help-downloadDirLoc.html">
+                <f:textbox />
+            </f:entry>
 
-		<f:entry field="flattenDirectories" help="/plugin/windows-azure-storage/help-flattenDirectories.html">
-			<div align="left">
-				<f:checkbox  title="${%flattenDirectories_title}"/>
-			</div>
-		</f:entry>
+            <f:entry field="flattenDirectories" help="/plugin/windows-azure-storage/help-flattenDirectories.html">
+                <div align="left">
+                    <f:checkbox  title="${%flattenDirectories_title}"/>
+                </div>
+            </f:entry>
 
-		<f:entry field="includeArchiveZips" help="/plugin/windows-azure-storage/help-includeArchiveZips.html">
-			<div align="left">
-				<f:checkbox  title="${%includeArchiveZips_title}"/>
-			</div>
-		</f:entry>
-	</f:advanced>
-	
+            <f:entry field="includeArchiveZips" help="/plugin/windows-azure-storage/help-includeArchiveZips.html">
+                <div align="left">
+                    <f:checkbox  title="${%includeArchiveZips_title}"/>
+                </div>
+            </f:entry>
+        </f:advanced>
+    </f:section>
+
 </j:jelly>
