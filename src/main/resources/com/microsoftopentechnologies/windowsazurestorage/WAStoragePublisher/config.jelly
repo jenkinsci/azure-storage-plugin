@@ -1,10 +1,10 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-   
-	<f:entry title="${%storageAccountName_title}" field="storageAccName" help="/plugin/windows-azure-storage/help-selectstorageaccount.html">
-		<f:select />
-	</f:entry>
-  
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:c="/lib/credentials" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+        <f:entry title="${%Storage_Credentials}" field="storageCredentialId" help="/plugin/windows-azure-storage/help-storagecredential.html"> 
+                <c:select expressionAllowed="false"/>
+        </f:entry> 
+        
 	<f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-containerName.html">
 		<f:textbox  checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)" />
 	</f:entry>
