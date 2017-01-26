@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.645</version>
+    <version>2.11</version>
   </parent>
 
 
@@ -17,7 +17,10 @@
   <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	<jenkins.version>1.645</jenkins.version>
+	<java.level>7</java.level>
         <findbugs.failOnError>false</findbugs.failOnError>
+	<maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
     
   <licenses>
@@ -29,14 +32,14 @@
   
   <developers>
     	<developer>
-      		<id>martinsawicki</id>
-      		<name>Martin Sawicki</name>
-      		<email>marcins@microsoft.com</email>
+      		<id>clguiman</id>
+      		<name>Claudiu Guiman</name>
+      		<email>clguiman@microsoft.com</email>
     	</developer>
 		<developer>
-      		<id>snallami</id>
-      		<name>Suresh Nallamilli</name>
-      		<email>snallami@gmail.com</email>
+      		<id>arroyc_microsoft</id>
+      		<name>Arjun Roy Chaudhuri</name>
+      		<email>arroyc@microsoft.com</email>
     	</developer>
   </developers>
     
