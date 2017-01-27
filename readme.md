@@ -39,10 +39,12 @@ Build actions
 Download from Azure Blob storage
 --------------------------------
 
-The `Download from Azure blob storage’ build step downloads blob contents from Azure blob storage.
+The `Download from Azure blob storageâ€™ build step downloads blob contents from Azure blob storage.
 
 1. Select the storage account name to use from the dropdown control
-2. Enter the name of the container to download from. Environment variables can also be referenced. For example: ${JOB_NAME} 
+2. Select 'Download From Container' or 'Download artifact from build'.
+ - **'Download From Container'** >> Enter the name of the container to download from. Environment variables can also be referenced. For example: ${JOB_NAME}
+ - **'Download artifact from build'** >> Enter Project Name and select the build from the drop-down for 'Build to download' . For example: 'Latest successful build'.
 3. Enter the name of the blob to download. You may also use the wild card "*" at the end to select multiple blob downloads sharing the same prefix, for example: project*
 4. Optionally, enter the target download path. If not specified, the files will be downloaded into the job's workspace.
 Environment variables can also be referenced, for example: ${JOB_NAME}
@@ -52,6 +54,15 @@ For a tutorial, see http://go.microsoft.com/fwlink/?LinkId=280058.
 
 Changelog
 =========
+
+Version 0.3.2 January 26, 2017
+-----------------------------
+- storage account key has become a hidden field.
+- added the capability to use managed artifacts, a use case for artifacts can be downloading a known good build or an artifact from an upstream build. 
+- artifacts can be downloaded from previous builds.
+- links on the project page (to download) has been fixed. This now allows easier access to download artifacts from Jenkins.
+- downloads are now faster, plugin doesn't need to search the entire container for the correct blobs when using managed artifacts.
+- changes are made inline with Jenkins API, updated Azure Java SDK to provide better output to Jenkins REST API.
 
 Version 0.3.0 September 09, 2014
 -----------------------------
