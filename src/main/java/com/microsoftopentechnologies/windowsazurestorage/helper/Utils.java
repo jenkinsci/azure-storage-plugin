@@ -16,20 +16,9 @@
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import java.util.Locale;
+import jenkins.model.Jenkins;
 
 public class Utils {
-
-    /* Regular expression for valid container name */
-    public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
-
-    /* Regular expression to match tokens in the format of $TOKEN or ${TOKEN} */
-    public static final String TOKEN_FORMAT = "\\$([A-Za-z0-9_]+|\\{[A-Za-z0-9_]+\\})";
-
-    public static final String DEF_BLOB_URL = "http://blob.core.windows.net/";
-    public static final String FWD_SLASH = "/";
-    public static final String HTTP_PRT = "http://";
-    // http Protocol separator
-    public static final String PRT_SEP = "://";
 
     /**
      * Checks for validity of container name after converting the input into
@@ -44,18 +33,18 @@ public class Utils {
      * @return true if container name is valid else returns false
      */
     public static boolean validateContainerName(final String containerName) {
-	if (containerName != null) {
-	    String lcContainerName = containerName.trim().toLowerCase(
-		    Locale.ENGLISH);
-	    if (lcContainerName.matches(VAL_CNT_NAME)) {
-		return true;
-	    }
-	}
-	return false;
+        if (containerName != null) {
+            String lcContainerName = containerName.trim().toLowerCase(
+                    Locale.ENGLISH);
+            if (lcContainerName.matches(Constants.VAL_CNT_NAME)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean validateBlobName(final String blobName) {
-	return blobName != null && (blobName.length() > 0 && blobName.length() <= 1024);
+        return blobName != null && (blobName.length() > 0 && blobName.length() <= 1024);
     }
 
     /**
@@ -65,7 +54,7 @@ public class Utils {
      * @return true if null or empty string
      */
     public static boolean isNullOrEmpty(final String name) {
-	return name == null || name.matches("\\s*");
+        return name == null || name.matches("\\s*");
     }
 
     /**
@@ -76,10 +65,10 @@ public class Utils {
      * @return true if tokens exist in input string
      */
     public static boolean containTokens(String text) {
-	if (isNullOrEmpty(text)) {
-	    return false;
-	}
-	return text.matches(TOKEN_FORMAT);
+        if (isNullOrEmpty(text)) {
+            return false;
+        }
+        return text.matches(Constants.TOKEN_FORMAT);
     }
 
     /**
@@ -92,24 +81,24 @@ public class Utils {
      */
     public static String getBlobEP(String blobURL) {
 
-	if (isNullOrEmpty(blobURL)) {
-	    return DEF_BLOB_URL;
-	}
+        if (isNullOrEmpty(blobURL)) {
+            return Constants.DEF_BLOB_URL;
+        }
 
-	// Append forward slash
-	if (!blobURL.endsWith(FWD_SLASH)) {
-	    blobURL = blobURL.concat(FWD_SLASH);
-	}
+        // Append forward slash
+        if (!blobURL.endsWith(Constants.FWD_SLASH)) {
+            blobURL = blobURL.concat(Constants.FWD_SLASH);
+        }
 
-	// prepend http protocol if missing
-	if (!blobURL.contains(PRT_SEP)) {
-	    blobURL = new StringBuilder()
-		    .append(HTTP_PRT)
-		    .append(blobURL)
-		    .toString();
-	}
+        // prepend http protocol if missing
+        if (!blobURL.contains(Constants.PRT_SEP)) {
+            blobURL = new StringBuilder()
+                    .append(Constants.HTTP_PRT)
+                    .append(blobURL)
+                    .toString();
+        }
 
-	return blobURL;
+        return blobURL;
     }
 
     /**
@@ -118,6 +107,31 @@ public class Utils {
      * @return
      */
     public static String getDefaultBlobURL() {
-	return DEF_BLOB_URL;
+        return Constants.DEF_BLOB_URL;
     }
+
+    /**
+     * Returns md5 hash in string format for a given string
+     *
+     * @return
+     */
+    public static String getMD5(String plainText) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance(Constants.HASH_TYPE);
+            byte[] array = md.digest(plainText.getBytes());
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < array.length; ++i) {
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+            }
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getWorkDirectory() {
+        return Jenkins.getInstance().root.getAbsolutePath();
+    }
+
 }

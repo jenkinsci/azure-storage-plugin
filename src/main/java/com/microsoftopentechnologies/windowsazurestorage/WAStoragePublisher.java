@@ -15,20 +15,19 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
-import com.cloudbees.plugins.credentials.CredentialsMatcher;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
+import com.microsoftopentechnologies.windowsazurestorage.helper.CredentialMigration;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractProject;
@@ -68,7 +67,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     /**
      * Windows Azure Storage Account Name.
      */
-    private final String storageAccName;
+    private final transient String storageAccName;
 
     /**
      * Windows Azure storage container name.
@@ -128,11 +127,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     private final boolean doNotWaitForPreviousBuild;
 
-    private final String storageCredentialId;
+    private String storageCredentialId;
 
-    private transient final AzureCredentials.StorageAccountCredential storageCreds;
+    private transient AzureCredentials.StorageAccountCredential storageCreds;
 
     public enum UploadType {
+
         INDIVIDUAL,
         ZIP,
         BOTH,
@@ -140,9 +140,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundConstructor
-    public WAStoragePublisher(final String storageCredentialId,
-            final String filesPath, final String excludeFilesPath, final String containerName,
-            final boolean cntPubAccess, final String virtualPath,
+    public WAStoragePublisher(final String storageAccName, 
+            final String storageCredentialId, final String filesPath, final String excludeFilesPath, 
+            final String containerName, final boolean cntPubAccess, final String virtualPath,
             final boolean cleanUpContainer, final boolean allowAnonymousAccess,
             final boolean uploadArtifactsOnlyIfSuccessful,
             final boolean doNotFailIfArchivingReturnsNothing,
@@ -150,7 +150,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             final boolean uploadZips,
             final boolean doNotWaitForPreviousBuild) {
         super();
-        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
         this.filesPath = filesPath.trim();
         this.excludeFilesPath = excludeFilesPath.trim();
         this.containerName = containerName.trim();
@@ -164,6 +163,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.uploadZips = uploadZips;
         this.doNotWaitForPreviousBuild = doNotWaitForPreviousBuild;
         this.storageCredentialId = storageCredentialId;
+        this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, storageAccName);
         this.storageAccName = this.storageCreds.getStorageAccountName();
     }
 
@@ -212,16 +212,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     public String getStorageCredentialId() {
+        if(this.storageCredentialId == null && this.storageAccName != null)
+            return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
         return storageCredentialId;
-    }
-
-    public AzureCredentials.StorageAccountCredential getStorageCreds() {
-
-        if (storageCreds == null && storageCredentialId != null) {
-            return AzureCredentials.getStorageAccountCredential(this.storageCredentialId);
-        }
-
-        return storageCreds;
     }
 
     private UploadType computeArtifactUploadType(final boolean uploadZips, final boolean doNotUploadIndividualFiles) {
@@ -249,7 +242,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     public WAStorageDescriptor getDescriptor() {
-        WAStorageDescriptor x = (WAStorageDescriptor) super.getDescriptor();
         return (WAStorageDescriptor) super.getDescriptor();
     }
 
@@ -270,7 +262,14 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      */
     public StorageAccountInfo getStorageAccount() {
         StorageAccountInfo storageAcc = null;
-        storageAcc = AzureCredentials.convertToStorageAccountInfo(this.getStorageCreds());
+        for (StorageAccountInfo sa : getDescriptor().getStorageAccounts()) {
+            if (sa.getStorageAccName().equals(storageAccName)) {
+                storageAcc = sa;
+                storageAcc.setBlobEndPointURL(Utils.getBlobEP(
+                        storageAcc.getBlobEndPointURL()));
+                break;
+            }
+        }
 
         return storageAcc;
     }
@@ -284,13 +283,16 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath ws, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+    public synchronized void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath ws, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
-        // Get storage account and set formatted blob endpoint url.
-        StorageAccountInfo strAcc = getStorageAccount();
-        //StorageAccountInfo strAcc = get
         final EnvVars envVars = run.getEnvironment(listener);
 
+        // Get storage account and set formatted blob endpoint url.
+        if(this.storageCreds == null) {
+            this.storageCreds = AzureCredentials.getStorageCreds(storageCredentialId, storageAccName);
+            this.storageCredentialId = this.storageCreds.getId();
+        }
+        StorageAccountInfo strAcc = AzureCredentials.convertToStorageAccountInfo(this.storageCreds);
         // Resolve container name
         String expContainerName = replaceMacro(containerName, envVars, Locale.ENGLISH);
 
@@ -307,8 +309,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         // Resolve virtual path
         String expVP = replaceMacro(virtualPath, envVars);
 
-        if (!(Utils.isNullOrEmpty(expVP) || expVP.endsWith(Utils.FWD_SLASH))) {
-            expVP += Utils.FWD_SLASH;
+        if (!(Utils.isNullOrEmpty(expVP) || expVP.endsWith(Constants.FWD_SLASH))) {
+            expVP += Constants.FWD_SLASH;
         }
 
         try {
@@ -409,7 +411,17 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     public static final class WAStorageDescriptor extends
             BuildStepDescriptor<Publisher> {
 
-        private final CopyOnWriteList<StorageAccountInfo> storageAccounts = new CopyOnWriteList<StorageAccountInfo>();
+        private static final CopyOnWriteList<StorageAccountInfo> storageAccounts = new CopyOnWriteList<StorageAccountInfo>();
+
+        @Initializer(before = InitMilestone.PLUGINS_STARTED)
+        public static void doUpgrade() {
+            try {
+                CredentialMigration.upgradeStorageConfig();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         public WAStorageDescriptor() {
             super();
@@ -566,7 +578,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
-
             ListBoxModel m = new StandardListBoxModel().withAll(CredentialsProvider.lookupCredentials(AzureCredentials.class, owner, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()));
             return m;
         }
@@ -586,6 +597,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
             }
             return allStorageCred;
+        }
+        
+        @Restricted(NoExternalUse.class)
+        public String getAjaxURI(){
+            return Constants.CREDENTIALS_AJAX_URI;
         }
 
     }

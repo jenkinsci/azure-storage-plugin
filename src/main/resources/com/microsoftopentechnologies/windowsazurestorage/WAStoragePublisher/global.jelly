@@ -1,11 +1,11 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:sf="/lib/credentials" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-
     <f:section title="${%WindowsAzureStorage_title}" id="windows-azure-storage">
         <f:entry title="${%entry_title}" >
-            <f:entry var="storageAccount" items="${descriptor.storageAccounts}" noAddButton="false" minimum="1">
-                <table width="100%">
-                    <f:entry title="" field="storageCredentialId" help="/plugin/windows-azure-storage/help-storageaccounts.html"> 
+            <f:entry var="storageAccount" items="${descriptor.storageAccounts}" noAddButton="true" minimum="1">
+                <table width="102%">
+                    
+                    <f:entry field="storageCredentialId" help="/plugin/windows-azure-storage/help-storageaccounts.html"> 
                         <div style="display: none; !important">
                             <sf:select class="display: none !important" expressionAllowed="false" />
                         </div>
@@ -23,9 +23,10 @@
                     </j:forEach>
                 </div>
                 <div align="center"> 
-                    <input type="button" class="yui-button yui-push-button" value="Add Storage Accounts" onclick="window.credentials.add()" /> 
+                    <j:set var="credsAjaxURI" value="${instance.getAjaxURI()}"/>
+                    <input type="button" class="yui-button" value="Add Storage Accounts" onclick="window.credentials.add('${credsAjaxURI}')" /> 
                     <p>
-                        <a href="credential-store/domain/_/">Manage Storage Accounts in Credential Store</a>
+                        <a href="credentials/store/system/domain/_/" target="_blank">Manage Storage Accounts in Credential Store</a>
                     </p>
                 </div>
             </f:entry> 	
