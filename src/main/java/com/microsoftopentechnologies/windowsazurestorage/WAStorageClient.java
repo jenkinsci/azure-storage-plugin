@@ -32,6 +32,7 @@ import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.UploadType;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -119,7 +120,7 @@ public class WAStorageClient {
 
 	credentials = new StorageCredentialsAccountAndKey(accName, storageAccount.getStorageAccountKey());
 
-	if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Utils.DEF_BLOB_URL)) {
+	if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Constants.DEF_BLOB_URL)) {
 	    cloudStorageAccount = new CloudStorageAccount(credentials);
 	} else {
 	    cloudStorageAccount = new CloudStorageAccount(credentials, new URI(
@@ -275,8 +276,8 @@ public class WAStorageClient {
 
 			if (Utils.isNullOrEmpty(embeddedVP)) {
 			    embeddedVP = null;
-			} else if (!embeddedVP.endsWith(Utils.FWD_SLASH)) {
-			    embeddedVP = embeddedVP + Utils.FWD_SLASH;
+			} else if (!embeddedVP.endsWith(Constants.FWD_SLASH)) {
+			    embeddedVP = embeddedVP + Constants.FWD_SLASH;
 			}
 		    }
 		    fileName = fileName.substring(0, embVPSepIndex);

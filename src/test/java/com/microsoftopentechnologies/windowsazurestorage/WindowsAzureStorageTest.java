@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import junit.framework.TestCase;
 
-
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils; 
 
 public class WindowsAzureStorageTest extends TestCase {
@@ -58,9 +58,9 @@ public class WindowsAzureStorageTest extends TestCase {
 	@Test
 	public void testGetBlobEPReturnsDefaultURL() throws Exception {
 		// return default blob host given null URL
-		assertEquals(Utils.DEF_BLOB_URL, Utils.getBlobEP(null));
+		assertEquals(Constants.DEF_BLOB_URL, Utils.getBlobEP(null));
 		// return default blob host given the default blob URL
-		assertEquals(Utils.DEF_BLOB_URL, Utils.getBlobEP(Utils.DEF_BLOB_URL));
+		assertEquals(Constants.DEF_BLOB_URL, Utils.getBlobEP(Constants.DEF_BLOB_URL));
 	}
 
 	@Test

@@ -57,7 +57,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
-    private final String storageAccName;
+    private final transient String storageAccName;
     private final String downloadType;
     private final String containerName;
     private final String includeFilesPattern;
@@ -67,9 +67,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private final boolean includeArchiveZips;
     private final BuildSelector buildSelector;
     private final String projectName;
-    private final String storageCredentialId;
+    private String storageCredentialId;
 
-    private transient final AzureCredentials.StorageAccountCredential storageCreds;
+    private transient AzureCredentials.StorageAccountCredential storageCreds;
 
     public static class DownloadType {
 
@@ -93,6 +93,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     @DataBoundConstructor
     public AzureStorageBuilder(
+            final String strAccName,
             final String storageCredentialId,
             final DownloadType downloadType,
             final String includeFilesPattern,
@@ -101,7 +102,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             final boolean flattenDirectories,
             final boolean includeArchiveZips) {
         this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
+        this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, strAccName);
         this.storageAccName = storageCreds.getStorageAccountName();
         this.downloadType = downloadType.type;
         this.containerName = downloadType.containerName;
@@ -157,7 +158,12 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
-
+    
+    public String getStorageCredentialId() {
+        if(this.storageCredentialId == null && this.storageAccName != null)
+            return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
+        return storageCredentialId;
+    }
     /**
      *
      * @param run environment of build
@@ -166,12 +172,16 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
      * @param listener logging
      */
     @Override
-    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
+    public synchronized void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
         StorageAccountInfo strAcc = null;
         try {
             final EnvVars envVars = run.getEnvironment(listener);
 
             // Get storage account
+            if (this.storageCreds == null) {
+                this.storageCreds = AzureCredentials.getStorageCreds(storageCredentialId, storageAccName);
+                this.storageCredentialId = this.storageCreds.getId();
+            }
             strAcc = AzureCredentials.convertToStorageAccountInfo(this.storageCreds);
 
             // Resolve include patterns
