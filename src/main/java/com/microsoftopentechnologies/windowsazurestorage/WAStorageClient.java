@@ -73,7 +73,7 @@ public class WAStorageClient {
 
     /**
      * This method validates Storage Account credentials by checking for a dummy
-     * conatiner existence.
+     * container existence.
      *
      * @param storageAccount
      * @return true if valid
@@ -123,9 +123,10 @@ public class WAStorageClient {
 	if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Constants.DEF_BLOB_URL)) {
 	    cloudStorageAccount = new CloudStorageAccount(credentials);
 	} else {
-	    cloudStorageAccount = new CloudStorageAccount(credentials, new URI(
-		    blobURL), new URI(getCustomURI(accName, QUEUE, blobURL)),
-		    new URI(getCustomURI(accName, TABLE, blobURL)));
+		String endpointSuffix = getEndpointSuffix(blobURL);
+		if(Utils.isNullOrEmpty(endpointSuffix))
+			throw new URISyntaxException(blobURL,"The blob endpoint is not correct!");
+		cloudStorageAccount = new CloudStorageAccount(credentials, false, endpointSuffix);
 	}
 
 	serviceClient = cloudStorageAccount.createCloudBlobClient();
@@ -170,7 +171,6 @@ public class WAStorageClient {
      */
     private static String getCustomURI(String storageAccountName, String type,
 	    String blobURL) {
-
 	if (QUEUE.equalsIgnoreCase(type)) {
 	    return blobURL.replace(storageAccountName + "." + BLOB,
 		    storageAccountName + "." + type);
@@ -180,6 +180,22 @@ public class WAStorageClient {
 	} else {
 	    return null;
 	}
+    }
+    
+    /**
+     * Returns suffix for blob endpoint.
+     *
+     * @param blob endpoint
+     * @return the endpoint suffix
+     */
+    private static String getEndpointSuffix(String blobURL)
+    {
+    	int endSuffixStartIndex = blobURL.toLowerCase().indexOf(Utils.BLOB_ENDPOINT_ENDSUFFIX_KEYWORD);
+    	if(endSuffixStartIndex < 0) {
+    		return null;
+    	} else {
+    		return blobURL.substring(endSuffixStartIndex);
+    	}
     }
 
     /**

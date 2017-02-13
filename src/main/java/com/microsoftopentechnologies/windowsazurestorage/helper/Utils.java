@@ -20,6 +20,19 @@ import jenkins.model.Jenkins;
 
 public class Utils {
 
+    /* Regular expression for valid container name */
+    public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
+
+    /* Regular expression to match tokens in the format of $TOKEN or ${TOKEN} */
+    public static final String TOKEN_FORMAT = "\\$([A-Za-z0-9_]+|\\{[A-Za-z0-9_]+\\})";
+
+    public static final String DEF_BLOB_URL = "http://blob.core.windows.net/";
+    public static final String BLOB_ENDPOINT_ENDSUFFIX_KEYWORD = "core";
+    public static final String FWD_SLASH = "/";
+    public static final String HTTP_PRT = "http://";
+    // http Protocol separator
+    public static final String PRT_SEP = "://";
+
     /**
      * Checks for validity of container name after converting the input into
      * lowercase. Rules for container name 1.Container names must start with a
