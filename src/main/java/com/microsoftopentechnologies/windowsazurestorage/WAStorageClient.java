@@ -42,6 +42,7 @@ import hudson.util.DirScanner.Glob;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -109,7 +110,7 @@ public class WAStorageClient {
      */
     private static CloudBlobContainer getBlobContainerReference(StorageAccountInfo storageAccount, String containerName,
 	    boolean createCnt, boolean allowRetry, Boolean cntPubAccess)
-	    throws URISyntaxException, StorageException {
+	    throws URISyntaxException, StorageException, MalformedURLException, IOException {
 
 	CloudStorageAccount cloudStorageAccount;
 	CloudBlobClient serviceClient;
@@ -141,7 +142,7 @@ public class WAStorageClient {
 	boolean cntExists = container.exists();
 
 	if (createCnt && !cntExists) {
-	    container.createIfNotExists();
+	    container.createIfNotExists(null, Utils.updateUserAgent());
 	}
 
 	// Apply permissions only if container is created newly
@@ -195,9 +196,11 @@ public class WAStorageClient {
 	    throws StorageException, IOException, InterruptedException {
 	long startTime = System.currentTimeMillis();
 	InputStream inputStream = src.read();
+        
 	try {
 	    blob.upload(inputStream, src.length(), null,
-		    getBlobRequestOptions(), null);
+		    getBlobRequestOptions(), Utils.updateUserAgent());
+            
 	} finally {
 	    try {
 		inputStream.close();
@@ -374,11 +377,12 @@ public class WAStorageClient {
      * @throws URISyntaxException
      */
     private static void deleteContents(CloudBlobContainer container)
-	    throws StorageException, URISyntaxException {
+	    throws StorageException, URISyntaxException, MalformedURLException, IOException {
 
 	for (ListBlobItem blobItem : container.listBlobs()) {
 	    if (blobItem instanceof CloudBlob) {
-		((CloudBlob) blobItem).delete();
+                ((CloudBlob) blobItem).uploadProperties(null, null, Utils.updateUserAgent());
+                ((CloudBlob) blobItem).delete();
 	    } else if (blobItem instanceof CloudBlobDirectory) {
 		deleteContents((CloudBlobDirectory) blobItem);
 	    }
@@ -393,11 +397,12 @@ public class WAStorageClient {
      * @throws URISyntaxException
      */
     private static void deleteContents(CloudBlobDirectory cloudBlobDirectory)
-	    throws StorageException, URISyntaxException {
+	    throws StorageException, URISyntaxException, MalformedURLException, IOException {
 
 	for (ListBlobItem blobItem : cloudBlobDirectory.listBlobs()) {
 	    if (blobItem instanceof CloudBlob) {
-		((CloudBlob) blobItem).delete();
+                ((CloudBlob) blobItem).uploadProperties(null, null, Utils.updateUserAgent());
+                ((CloudBlob) blobItem).delete();
 	    } else if (blobItem instanceof CloudBlobDirectory) {
 		deleteContents((CloudBlobDirectory) blobItem);
 	    }
@@ -672,8 +677,8 @@ public class WAStorageClient {
 	    fos = downloadFile.write();
 
 	    long startTime = System.currentTimeMillis();
-
-	    blob.download(fos, null, getBlobRequestOptions(), null);
+            
+            blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
 
 	    long endTime = System.currentTimeMillis();
 
