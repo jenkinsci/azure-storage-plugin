@@ -25,5 +25,6 @@ public class Constants {
     public static final String LEGACY_STORAGE_CONFIG_FILE = "com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml";
     public static final String HASH_TYPE = "MD5";
     public static final String CREDENTIALS_AJAX_URI = "/descriptor/com.cloudbees.plugins.credentials.CredentialsSelectHelper/resolver/com.cloudbees.plugins.credentials.CredentialsSelectHelper$SystemContextResolver/provider/com.cloudbees.plugins.credentials.SystemCredentialsProvider$ProviderImpl/context/jenkins/dialog";
+    public static final String PLUGIN_NAME = "AzureJenkinsStorage";
 
 }

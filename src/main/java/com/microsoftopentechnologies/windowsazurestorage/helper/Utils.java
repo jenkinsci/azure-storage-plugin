@@ -15,6 +15,10 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
+import com.microsoft.azure.storage.OperationContext;
+import com.microsoft.azure.storage.core.BaseRequest;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Locale;
 import jenkins.model.Jenkins;
 
@@ -145,6 +149,40 @@ public class Utils {
 
     public static String getWorkDirectory() {
         return Jenkins.getInstance().root.getAbsolutePath();
+    }
+    
+    public static OperationContext updateUserAgent() throws IOException {
+                    
+        String userInfo = BaseRequest.getUserAgent();       
+        String version = null;
+        String instanceId = null;
+
+        try {
+            version = Utils.class.getPackage().getImplementationVersion();
+            instanceId = Jenkins.getInstance().getLegacyInstanceId();
+        } catch (Exception e) {
+        }
+
+        if (version == null) {
+            version = "local";
+        }
+        if (instanceId == null) {
+            instanceId = "local";
+        }
+        String pluginInfo = Constants.PLUGIN_NAME + "/" + version + "/" + instanceId;
+        
+        if (userInfo == null) {
+            userInfo = pluginInfo;
+        } else {
+            userInfo = pluginInfo + "/" + userInfo;
+        }
+
+        OperationContext opContext = new OperationContext();
+        HashMap<String, String> temp = new HashMap<String, String>();
+        temp.put("User-Agent", userInfo);
+
+        opContext.setUserHeaders(temp);
+        return opContext;
     }
 
 }
