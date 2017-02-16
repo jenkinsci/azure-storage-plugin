@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Jenkins.getInstance() should never be null, but findbug is showing warning/error on that so filetring it.
+-->
+<FindBugsFilter>
+    <Match>
+        <!-- The issue was fixed, but the error is still there -->
+        <Class name="com.microsoftopentechnologies.windowsazurestorage.helper.Utils" />
+        <Method name="getJenkinsInstance"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
+    </Match>
+</FindBugsFilter>

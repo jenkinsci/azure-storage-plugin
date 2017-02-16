@@ -2,6 +2,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.WAStorageDescriptor;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.model.Api;
 import hudson.model.Run;
 import hudson.model.RunAction;
@@ -90,7 +91,7 @@ public class AzureBlobAction implements RunAction {
     }
 
     private WAStoragePublisher.WAStorageDescriptor getWAStorageDescriptor() {
-	WAStoragePublisher.WAStorageDescriptor desc = Jenkins.getInstance().getDescriptorByType(WAStoragePublisher.WAStorageDescriptor.class);
+	WAStoragePublisher.WAStorageDescriptor desc = Utils.getJenkinsInstance().getDescriptorByType(WAStoragePublisher.WAStorageDescriptor.class);
 	return desc;
     }
 

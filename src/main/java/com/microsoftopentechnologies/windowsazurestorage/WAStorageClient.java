@@ -379,7 +379,7 @@ public class WAStorageClient {
 		tempPath.deleteRecursive();
 	    }
 
-	} catch (Exception e) {
+	} catch (StorageException | IOException | InterruptedException | URISyntaxException e) {
 	    throw new WAStorageException(e.getMessage(), e.getCause());
 	}
 	return filesUploaded;

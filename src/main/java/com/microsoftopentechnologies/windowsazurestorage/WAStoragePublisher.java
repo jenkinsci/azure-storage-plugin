@@ -288,11 +288,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         final EnvVars envVars = run.getEnvironment(listener);
 
         // Get storage account and set formatted blob endpoint url.
-        if(this.storageCreds == null) {
-            this.storageCreds = AzureCredentials.getStorageCreds(storageCredentialId, storageAccName);
-            this.storageCredentialId = this.storageCreds.getId();
-        }
-        StorageAccountInfo strAcc = AzureCredentials.convertToStorageAccountInfo(this.storageCreds);
+        StorageAccountInfo strAcc = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
         // Resolve container name
         String expContainerName = replaceMacro(containerName, envVars, Locale.ENGLISH);
 
