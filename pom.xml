@@ -19,7 +19,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	<jenkins.version>1.645</jenkins.version>
 	<java.level>7</java.level>
-        <findbugs.failOnError>false</findbugs.failOnError>
+        <findbugs.failOnError>true</findbugs.failOnError>
+        <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
 	<maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
     

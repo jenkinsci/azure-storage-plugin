@@ -19,6 +19,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.DescriptorExtensionList;
@@ -44,12 +45,14 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.acegisecurity.AccessDeniedException;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -173,17 +176,13 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
      */
     @Override
     public synchronized void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
-        StorageAccountInfo strAcc = null;
-        try {
+        // Get storage account
+        StorageAccountInfo strAcc = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
+        try{
             final EnvVars envVars = run.getEnvironment(listener);
-
-            // Get storage account
-            if (this.storageCreds == null) {
-                this.storageCreds = AzureCredentials.getStorageCreds(storageCredentialId, storageAccName);
-                this.storageCredentialId = this.storageCreds.getId();
-            }
-            strAcc = AzureCredentials.convertToStorageAccountInfo(this.storageCreds);
-
+            if (envVars == null) {
+                throw new IllegalStateException("Failed to capture information about running environment.");
+            }          
             // Resolve include patterns
             String expIncludePattern = Util.replaceMacro(includeFilesPattern, envVars);
 
@@ -218,7 +217,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                         strAcc, expIncludePattern, expExcludePattern, Util.replaceMacro(downloadDirLoc, envVars),
                         flattenDirectories, workspace, expContainerName);
             } else {
-                Job<?, ?> job = Jenkins.getInstance().getItemByFullName(expProjectName, Job.class);
+                Job<?, ?> job = Utils.getJenkinsInstance().getItemByFullName(expProjectName, Job.class);
                 if (job != null) {
                     // Resolve download location
                     BuildFilter filter = new BuildFilter();
@@ -245,7 +244,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                 listener.getLogger().println(Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
             }
 
-        } catch (Exception e) {
+        } catch (WAStorageException | IOException | InterruptedException | AccessDeniedException e) {
             e.printStackTrace(listener.error(Messages.AzureStorageBuilder_download_err(strAcc.getStorageAccName())));
             run.setResult(Result.UNSTABLE);
         }
@@ -267,7 +266,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                     strAcc, blob, includeFilter, excludeFilter,
                     downloadDir, flattenDirectories, workspace);
 
-        } catch (Exception e) {
+        } catch (WAStorageException | IOException | InterruptedException e) {
             run.setResult(Result.UNSTABLE);
         }
 
@@ -340,7 +339,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter String value) {
             AutoCompletionCandidates projectList = new AutoCompletionCandidates();
-            for (AbstractProject<?, ?> project : Jenkins.getInstance().getItems(AbstractProject.class)) {
+            for (AbstractProject<?, ?> project : Utils.getJenkinsInstance().getItems(AbstractProject.class)) {
                 if (project.getName().toLowerCase().startsWith(value.toLowerCase())) {
                     projectList.add(project.getName());
                 }
@@ -359,8 +358,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
 
         public StorageAccountInfo[] getStorageAccounts() {
-            WAStoragePublisher.WAStorageDescriptor publisherDescriptor = Jenkins
-                    .getInstance().getDescriptorByType(
+            WAStoragePublisher.WAStorageDescriptor publisherDescriptor = Utils.getJenkinsInstance().getDescriptorByType(
                             WAStoragePublisher.WAStorageDescriptor.class);
 
             StorageAccountInfo[] sa = publisherDescriptor.getStorageAccounts();

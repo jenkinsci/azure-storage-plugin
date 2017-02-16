@@ -17,9 +17,12 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.core.BaseRequest;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
+import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 
 public class Utils {
@@ -126,29 +129,41 @@ public class Utils {
     public static String getDefaultBlobURL() {
         return Constants.DEF_BLOB_URL;
     }
+    
+    @Nonnull
+    public static Jenkins getJenkinsInstance() {
+        return Jenkins.getInstance();
+    }
 
     /**
      * Returns md5 hash in string format for a given string
      *
+     * @param plainText
      * @return
      */
     public static String getMD5(String plainText) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance(Constants.HASH_TYPE);
-            byte[] array = md.digest(plainText.getBytes());
-            StringBuffer sb = new StringBuffer();
+            byte[] array = md.digest(plainText.getBytes(Charset.forName("UTF-8")));
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < array.length; ++i) {
                 sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
             }
             return sb.toString();
         } catch (java.security.NoSuchAlgorithmException e) {
-            e.printStackTrace();
         }
         return null;
     }
 
     public static String getWorkDirectory() {
-        return Jenkins.getInstance().root.getAbsolutePath();
+        File jenkinsRoot;
+        jenkinsRoot = Utils.getJenkinsInstance().root;
+        if (jenkinsRoot == null) {
+            throw new IllegalStateException("Root isn't configured. Couldn't find Jenkins work directory."); 
+        }
+        
+        return jenkinsRoot.getAbsolutePath();
+        
     }
     
     public static OperationContext updateUserAgent() throws IOException {
@@ -159,7 +174,12 @@ public class Utils {
 
         try {
             version = Utils.class.getPackage().getImplementationVersion();
-            instanceId = Jenkins.getInstance().getLegacyInstanceId();
+            if(Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
+                instanceId = "local-instance";
+            }
+            else {
+                instanceId = Utils.getJenkinsInstance().getLegacyInstanceId();
+            }
         } catch (Exception e) {
         }
 
@@ -183,6 +203,6 @@ public class Utils {
 
         opContext.setUserHeaders(temp);
         return opContext;
-    }
+    }    
 
 }
