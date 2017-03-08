@@ -137,7 +137,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             else {
                 List<AzureCredentials> allCreds = CredentialsProvider.lookupCredentials(AzureCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
                 for (AzureCredentials cred : allCreds) {
-                    if (storageAccName.equals(cred.getStorageAccName())) {
+                    if (storageAccName.equals(cred.getStorageAccountName())) {
                         return cred.getStorageCred();
                     }
                 }
@@ -149,15 +149,15 @@ public class AzureCredentials extends BaseStandardCredentials {
         return null;
     }
 
-    public String getStorageAccName() {
+    public String getStorageAccountName() {
         return storageData.storageAccountName;
     }
 
-    public String getStorageAccKey() {
+    public String getStorageKey() {
         return storageData.storageAccountKey.getEncryptedValue();
     }
 
-    public String getBLOBURL() {
+    public String getBlobEndpointURL() {
         return storageData.blobEndpointURL;
     }
     
