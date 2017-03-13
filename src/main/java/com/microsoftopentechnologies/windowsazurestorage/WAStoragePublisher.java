@@ -333,7 +333,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
 
                 run.getActions().add(new AzureBlobAction(run, strAcc.getStorageAccName(),
-                        expContainerName, individualBlobs, zipArchiveBlob, allowAnonymousAccess));
+                        expContainerName, individualBlobs, zipArchiveBlob, allowAnonymousAccess, storageCredentialId));
             }
         } catch (Exception e) {
             e.printStackTrace(listener.error(Messages

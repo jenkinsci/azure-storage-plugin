@@ -1,8 +1,7 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.WAStorageDescriptor;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import hudson.model.Api;
 import hudson.model.Run;
 import hudson.model.RunAction;
@@ -25,16 +24,18 @@ public class AzureBlobAction implements RunAction {
     private final boolean allowAnonymousAccess;
     private final AzureBlob zipArchiveBlob;
     private final List<AzureBlob> individualBlobs;
+    private final String storageCredentialId;
 
     public AzureBlobAction(Run build, String storageAccountName, String containerName,
 	    List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
-	    boolean allowAnonymousAccess) {
+	    boolean allowAnonymousAccess, String storageCredentialId) {
 	this.storageAccountName = storageAccountName;
 	this.containerName = containerName;
 	this.individualBlobs = individualBlobs;
 	this.allowAnonymousAccess = allowAnonymousAccess;
 	this.zipArchiveBlob = zipArchiveBlob;
 	this.build = build;
+        this.storageCredentialId = storageCredentialId;
     }
 
     public Run<?, ?> getBuild() {
@@ -90,19 +91,15 @@ public class AzureBlobAction implements RunAction {
 	return allowAnonymousAccess;
     }
 
-    private WAStoragePublisher.WAStorageDescriptor getWAStorageDescriptor() {
-	WAStoragePublisher.WAStorageDescriptor desc = Utils.getJenkinsInstance().getDescriptorByType(WAStoragePublisher.WAStorageDescriptor.class);
-	return desc;
-    }
-
     public void doProcessDownloadRequest(final StaplerRequest request, final StaplerResponse response) throws IOException, ServletException {
-	WAStorageDescriptor storageDesc = getWAStorageDescriptor();
-	StorageAccountInfo accountInfo = storageDesc.getStorageAccount(storageAccountName);
+	AzureCredentials.StorageAccountCredential accountCredentials = AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
 
-	if (accountInfo == null) {
+	if (accountCredentials == null) {
 	    response.sendError(500, "Azure Storage account global configuration is missing");
 	    return;
 	}
+
+	StorageAccountInfo accountInfo = AzureCredentials.convertToStorageAccountInfo(accountCredentials);
 
 	if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
 	    String url = request.getOriginalRequestURI();
