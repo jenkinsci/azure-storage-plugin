@@ -438,12 +438,13 @@ public class WAStorageClient {
      * @param flattenDirectories if directories are flattened
      * @param workspace workspace of build
      * @param containerName container with blobs
+     * @param deleteAfterDownload
      * @return filesDownloaded number of files that are downloaded
      * @throws WAStorageException throws exception
      */
     public static int download(Run<?, ?> run, Launcher launcher,
             TaskListener listener, StorageAccountInfo strAcc, String includePattern, String excludePattern,
-            String downloadDirLoc, boolean flattenDirectories, FilePath workspace, String containerName)
+            String downloadDirLoc, boolean flattenDirectories, FilePath workspace, String containerName, boolean deleteAfterDownload)
             throws WAStorageException {
 
         int filesDownloaded = 0;
@@ -456,7 +457,7 @@ public class WAStorageClient {
                     .getBlobContainerReference(strAcc, containerName,
                             false, true, null);
             filesDownloaded = downloadBlobs(container, includePattern, excludePattern,
-                    downloadDir, flattenDirectories, listener);
+                    downloadDir, flattenDirectories, deleteAfterDownload, listener);
         } catch (Exception e) {
             throw new WAStorageException(e.getMessage(), e.getCause());
         }
@@ -476,13 +477,14 @@ public class WAStorageClient {
      * @param downloadDirLoc dir to download to
      * @param flattenDirectories if directories are flattened
      * @param workspace workspace of build
+     * @param deleteAfterDownload
      * @return filesDownloaded number of files that are downloaded
      * @throws WAStorageException throws exception
      */
     public static int download(Run<?, ?> run, Launcher launcher,
 	    TaskListener listener, StorageAccountInfo strAcc,
 	    List<AzureBlob> blobs, String includePattern, String excludePattern,
-	    String downloadDirLoc, boolean flattenDirectories, FilePath workspace)
+	    String downloadDirLoc, boolean flattenDirectories, FilePath workspace, boolean deleteAfterDownload)
 	    throws WAStorageException {
 
 	int filesDownloaded = 0;
@@ -504,7 +506,7 @@ public class WAStorageClient {
 				false, true, null);
 
 		if (shouldDownload(includePattern, excludePattern, blob.getBlobName())) {
-		    filesDownloaded += downloadBlobs(container, blob, downloadDir, flattenDirectories, listener);
+		    filesDownloaded += downloadBlobs(container, blob, downloadDir, flattenDirectories, deleteAfterDownload, listener);
 		}
 
 	    } catch (Exception e) {
@@ -603,11 +605,11 @@ public class WAStorageClient {
      * @param listener
      * @return
      */
-    private static int downloadBlobs(CloudBlobContainer container, AzureBlob blob, FilePath downloadDir, boolean flattenDirectories, TaskListener listener) {
+    private static int downloadBlobs(CloudBlobContainer container, AzureBlob blob, FilePath downloadDir, boolean flattenDirectories, boolean deleteAfterDownload, TaskListener listener) {
 	int filesDownloaded = 0;
 	try {
 	    CloudBlockBlob cbb = container.getBlockBlobReference(blob.getBlobName());
-	    downloadBlob(cbb, downloadDir, flattenDirectories, listener);
+	    downloadBlob(cbb, downloadDir, flattenDirectories, deleteAfterDownload, listener);
 	    filesDownloaded++;
 	} catch (URISyntaxException ex) {
 	    Logger.getLogger(WAStorageClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -635,7 +637,8 @@ public class WAStorageClient {
      */
     private static int downloadBlobs(CloudBlobContainer container,
             String includePattern, String excludePattern,
-            FilePath downloadDir, boolean flattenDirectories, TaskListener listener) throws WAStorageException, URISyntaxException, IOException, StorageException {
+            FilePath downloadDir, boolean flattenDirectories, boolean deleteAfterDownload, 
+            TaskListener listener) throws WAStorageException, URISyntaxException, IOException, StorageException {
         int filesDownloaded = 0;
         String[] includePatterns = includePattern.split(fpSeparator);
         String[] excludePatterns = null;
@@ -653,14 +656,14 @@ public class WAStorageClient {
 
                 // Check whether we should download it.
                 if (blobPathMatches(blob.getName(), includePatterns, excludePatterns, true)) {
-                    downloadBlob((CloudBlockBlob) blob, downloadDir, flattenDirectories, listener);
+                    downloadBlob((CloudBlockBlob) blob, downloadDir, flattenDirectories, deleteAfterDownload, listener);
                     filesDownloaded++;
                 }
 
             } else if (blobItem instanceof CloudBlobDirectory) {
                 CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
                 filesDownloaded += downloadBlob(blobDirectory, includePatterns,
-                        excludePatterns, downloadDir, flattenDirectories, listener);
+                        excludePatterns, downloadDir, flattenDirectories, deleteAfterDownload, listener);
             }
         }
         return filesDownloaded;
@@ -677,7 +680,7 @@ public class WAStorageClient {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static void downloadBlob(CloudBlob blob, FilePath downloadDir, boolean flattenDirectories,
+    private static void downloadBlob(CloudBlob blob, FilePath downloadDir, boolean flattenDirectories, boolean deleteAfterDownload,
 	    TaskListener listener) throws WAStorageException {
 	OutputStream fos = null;
 	try {
@@ -696,7 +699,11 @@ public class WAStorageClient {
             
             blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
 
-	    long endTime = System.currentTimeMillis();
+            if (deleteAfterDownload) {
+                blob.delete();
+            }
+
+            long endTime = System.currentTimeMillis();
 
 	    listener.getLogger().println(
 		    "blob " + blob.getName() + " is downloaded to "
@@ -731,7 +738,7 @@ public class WAStorageClient {
      */
     private static int downloadBlob(CloudBlobDirectory blobDirectory,
             String[] includePatterns, String[] excludePatterns,
-            FilePath downloadDir, boolean flattenDirectories, TaskListener listener)
+            FilePath downloadDir, boolean flattenDirectories, boolean deleteAfterDownload, TaskListener listener)
             throws StorageException, URISyntaxException, IOException,
             WAStorageException {
 
@@ -748,13 +755,13 @@ public class WAStorageClient {
                 CloudBlob blob = (CloudBlob) blobItem;
 
                 if (blobPathMatches(blob.getName(), includePatterns, excludePatterns, true)) {
-                    downloadBlob(blob, downloadDir, flattenDirectories, listener);
+                    downloadBlob(blob, downloadDir, flattenDirectories, deleteAfterDownload, listener);
                     filesDownloaded++;
                 }
             } else if (blobItem instanceof CloudBlobDirectory) {
                 CloudBlobDirectory blobDir = (CloudBlobDirectory) blobItem;
                 filesDownloaded += downloadBlob(blobDir, includePatterns, excludePatterns,
-                        downloadDir, flattenDirectories, listener);
+                        downloadDir, flattenDirectories, deleteAfterDownload, listener);
             }
         }
 

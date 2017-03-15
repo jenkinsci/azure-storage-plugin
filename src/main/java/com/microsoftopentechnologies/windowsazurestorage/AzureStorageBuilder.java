@@ -68,6 +68,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private final String downloadDirLoc;
     private final boolean flattenDirectories;
     private final boolean includeArchiveZips;
+    private final boolean deleteAfterDownload;
     private final BuildSelector buildSelector;
     private final String projectName;
     private String storageCredentialId;
@@ -103,7 +104,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             final String excludeFilesPattern,
             final String downloadDirLoc,
             final boolean flattenDirectories,
-            final boolean includeArchiveZips) {
+            final boolean includeArchiveZips,
+            final boolean deleteAfterDownload) {
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, strAccName);
         this.storageAccName = storageCreds.getStorageAccountName();
@@ -114,6 +116,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         this.downloadDirLoc = downloadDirLoc;
         this.flattenDirectories = flattenDirectories;
         this.includeArchiveZips = includeArchiveZips;
+        this.deleteAfterDownload = deleteAfterDownload;
         this.projectName = downloadType.projectName;
         this.buildSelector = downloadType.buildSelector;
     }
@@ -162,6 +165,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         return BuildStepMonitor.NONE;
     }
     
+    public boolean getDeleteAfterDownload() {
+        return deleteAfterDownload;
+    }
+
     public String getStorageCredentialId() {
         if(this.storageCredentialId == null && this.storageAccName != null)
             return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
@@ -215,7 +222,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                 /*the null check is backward compatibility*/
                 filesDownloaded += WAStorageClient.download(run, launcher, listener,
                         strAcc, expIncludePattern, expExcludePattern, Util.replaceMacro(downloadDirLoc, envVars),
-                        flattenDirectories, workspace, expContainerName);
+                        flattenDirectories, workspace, expContainerName, deleteAfterDownload);
             } else {
                 Job<?, ?> job = Utils.getJenkinsInstance().getItemByFullName(expProjectName, Job.class);
                 if (job != null) {
@@ -264,7 +271,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
             filesDownloaded = WAStorageClient.download(run, launcher, listener,
                     strAcc, blob, includeFilter, excludeFilter,
-                    downloadDir, flattenDirectories, workspace);
+                    downloadDir, flattenDirectories, workspace, deleteAfterDownload);
 
         } catch (WAStorageException | IOException | InterruptedException e) {
             run.setResult(Result.UNSTABLE);
