@@ -52,9 +52,7 @@
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-war</artifactId>
-            <type>war</type>
-            <version>1.645<!-- replace this with the version you want--></version>
+            <artifactId>jenkins-test-harness</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -156,6 +154,16 @@
                  <excludes>
                      <exclude>InjectedTest.java</exclude>
                  </excludes>
+             </configuration>
+         </plugin>
+         <plugin>
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-failsafe-plugin</artifactId>
+             <configuration>
+                 <forkCount>10</forkCount>
+                 <reuseForks>true</reuseForks>
+                 <threadCountMethods>10</threadCountMethods>
+                 <parallel>methods</parallel>
              </configuration>
          </plugin>
 	</plugins>
