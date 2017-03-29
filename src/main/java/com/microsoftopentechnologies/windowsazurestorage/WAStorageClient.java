@@ -208,7 +208,7 @@ public class WAStorageClient {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static void upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
+    protected static void upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
 	    throws StorageException, IOException, InterruptedException {
 	long startTime = System.currentTimeMillis();
 	InputStream inputStream = src.read();
