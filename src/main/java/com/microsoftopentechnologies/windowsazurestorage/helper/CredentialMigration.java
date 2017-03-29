@@ -40,7 +40,7 @@ import org.xml.sax.SAXException;
 public class CredentialMigration {
     private static final Logger LOGGER = Logger.getLogger(CredentialMigration.class.getName());
     
-    private static List<StorageAccountInfo> getOldStorageConfig(File inputFile) throws SAXException, IOException, ParserConfigurationException {
+    protected static List<StorageAccountInfo> getOldStorageConfig(File inputFile) throws SAXException, IOException, ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
 
