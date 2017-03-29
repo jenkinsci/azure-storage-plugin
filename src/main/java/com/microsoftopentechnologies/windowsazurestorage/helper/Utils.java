@@ -166,6 +166,25 @@ public class Utils {
         
     }
     
+    public static String getPluginInstance() {
+        String instanceId = null;
+        try {
+            if(Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
+                instanceId = "local";
+            }
+            else {
+                instanceId = Utils.getJenkinsInstance().getLegacyInstanceId();
+            }
+        } catch (Exception e) {
+        }
+        return instanceId;
+    }
+    
+    public static String getPluginVersion() {
+        String version = Utils.class.getPackage().getImplementationVersion();
+        return version;
+    }
+            
     public static OperationContext updateUserAgent() throws IOException {
                     
         String userInfo = BaseRequest.getUserAgent();       
@@ -173,22 +192,14 @@ public class Utils {
         String instanceId = null;
 
         try {
-            version = Utils.class.getPackage().getImplementationVersion();
-            if(Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
-                instanceId = "local-instance";
+            version = Utils.getPluginVersion();
+            if (version == null) {
+                version = "local";
             }
-            else {
-                instanceId = Utils.getJenkinsInstance().getLegacyInstanceId();
-            }
+            instanceId = Utils.getPluginInstance();
         } catch (Exception e) {
         }
 
-        if (version == null) {
-            version = "local";
-        }
-        if (instanceId == null) {
-            instanceId = "local";
-        }
         String pluginInfo = Constants.PLUGIN_NAME + "/" + version + "/" + instanceId;
         
         if (userInfo == null) {

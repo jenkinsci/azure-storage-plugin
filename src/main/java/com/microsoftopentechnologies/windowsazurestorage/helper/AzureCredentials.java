@@ -87,6 +87,9 @@ public class AzureCredentials extends BaseStandardCredentials {
         public String getStorageAccountKey() {
             return storageAccountKey.getPlainText();
         }
+        protected Secret getSecureKey() {
+            return storageAccountKey;
+        }
 
         public String getEndpointURL() {
             return blobEndpointURL;
