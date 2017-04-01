@@ -51,6 +51,12 @@
                     <f:checkbox  title="${%includeArchiveZips_title}"/>
                 </div>
             </f:entry>
+
+            <f:entry field="deleteAfterDownload" help="/plugin/windows-azure-storage/help-deleteAfterDownload.html">
+                <div align="left">
+                    <f:checkbox  title="${%deleteAfterDownload_title}"/>
+                </div>
+            </f:entry>
         </f:advanced>
     </f:section>
 
