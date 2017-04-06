@@ -46,6 +46,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
@@ -58,6 +60,8 @@ import java.util.logging.Logger;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.springframework.util.AntPathMatcher;
+
+import javax.xml.bind.DatatypeConverter;
 
 public class WAStorageClient {
 
@@ -207,25 +211,18 @@ public class WAStorageClient {
      * @throws StorageException
      * @throws IOException
      * @throws InterruptedException
+	 * @returns Md5 hash of the uploaded file in hexadecimal encoding
      */
-    protected static void upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
-	    throws StorageException, IOException, InterruptedException {
-	long startTime = System.currentTimeMillis();
-	InputStream inputStream = src.read();
-        
-	try {
-	    blob.upload(inputStream, src.length(), null,
-		    getBlobRequestOptions(), Utils.updateUserAgent());
-            
-	} finally {
-	    try {
-		inputStream.close();
-	    } catch (IOException e) {
-
-	    }
-	}
-	long endTime = System.currentTimeMillis();
-	listener.getLogger().println("Uploaded blob with uri " + blob.getUri() + " in " + getTime(endTime - startTime));
+    protected static String upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
+			throws StorageException, IOException, InterruptedException {
+		MessageDigest md = DigestUtils.getMd5Digest();
+		long startTime = System.currentTimeMillis();
+		try (InputStream inputStream = src.read(); DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)){
+			blob.upload(digestInputStream, src.length(), null, getBlobRequestOptions(), Utils.updateUserAgent());
+		}
+		long endTime = System.currentTimeMillis();
+		listener.getLogger().println("Uploaded blob with uri " + blob.getUri() + " in " + getTime(endTime - startTime));
+		return DatatypeConverter.printHexBinary(md.digest());
     }
 
     /**
@@ -320,10 +317,6 @@ public class WAStorageClient {
 			// Remove the workspace bit of this path
 			URI srcURI = workspaceURI.relativize(src.toURI());
 
-			InputStream inputStream = src.read();
-			String md5hex = DigestUtils.md5Hex(inputStream);
-			long sizeInBytes = src.length();
-
 			CloudBlockBlob blob;
 			String srcPrefix = srcURI.getPath();
 			if (Utils.isNullOrEmpty(expVP)
@@ -342,8 +335,8 @@ public class WAStorageClient {
 			    blob = container.getBlockBlobReference(prefix + srcPrefix);
 			}
 
-			upload(listener, blob, src);
-			individualBlobs.add(new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
+			String uploadedFileHash = upload(listener, blob, src);
+			individualBlobs.add(new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, src.length()));
 		    }
 		}
 	    }
@@ -361,20 +354,16 @@ public class WAStorageClient {
 		// blob reference.
 		String blobURI = zipPath.getName();
 
-		InputStream inputStream = zipPath.read();
-		String md5hex = DigestUtils.md5Hex(inputStream);
-		long sizeInBytes = zipPath.length();
-
 		if (!Utils.isNullOrEmpty(expVP)) {
 		    blobURI = expVP + blobURI;
 		}
 
 		CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
 
-		upload(listener, blob, zipPath);
+		String uploadedFileHash = upload(listener, blob, zipPath);
 		// Make sure to note the new blob as an archive blob,
 		// so that it can be specially marked on the azure storage page.
-		archiveBlobs.add(new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), md5hex, sizeInBytes));
+		archiveBlobs.add(new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length()));
 
 		tempPath.deleteRecursive();
 	    }
@@ -382,7 +371,7 @@ public class WAStorageClient {
 	} catch (StorageException | IOException | InterruptedException | URISyntaxException e) {
 	    throw new WAStorageException(e.getMessage(), e.getCause());
 	}
-	return filesUploaded;
+		return filesUploaded;
     }
 
     /**
@@ -679,40 +668,29 @@ public class WAStorageClient {
      */
     private static void downloadBlob(CloudBlob blob, FilePath downloadDir, boolean flattenDirectories,
 	    TaskListener listener) throws WAStorageException {
-	OutputStream fos = null;
-	try {
-	    FilePath downloadFile = new FilePath(downloadDir, blob.getName());
+		try {
+			FilePath downloadFile = new FilePath(downloadDir, blob.getName());
 
-	    // That filepath will contain all the directories and explicit virtual
-	    // paths, so if the user wanted it flattened, grab just the file name and
-	    // recreate the file path
-	    if (flattenDirectories) {
-		downloadFile = new FilePath(downloadDir, downloadFile.getName());
-	    }
+			// That filepath will contain all the directories and explicit virtual
+			// paths, so if the user wanted it flattened, grab just the file name and
+			// recreate the file path
+			if (flattenDirectories) {
+				downloadFile = new FilePath(downloadDir, downloadFile.getName());
+			}
 
-	    fos = downloadFile.write();
+			long startTime = System.currentTimeMillis();
+			try (OutputStream fos = downloadFile.write()) {
+				blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
+			}
+			long endTime = System.currentTimeMillis();
 
-	    long startTime = System.currentTimeMillis();
-            
-            blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
-
-	    long endTime = System.currentTimeMillis();
-
-	    listener.getLogger().println(
-		    "blob " + blob.getName() + " is downloaded to "
-		    + downloadDir + " in "
-		    + getTime(endTime - startTime));
-	} catch (Exception e) {
-	    throw new WAStorageException(e.getMessage(), e.getCause());
-	} finally {
-	    try {
-		if (fos != null) {
-		    fos.close();
+			listener.getLogger().println(
+					"blob " + blob.getName() + " is downloaded to "
+							+ downloadDir + " in "
+							+ getTime(endTime - startTime));
+		} catch (Exception e) {
+			throw new WAStorageException(e.getMessage(), e.getCause());
 		}
-	    } catch (IOException e) {
-
-	    }
-	}
     }
 
     /**
