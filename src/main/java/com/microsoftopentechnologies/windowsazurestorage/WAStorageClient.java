@@ -186,7 +186,7 @@ public class WAStorageClient {
 	    return null;
 	}
     }
-    
+
     /**
      * Returns suffix for blob endpoint.
      *
@@ -246,6 +246,7 @@ public class WAStorageClient {
      */
     public static int upload(Run<?, ?> run, Launcher launcher, TaskListener listener,
 	    StorageAccountInfo strAcc, String expContainerName,
+	    AzureBlobProperties blobProperties,
 	    boolean cntPubAccess, boolean cleanUpContainer, String expFP,
 	    String expVP, String excludeFP, UploadType uploadType,
 	    List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs, FilePath workspace) throws WAStorageException {
@@ -333,6 +334,11 @@ public class WAStorageClient {
 				}
 			    }
 			    blob = container.getBlockBlobReference(prefix + srcPrefix);
+			}
+
+			// Set blob properties
+			if (blobProperties != null) {
+				blobProperties.configure(blob);
 			}
 
 			String uploadedFileHash = upload(listener, blob, src);

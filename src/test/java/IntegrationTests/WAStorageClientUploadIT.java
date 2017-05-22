@@ -4,11 +4,9 @@ import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.ResultSegment;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.microsoft.azure.storage.blob.*;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
+import com.microsoftopentechnologies.windowsazurestorage.AzureBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.WAStorageClient;
 import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
@@ -36,6 +34,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -47,7 +46,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
 
     @Before
     public void setUp() throws IOException {
-        
+
         try {
             String containerName = "testupload" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(containerName);
@@ -93,7 +92,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         WAStorageClient.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, "asdhasdh@asdas!@234=", testEnv.blobURL));
         testEnv.container.deleteIfExists();
     }
-    
+
     /**
      * Test of validateStorageAccount method, of class WAStorageClient.
      */
@@ -103,7 +102,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         WAStorageClient.validateStorageAccount(new StorageAccountInfo("rfguthio123", testEnv.azureStorageAccountKey2, testEnv.blobURL));
         testEnv.container.deleteIfExists();
     }
-    
+
     /**
      * Test of validateStorageAccount method, of class WAStorageClient.
      */
@@ -127,6 +126,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             Launcher mockLauncher = mock(Launcher.class);
             List<AzureBlob> individualBlobs = new ArrayList<>();
             List<AzureBlob> archiveBlobs = new ArrayList<>();
+            AzureBlobProperties blobProperties = mock(AzureBlobProperties.class);
 
             Iterator it = testEnv.uploadFileList.entrySet().iterator();
             while (it.hasNext()) {
@@ -134,7 +134,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
                 File temp = (File) pair.getValue();
                 FilePath workspace = new FilePath(mockLauncher.getChannel(), FilenameUtils.getFullPathNoEndSeparator(temp.getAbsolutePath()));
                 LOGGER.log(Level.INFO, temp.getAbsolutePath());
-                mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+                mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
             }
 
             for (ListBlobItem blobItem : testEnv.container.listBlobs()) {
@@ -158,6 +158,45 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         }
     }
 
+    @Test
+    public void testBlobProperties() {
+        try {
+            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
+            Run mockRun = mock(Run.class);
+            Launcher mockLauncher = mock(Launcher.class);
+            List<AzureBlob> individualBlobs = new ArrayList<>();
+            List<AzureBlob> archiveBlobs = new ArrayList<>();
+            AzureBlobProperties blobProperties = new AzureBlobProperties(
+                "no-cache",
+                "identity",
+                "en-US",
+                "text/plain"
+            );
+
+            Iterator it = testEnv.uploadFileList.entrySet().iterator();
+            Map.Entry firstPair = (Map.Entry) it.next();
+            File firstFile = (File) firstPair.getValue();
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), FilenameUtils.getFullPathNoEndSeparator(firstFile.getAbsolutePath()));
+            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false,
+                firstFile.getName(), // Upload the first file only for efficiency
+                "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
+            downloadedBlob.downloadAttributes();
+            BlobProperties downloadedProps = downloadedBlob.getProperties();
+
+            assertEquals(blobProperties.getCacheControl(), downloadedProps.getCacheControl());
+            assertEquals(blobProperties.getContentEncoding(), downloadedProps.getContentEncoding());
+            assertEquals(blobProperties.getContentLanguage(), downloadedProps.getContentLanguage());
+            assertEquals(blobProperties.getContentType(), downloadedProps.getContentType());
+
+            testEnv.container.deleteIfExists();
+
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
     @After
     public void tearDown() throws StorageException {
         System.gc();
@@ -174,7 +213,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         }/*
         ResultSegment<CloudBlobContainer> containerList = blobClient.listContainersSegmented("testupload");
         int totalContainers = containerList.getLength();
-        while(totalContainers > 0){        
+        while(totalContainers > 0){
             containerList.getResults().get(--totalContainers).deleteIfExists();
         }*/
         testEnv.container.deleteIfExists();

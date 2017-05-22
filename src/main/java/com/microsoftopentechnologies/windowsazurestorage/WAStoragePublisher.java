@@ -1,12 +1,12 @@
 /*
  Copyright 2014 Microsoft Open Technologies, Inc.
- 
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,6 +75,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final String containerName;
 
     /**
+     * Windows Azure storage blob properties
+     */
+    private final AzureBlobProperties blobProperties;
+
+    /**
      * Windows Azure storage container access.
      */
     private final boolean cntPubAccess;
@@ -140,9 +145,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundConstructor
-    public WAStoragePublisher(final String storageAccName, 
-            final String storageCredentialId, final String filesPath, final String excludeFilesPath, 
+    public WAStoragePublisher(final String storageAccName,
+            final String storageCredentialId, final String filesPath, final String excludeFilesPath,
             final String containerName, final boolean cntPubAccess, final String virtualPath,
+            final AzureBlobProperties blobProperties,
             final boolean cleanUpContainer, final boolean allowAnonymousAccess,
             final boolean uploadArtifactsOnlyIfSuccessful,
             final boolean doNotFailIfArchivingReturnsNothing,
@@ -155,6 +161,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.containerName = containerName.trim();
         this.cntPubAccess = cntPubAccess;
         this.virtualPath = virtualPath.trim();
+        this.blobProperties = blobProperties;
         this.cleanUpContainer = cleanUpContainer;
         this.allowAnonymousAccess = allowAnonymousAccess;
         this.uploadArtifactsOnlyIfSuccessful = uploadArtifactsOnlyIfSuccessful;
@@ -177,6 +184,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     public String getContainerName() {
         return containerName;
+    }
+
+    public AzureBlobProperties getBlobProperties() {
+        return blobProperties;
     }
 
     public boolean isCntPubAccess() {
@@ -314,7 +325,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
 
             int filesUploaded = WAStorageClient.upload(run, launcher, listener, strAcc,
-                    expContainerName, cntPubAccess, cleanUpContainer, expFP,
+                    expContainerName, blobProperties, cntPubAccess, cleanUpContainer, expFP,
                     expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs, ws);
 
             // Mark build unstable if no files are uploaded and the user
@@ -594,7 +605,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
             return allStorageCred;
         }
-        
+
         @Restricted(NoExternalUse.class)
         public String getAjaxURI(){
             return Constants.CREDENTIALS_AJAX_URI;
