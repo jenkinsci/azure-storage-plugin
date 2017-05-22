@@ -1,0 +1,17 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="${%cacheControl_title}" field="cacheControl">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%contentEncoding_title}" field="contentEncoding">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%contentLanguage_title}" field="contentLanguage">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%contentType_title}" field="contentType">
+        <f:textbox />
+    </f:entry>
+</j:jelly>
