@@ -1,7 +1,6 @@
 package IntegrationTests;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.ResultSegment;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.*;
@@ -25,16 +24,13 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 /**
  *
@@ -44,11 +40,12 @@ public class WAStorageClientUploadIT extends IntegrationTest {
 
     private static final Logger LOGGER = Logger.getLogger(WAStorageClientUploadIT.class.getName());
 
+    private String containerName;
+
     @Before
     public void setUp() throws IOException {
-
         try {
-            String containerName = "testupload" + TestEnvironment.GenerateRandomString(15);
+            containerName = "testupload" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(containerName);
             File directory = new File(containerName);
             if(!directory.exists())
@@ -118,9 +115,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
      */
     @Test
     public void testUpload() {
-        System.out.println("upload");
         try {
-
             WAStorageClient mockStorageClient = spy(WAStorageClient.class);
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
@@ -128,14 +123,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             List<AzureBlob> archiveBlobs = new ArrayList<>();
             AzureBlobProperties blobProperties = mock(AzureBlobProperties.class);
 
-            Iterator it = testEnv.uploadFileList.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry) it.next();
-                File temp = (File) pair.getValue();
-                FilePath workspace = new FilePath(mockLauncher.getChannel(), FilenameUtils.getFullPathNoEndSeparator(temp.getAbsolutePath()));
-                LOGGER.log(Level.INFO, temp.getAbsolutePath());
-                mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
-            }
+            File workspaceDir = new File(containerName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
 
             for (ListBlobItem blobItem : testEnv.container.listBlobs()) {
                 if (blobItem instanceof CloudBlockBlob) {
@@ -176,7 +166,8 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             Iterator it = testEnv.uploadFileList.entrySet().iterator();
             Map.Entry firstPair = (Map.Entry) it.next();
             File firstFile = (File) firstPair.getValue();
-            FilePath workspace = new FilePath(mockLauncher.getChannel(), FilenameUtils.getFullPathNoEndSeparator(firstFile.getAbsolutePath()));
+            File workspaceDir = new File(containerName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
             mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false,
                 firstFile.getName(), // Upload the first file only for efficiency
                 "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
