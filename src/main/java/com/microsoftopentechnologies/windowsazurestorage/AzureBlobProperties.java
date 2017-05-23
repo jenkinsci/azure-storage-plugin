@@ -17,7 +17,9 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import com.microsoft.azure.storage.blob.BlobProperties;
 import com.microsoft.azure.storage.blob.CloudBlob;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
@@ -59,12 +61,12 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
         return contentType;
     }
 
-    public void configure(CloudBlob blob) {
+    public void configure(CloudBlob blob, EnvVars env) {
         BlobProperties props = blob.getProperties();
-        props.setCacheControl(cacheControl);
-        props.setContentEncoding(contentEncoding);
-        props.setContentLanguage(contentLanguage);
-        props.setContentType(contentType);
+        props.setCacheControl(Util.replaceMacro(cacheControl, env));
+        props.setContentEncoding(Util.replaceMacro(contentEncoding, env));
+        props.setContentLanguage(Util.replaceMacro(contentLanguage, env));
+        props.setContentType(Util.replaceMacro(contentType, env));
     }
 
     @SuppressWarnings("unchecked")

@@ -14,7 +14,9 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;

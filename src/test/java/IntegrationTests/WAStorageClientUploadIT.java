@@ -7,6 +7,7 @@ import com.microsoft.azure.storage.blob.*;
 import com.microsoftopentechnologies.windowsazurestorage.*;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
@@ -22,8 +23,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyVararg;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -183,6 +188,55 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             for (AzureBlobMetadataPair pair : metadata) {
                 assertEquals(pair.getValue(), downloadedMeta.get(pair.getKey()));
             }
+
+            testEnv.container.deleteIfExists();
+
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testEnvVarResolve() {
+        try {
+            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
+            EnvVars mockEnv = new EnvVars(
+                "MY_CONTENT_TYPE", "text/plain",
+                "MY_META_KEY", "foo",
+                "MY_META_VALUE", "bar"
+            );
+            Run mockRun = mock(Run.class);
+            when(mockRun.getEnvironment(any(TaskListener.class))).thenReturn(mockEnv);
+            Launcher mockLauncher = mock(Launcher.class);
+            List<AzureBlob> individualBlobs = new ArrayList<>();
+            List<AzureBlob> archiveBlobs = new ArrayList<>();
+            AzureBlobProperties blobProperties = new AzureBlobProperties(
+                    null,
+                    null,
+                    null,
+                    "${MY_CONTENT_TYPE}"
+            );
+            List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                    new AzureBlobMetadataPair("${MY_META_KEY}", "${MY_META_VALUE}")
+            );
+
+            Iterator it = testEnv.uploadFileList.entrySet().iterator();
+            Map.Entry firstPair = (Map.Entry) it.next();
+            File firstFile = (File) firstPair.getValue();
+            File workspaceDir = new File(containerName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false,
+                    firstFile.getName(), // Upload the first file only for efficiency
+                    "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
+            downloadedBlob.downloadAttributes();
+
+            BlobProperties downloadedProps = downloadedBlob.getProperties();
+            assertEquals("text/plain", downloadedProps.getContentType());
+
+            HashMap<String, String> downloadedMeta = downloadedBlob.getMetadata();
+            assertEquals("bar", downloadedMeta.get("foo"));
 
             testEnv.container.deleteIfExists();
 

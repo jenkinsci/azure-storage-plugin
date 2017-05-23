@@ -24,8 +24,10 @@ import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInf
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.DirScanner.Glob;
@@ -233,6 +235,7 @@ public class WAStorageClient {
 
         try {
             FilePath workspacePath = new FilePath(launcher.getChannel(), workspace.getRemote());
+            final EnvVars env = run.getEnvironment(listener);
 
             listener.getLogger().println(
                     Messages.WAStoragePublisher_uploading());
@@ -323,7 +326,10 @@ public class WAStorageClient {
                         if (metadata != null) {
                             HashMap<String, String> metadataMap = blob.getMetadata();
                             for (AzureBlobMetadataPair pair : metadata) {
-                                metadataMap.put(pair.getKey(), pair.getValue());
+                                metadataMap.put(
+                                    Util.replaceMacro(pair.getKey(), env),
+                                    Util.replaceMacro(pair.getValue(), env)
+                                );
                             }
                             blob.setMetadata(metadataMap);
                         }
