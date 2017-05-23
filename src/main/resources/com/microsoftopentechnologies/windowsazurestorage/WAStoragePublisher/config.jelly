@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:c="/lib/credentials" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-        <f:entry title="${%Storage_Credentials}" field="storageCredentialId" help="/plugin/windows-azure-storage/help-storagecredential.html">
+        <f:entry title="${%storageCredentials_title}" field="storageCredentialId" help="/plugin/windows-azure-storage/help-storagecredential.html">
                 <c:select expressionAllowed="false"/>
         </f:entry>
 
@@ -13,11 +13,21 @@
 		<f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
 	</f:entry>
 
-	<f:section title="${%blobProperties_title}">
+	<f:section title="${%blobPropertiesMetadata_title}">
 		<f:advanced title="${%edit_title}">
 			<f:property field="blobProperties">
 				<st:include page="config.jelly" class="${descriptor.clazz}" />
 			</f:property>
+
+			<f:entry title="${%blobMetadata_title}">
+				<f:repeatableProperty field="metadata">
+					<f:entry>
+						<div align="right">
+							<f:repeatableDeleteButton />
+						</div>
+					</f:entry>
+				</f:repeatableProperty>
+			</f:entry>
 		</f:advanced>
 	</f:section>
 

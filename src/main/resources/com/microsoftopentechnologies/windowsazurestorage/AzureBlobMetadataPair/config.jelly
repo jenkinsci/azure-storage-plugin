@@ -1,0 +1,10 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+    <f:entry title="${%MetadataKey_title}" field="key">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%MetadataValue_title}" field="value">
+        <f:textbox />
+    </f:entry>
+
+</j:jelly>

@@ -79,6 +79,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      */
     private final AzureBlobProperties blobProperties;
 
+
+    private final List<AzureBlobMetadataPair> metadata;
+
     /**
      * Windows Azure storage container access.
      */
@@ -148,7 +151,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     public WAStoragePublisher(final String storageAccName,
             final String storageCredentialId, final String filesPath, final String excludeFilesPath,
             final String containerName, final boolean cntPubAccess, final String virtualPath,
-            final AzureBlobProperties blobProperties,
+            final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
             final boolean cleanUpContainer, final boolean allowAnonymousAccess,
             final boolean uploadArtifactsOnlyIfSuccessful,
             final boolean doNotFailIfArchivingReturnsNothing,
@@ -162,6 +165,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.cntPubAccess = cntPubAccess;
         this.virtualPath = virtualPath.trim();
         this.blobProperties = blobProperties;
+        this.metadata = metadata;
         this.cleanUpContainer = cleanUpContainer;
         this.allowAnonymousAccess = allowAnonymousAccess;
         this.uploadArtifactsOnlyIfSuccessful = uploadArtifactsOnlyIfSuccessful;
@@ -188,6 +192,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     public AzureBlobProperties getBlobProperties() {
         return blobProperties;
+    }
+
+    public List<AzureBlobMetadataPair> getMetadata() {
+        return metadata;
     }
 
     public boolean isCntPubAccess() {
@@ -325,7 +333,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
 
             int filesUploaded = WAStorageClient.upload(run, launcher, listener, strAcc,
-                    expContainerName, blobProperties, cntPubAccess, cleanUpContainer, expFP,
+                    expContainerName, blobProperties, metadata, cntPubAccess, cleanUpContainer, expFP,
                     expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs, ws);
 
             // Mark build unstable if no files are uploaded and the user

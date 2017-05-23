@@ -4,10 +4,7 @@ import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.*;
-import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
-import com.microsoftopentechnologies.windowsazurestorage.AzureBlobProperties;
-import com.microsoftopentechnologies.windowsazurestorage.WAStorageClient;
-import com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher;
+import com.microsoftopentechnologies.windowsazurestorage.*;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import hudson.FilePath;
@@ -16,11 +13,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -122,10 +115,11 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             List<AzureBlob> individualBlobs = new ArrayList<>();
             List<AzureBlob> archiveBlobs = new ArrayList<>();
             AzureBlobProperties blobProperties = mock(AzureBlobProperties.class);
+            List<AzureBlobMetadataPair> metadata = new ArrayList<>();
 
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
 
             for (ListBlobItem blobItem : testEnv.container.listBlobs()) {
                 if (blobItem instanceof CloudBlockBlob) {
@@ -149,7 +143,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     }
 
     @Test
-    public void testBlobProperties() {
+    public void testBlobPropertiesAndMetadata() {
         try {
             WAStorageClient mockStorageClient = spy(WAStorageClient.class);
             Run mockRun = mock(Run.class);
@@ -162,24 +156,33 @@ public class WAStorageClientUploadIT extends IntegrationTest {
                 "en-US",
                 "text/plain"
             );
+            List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                new AzureBlobMetadataPair("k1", "v1"),
+                new AzureBlobMetadataPair("k2", "v2")
+            );
 
             Iterator it = testEnv.uploadFileList.entrySet().iterator();
             Map.Entry firstPair = (Map.Entry) it.next();
             File firstFile = (File) firstPair.getValue();
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties,false, false,
+            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false,
                 firstFile.getName(), // Upload the first file only for efficiency
                 "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
             downloadedBlob.downloadAttributes();
-            BlobProperties downloadedProps = downloadedBlob.getProperties();
 
+            BlobProperties downloadedProps = downloadedBlob.getProperties();
             assertEquals(blobProperties.getCacheControl(), downloadedProps.getCacheControl());
             assertEquals(blobProperties.getContentEncoding(), downloadedProps.getContentEncoding());
             assertEquals(blobProperties.getContentLanguage(), downloadedProps.getContentLanguage());
             assertEquals(blobProperties.getContentType(), downloadedProps.getContentType());
+
+            HashMap<String, String> downloadedMeta = downloadedBlob.getMetadata();
+            for (AzureBlobMetadataPair pair : metadata) {
+                assertEquals(pair.getValue(), downloadedMeta.get(pair.getKey()));
+            }
 
             testEnv.container.deleteIfExists();
 

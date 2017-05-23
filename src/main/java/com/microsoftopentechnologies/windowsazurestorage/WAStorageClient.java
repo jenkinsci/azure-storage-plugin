@@ -224,7 +224,7 @@ public class WAStorageClient {
      */
     public static int upload(Run<?, ?> run, Launcher launcher, TaskListener listener,
                              StorageAccountInfo strAcc, String expContainerName,
-                             AzureBlobProperties blobProperties,
+                             AzureBlobProperties blobProperties, List<AzureBlobMetadataPair> metadata,
                              boolean cntPubAccess, boolean cleanUpContainer, String expFP,
                              String expVP, String excludeFP, UploadType uploadType,
                              List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs, FilePath workspace) throws WAStorageException {
@@ -317,6 +317,15 @@ public class WAStorageClient {
                         // Set blob properties
                         if (blobProperties != null) {
                             blobProperties.configure(blob);
+                        }
+
+                        // Set blob metadata
+                        if (metadata != null) {
+                            HashMap<String, String> metadataMap = blob.getMetadata();
+                            for (AzureBlobMetadataPair pair : metadata) {
+                                metadataMap.put(pair.getKey(), pair.getValue());
+                            }
+                            blob.setMetadata(metadataMap);
                         }
 
                         String uploadedFileHash = upload(listener, blob, src);
