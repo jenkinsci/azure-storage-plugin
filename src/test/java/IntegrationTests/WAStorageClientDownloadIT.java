@@ -1,17 +1,21 @@
 package IntegrationTests;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.ResultSegment;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoftopentechnologies.windowsazurestorage.AzureStorageBuilderContext;
 import com.microsoftopentechnologies.windowsazurestorage.WAStorageClient;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
@@ -19,12 +23,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -74,11 +74,18 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
             WAStorageClient mockStorageClient = spy(WAStorageClient.class);
-            
+
+            AzureStorageBuilderContext context = new AzureStorageBuilderContext(mockLauncher, mockRun, TaskListener.NULL);
+            context.setStorageAccountInfo(testEnv.sampleStorageAccount);
+            context.setIncludeFilesPattern("*.txt");
+            context.setExcludeFilesPattern("archive.zip");
+
             File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
             downloaded.mkdir();
             FilePath workspace= new FilePath(downloaded.getAbsoluteFile());
-            int totalFiles = mockStorageClient.download(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, "*.txt", ",archive.zip", "", false, workspace, testEnv.containerName);
+            context.setWorkspace(workspace);
+            context.setContainerName(testEnv.containerName);
+            int totalFiles = mockStorageClient.downloadFromContainer(context);
             
             
             assertEquals(testEnv.downloadFileList.size(),totalFiles);
@@ -114,10 +121,16 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
             Launcher mockLauncher = mock(Launcher.class);
             WAStorageClient mockStorageClient = spy(WAStorageClient.class);
 
+            AzureStorageBuilderContext context = new AzureStorageBuilderContext(mockLauncher, mockRun, TaskListener.NULL);
+            context.setStorageAccountInfo(testEnv.sampleStorageAccount);
+            context.setIncludeFilesPattern("*.txt");
+
             File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
-            int totalFiles = mockStorageClient.download(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, "*.txt", "", "", false, workspace, testEnv.containerName);
+            context.setWorkspace(workspace);
+            context.setContainerName(testEnv.containerName);
+            int totalFiles = mockStorageClient.downloadFromContainer(context);
 
             assertEquals(testEnv.downloadFileList.size(), totalFiles);
             File[] listofFiles = downloaded.listFiles();
@@ -151,10 +164,17 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
             Launcher mockLauncher = mock(Launcher.class);
             WAStorageClient mockStorageClient = spy(WAStorageClient.class);
 
+            AzureStorageBuilderContext context = new AzureStorageBuilderContext(mockLauncher, mockRun, TaskListener.NULL);
+            context.setStorageAccountInfo(testEnv.sampleStorageAccount);
+            context.setIncludeFilesPattern("*.txt");
+
             File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
-            int totalFiles = mockStorageClient.download(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, "*.txt", "", "", true, workspace, testEnv.containerName);
+            context.setWorkspace(workspace);
+            context.setContainerName(testEnv.containerName);
+            context.setFlattenDirectories(true);
+            int totalFiles = mockStorageClient.downloadFromContainer(context);
 
             assertEquals(testEnv.downloadFileList.size(), totalFiles);
             File[] listofFiles = downloaded.listFiles();
