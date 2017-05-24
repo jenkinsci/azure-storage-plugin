@@ -22,21 +22,9 @@ import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInf
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import hudson.DescriptorExtensionList;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Util;
+import hudson.*;
 import hudson.matrix.MatrixBuild;
-import hudson.model.AbstractProject;
-import hudson.model.AutoCompletionCandidates;
-import hudson.model.Descriptor;
-import hudson.model.Item;
-import hudson.model.Job;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.plugins.copyartifact.BuildFilter;
 import hudson.plugins.copyartifact.BuildSelector;
 import hudson.plugins.copyartifact.StatusBuildSelector;
@@ -45,18 +33,18 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.acegisecurity.AccessDeniedException;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
@@ -68,6 +56,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private final String downloadDirLoc;
     private final boolean flattenDirectories;
     private final boolean includeArchiveZips;
+    private final boolean deleteFromAzureAfterDownload;
     private final BuildSelector buildSelector;
     private final String projectName;
     private String storageCredentialId;
@@ -103,6 +92,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             final String excludeFilesPattern,
             final String downloadDirLoc,
             final boolean flattenDirectories,
+            final boolean deleteFromAzureAfterDownload,
             final boolean includeArchiveZips) {
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, strAccName);
@@ -113,6 +103,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         this.excludeFilesPattern = excludeFilesPattern;
         this.downloadDirLoc = downloadDirLoc;
         this.flattenDirectories = flattenDirectories;
+        this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
         this.includeArchiveZips = includeArchiveZips;
         this.projectName = downloadType.projectName;
         this.buildSelector = downloadType.buildSelector;
@@ -161,43 +152,42 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
-    
+
     public String getStorageCredentialId() {
-        if(this.storageCredentialId == null && this.storageAccName != null)
+        if (this.storageCredentialId == null && this.storageAccName != null)
             return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
         return storageCredentialId;
     }
+
     /**
-     *
-     * @param run environment of build
+     * @param run       environment of build
      * @param workspace filepath
-     * @param launcher env var for remote builds
-     * @param listener logging
+     * @param launcher  env var for remote builds
+     * @param listener  logging
      */
     @Override
     public synchronized void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
         // Get storage account
-        StorageAccountInfo strAcc = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
-        try{
+        StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
+        try {
             final EnvVars envVars = run.getEnvironment(listener);
             if (envVars == null) {
                 throw new IllegalStateException("Failed to capture information about running environment.");
-            }          
+            }
+
+            final String expProjectName = Util.replaceMacro(projectName, envVars);
+            final AzureStorageBuilderContext azureStorageBuilderContext = new AzureStorageBuilderContext(launcher, run, listener);
+
             // Resolve include patterns
             String expIncludePattern = Util.replaceMacro(includeFilesPattern, envVars);
-
-            // Resolve exclude patterns
-            String expExcludePattern = Util.replaceMacro(excludeFilesPattern, envVars);
-
-            String expProjectName = Util.replaceMacro(projectName, envVars);
-
-            String expContainerName = Util.replaceMacro(containerName, envVars);
-
             // If the include is empty, make **/*
             if (Utils.isNullOrEmpty(expIncludePattern)) {
                 expIncludePattern = "**/*";
             }
+            azureStorageBuilderContext.setIncludeFilesPattern(expIncludePattern);
 
+            // Resolve exclude patterns
+            String expExcludePattern = Util.replaceMacro(excludeFilesPattern, envVars);
             // Exclude archive.zip by default.
             if (!includeArchiveZips) {
                 if (expExcludePattern != null) {
@@ -206,16 +196,22 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                     expExcludePattern = "archive.zip";
                 }
             }
+            azureStorageBuilderContext.setExcludeFilesPattern(expExcludePattern);
 
-            // Validate input data
-            validateData(run, listener, strAcc);
+            // Validate input data and resolve storage account
+            validateData(run, listener, storageAccountInfo);
+            azureStorageBuilderContext.setStorageAccountInfo(storageAccountInfo);
+            azureStorageBuilderContext.setDownloadDirLoc(Util.replaceMacro(downloadDirLoc, envVars));
+            azureStorageBuilderContext.setContainerName(Util.replaceMacro(containerName, envVars));
+
+            // Set advanced options
+            azureStorageBuilderContext.setFlattenDirectories(flattenDirectories);
+            azureStorageBuilderContext.setDeleteFromAzureAfterDownload(deleteFromAzureAfterDownload);
 
             int filesDownloaded = 0;
             if (downloadType == null || downloadType.equals("container")) {
                 /*the null check is backward compatibility*/
-                filesDownloaded += WAStorageClient.download(run, launcher, listener,
-                        strAcc, expIncludePattern, expExcludePattern, Util.replaceMacro(downloadDirLoc, envVars),
-                        flattenDirectories, workspace, expContainerName);
+                filesDownloaded += WAStorageClient.downloadFromContainer(azureStorageBuilderContext);
             } else {
                 Job<?, ?> job = Utils.getJenkinsInstance().getItemByFullName(expProjectName, Job.class);
                 if (job != null) {
@@ -225,10 +221,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
                     if (source instanceof MatrixBuild) {
                         for (Run r : ((MatrixBuild) source).getExactRuns()) {
-                            filesDownloaded += downloadArtifacts(r, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
+                            filesDownloaded += downloadArtifacts(r, azureStorageBuilderContext);
                         }
                     } else {
-                        filesDownloaded += downloadArtifacts(source, run, launcher, expIncludePattern, expExcludePattern, listener, strAcc, workspace);
+                        filesDownloaded += downloadArtifacts(source, azureStorageBuilderContext);
                     }
                 } else {
                     listener.getLogger().println(Messages.AzureStorageBuilder_job_invalid(expProjectName));
@@ -244,37 +240,32 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                 listener.getLogger().println(Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
             }
 
-        } catch (WAStorageException | IOException | InterruptedException | AccessDeniedException e) {
-            e.printStackTrace(listener.error(Messages.AzureStorageBuilder_download_err(strAcc.getStorageAccName())));
+        } catch (IOException | InterruptedException | WAStorageException e) {
+            e.printStackTrace(listener.error(Messages.AzureStorageBuilder_download_err(storageAccountInfo.getStorageAccName())));
             run.setResult(Result.UNSTABLE);
         }
     }
 
-    private int downloadArtifacts(Run<?, ?> source, Run<?, ?> run, Launcher launcher, String includeFilter, String excludeFilter, TaskListener listener, StorageAccountInfo strAcc, FilePath workspace) {
+    private int downloadArtifacts(final Run<?, ?> source, final AzureStorageBuilderContext context) {
         int filesDownloaded = 0;
         try {
-            final EnvVars envVars = run.getEnvironment(listener);
             final AzureBlobAction action = source.getAction(AzureBlobAction.class);
-            List<AzureBlob> blob = action.getIndividualBlobs();
+            List<AzureBlob> azureBlobs = action.getIndividualBlobs();
             if (action.getZipArchiveBlob() != null && includeArchiveZips) {
-                blob.addAll(Arrays.asList(action.getZipArchiveBlob()));
+                azureBlobs.addAll(Arrays.asList(action.getZipArchiveBlob()));
             }
 
-            // Resolve download location
-            String downloadDir = Util.replaceMacro(downloadDirLoc, envVars);
-            filesDownloaded = WAStorageClient.download(run, launcher, listener,
-                    strAcc, blob, includeFilter, excludeFilter,
-                    downloadDir, flattenDirectories, workspace);
+            filesDownloaded = WAStorageClient.downloadArtifacts(azureBlobs, context);
 
-        } catch (WAStorageException | IOException | InterruptedException e) {
-            run.setResult(Result.UNSTABLE);
+        } catch (WAStorageException e) {
+            context.getRun().setResult(Result.UNSTABLE);
         }
 
         return filesDownloaded;
     }
 
     private void validateData(Run<?, ?> run, TaskListener listener,
-            StorageAccountInfo strAcc) {
+                              StorageAccountInfo strAcc) {
 
         // No need to download artifacts if build failed
         if (run.getResult() == Result.FAILURE) {
@@ -359,7 +350,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         public StorageAccountInfo[] getStorageAccounts() {
             WAStoragePublisher.WAStorageDescriptor publisherDescriptor = Utils.getJenkinsInstance().getDescriptorByType(
-                            WAStoragePublisher.WAStorageDescriptor.class);
+                    WAStoragePublisher.WAStorageDescriptor.class);
 
             StorageAccountInfo[] sa = publisherDescriptor.getStorageAccounts();
 
