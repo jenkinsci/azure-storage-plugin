@@ -14,4 +14,11 @@
     <f:entry title="${%contentType_title}" field="contentType">
         <f:textbox />
     </f:entry>
+
+    <f:entry field="detectContentType">
+        <div align="left">
+            <f:checkbox title="${%detectContentType_title}" default="true" />
+        </div>
+    </f:entry>
+
 </j:jelly>

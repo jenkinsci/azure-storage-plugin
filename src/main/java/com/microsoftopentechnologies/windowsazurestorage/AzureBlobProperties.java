@@ -16,14 +16,19 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.microsoft.azure.storage.blob.BlobProperties;
 import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
+import org.apache.tika.Tika;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public class AzureBlobProperties implements Describable<AzureBlobProperties> {
 
@@ -31,18 +36,21 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
     private final String contentEncoding;
     private final String contentLanguage;
     private final String contentType;
+    private final boolean detectContentType;
 
     @DataBoundConstructor
     public AzureBlobProperties(
         String cacheControl,
         String contentEncoding,
         String contentLanguage,
-        String contentType
+        String contentType,
+        boolean detectContentType
     ) {
         this.cacheControl = cacheControl;
         this.contentEncoding = contentEncoding;
         this.contentLanguage = contentLanguage;
         this.contentType = contentType;
+        this.detectContentType = detectContentType;
     }
 
     public String getCacheControl() {
@@ -61,12 +69,29 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
         return contentType;
     }
 
-    public void configure(CloudBlob blob, EnvVars env) {
+    public boolean getDetectContentType() {
+        return detectContentType;
+    }
+
+    public void configure(CloudBlob blob, FilePath src, EnvVars env) throws InterruptedException, IOException {
         BlobProperties props = blob.getProperties();
         props.setCacheControl(Util.replaceMacro(cacheControl, env));
         props.setContentEncoding(Util.replaceMacro(contentEncoding, env));
         props.setContentLanguage(Util.replaceMacro(contentLanguage, env));
-        props.setContentType(Util.replaceMacro(contentType, env));
+
+        final String resolvedContentType = Util.replaceMacro(contentType, env);
+        if (StringUtils.isNotBlank(resolvedContentType)) {
+            props.setContentType(resolvedContentType);
+        } else if (detectContentType) {
+            props.setContentType(detectContentType(src));
+        }
+    }
+
+    private String detectContentType(FilePath file) throws InterruptedException, IOException {
+        Tika tika = new Tika();
+        try (InputStream stream = file.read()) {
+            return tika.detect(stream, file.getName());
+        }
     }
 
     @SuppressWarnings("unchecked")

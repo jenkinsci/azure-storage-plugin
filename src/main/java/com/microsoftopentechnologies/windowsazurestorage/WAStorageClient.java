@@ -320,7 +320,7 @@ public class WAStorageClient {
 
                         // Set blob properties
                         if (blobProperties != null) {
-                            blobProperties.configure(blob, env);
+                            blobProperties.configure(blob, src, env);
                         }
 
                         // Set blob metadata

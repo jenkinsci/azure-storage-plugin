@@ -159,7 +159,8 @@ public class WAStorageClientUploadIT extends IntegrationTest {
                 "no-cache",
                 "identity",
                 "en-US",
-                "text/plain"
+                "text/plain",
+                false
             );
             List<AzureBlobMetadataPair> metadata = Arrays.asList(
                 new AzureBlobMetadataPair("k1", "v1"),
@@ -204,7 +205,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             Launcher mockLauncher = mock(Launcher.class);
             List<AzureBlob> individualBlobs = new ArrayList<>();
             List<AzureBlob> archiveBlobs = new ArrayList<>();
-            AzureBlobProperties blobProperties = new AzureBlobProperties(null, null, null, null);
+            AzureBlobProperties blobProperties = new AzureBlobProperties(null, null, null, null, false);
             List<AzureBlobMetadataPair> metadata = Arrays.asList(
                     new AzureBlobMetadataPair(null, "v1"),
                     new AzureBlobMetadataPair("", "v1"),
@@ -254,7 +255,8 @@ public class WAStorageClientUploadIT extends IntegrationTest {
                     null,
                     null,
                     null,
-                    "${MY_CONTENT_TYPE}"
+                    "${MY_CONTENT_TYPE}",
+                    false
             );
             List<AzureBlobMetadataPair> metadata = Arrays.asList(
                     new AzureBlobMetadataPair("${MY_META_KEY}", "${MY_META_VALUE}")
