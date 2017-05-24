@@ -48,7 +48,7 @@
 
             <f:entry field="deleteFromAzureAfterDownload" help="/plugin/windows-azure-storage/help-deleteFromAzureAfterDownload.html">
                 <div align="left">
-                    <f:checkbox  title="${%includeArchiveZips_title}"/>
+                    <f:checkbox  title="${%deleteFromAzureAfterDownload_title}"/>
                 </div>
             </f:entry>
 

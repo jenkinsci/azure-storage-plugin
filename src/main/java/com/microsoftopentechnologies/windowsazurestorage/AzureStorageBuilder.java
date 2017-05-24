@@ -177,6 +177,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
             final String expProjectName = Util.replaceMacro(projectName, envVars);
             final AzureStorageBuilderContext azureStorageBuilderContext = new AzureStorageBuilderContext(launcher, run, listener);
+            azureStorageBuilderContext.setWorkspace(workspace);
 
             // Resolve include patterns
             String expIncludePattern = Util.replaceMacro(includeFilesPattern, envVars);
