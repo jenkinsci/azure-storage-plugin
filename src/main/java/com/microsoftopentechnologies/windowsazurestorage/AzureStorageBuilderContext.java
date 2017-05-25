@@ -25,6 +25,7 @@ import hudson.Util;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 
@@ -55,7 +56,7 @@ public class AzureStorageBuilderContext {
     public FilePath getDownloadDir() {
         FilePath downloadDir = getWorkspacePath();
         try {
-            if (!Utils.isNullOrEmpty(downloadDirLoc)) {
+            if (!StringUtils.isBlank(downloadDirLoc)) {
                 final EnvVars envVars = run.getEnvironment(listener);
                 downloadDir = new FilePath(getWorkspacePath(), Util.replaceMacro(downloadDirLoc, envVars));
             }
