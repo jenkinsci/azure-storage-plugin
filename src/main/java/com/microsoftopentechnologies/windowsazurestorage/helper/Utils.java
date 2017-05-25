@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 
 public class Utils {
 
@@ -68,16 +69,6 @@ public class Utils {
     }
 
     /**
-     * Utility method to check for null conditions or empty strings.
-     *
-     * @param name
-     * @return true if null or empty string
-     */
-    public static boolean isNullOrEmpty(final String name) {
-        return name == null || name.matches("\\s*");
-    }
-
-    /**
      * This method checks if text contains tokens in the form of $TOKEN or
      * ${TOKEN}
      *
@@ -85,7 +76,7 @@ public class Utils {
      * @return true if tokens exist in input string
      */
     public static boolean containTokens(String text) {
-        if (isNullOrEmpty(text)) {
+        if (StringUtils.isBlank(text)) {
             return false;
         }
         return text.matches(Constants.TOKEN_FORMAT);
@@ -101,7 +92,7 @@ public class Utils {
      */
     public static String getBlobEP(String blobURL) {
 
-        if (isNullOrEmpty(blobURL)) {
+        if (StringUtils.isBlank(blobURL)) {
             return Constants.DEF_BLOB_URL;
         }
 
@@ -129,7 +120,7 @@ public class Utils {
     public static String getDefaultBlobURL() {
         return Constants.DEF_BLOB_URL;
     }
-    
+
     @Nonnull
     public static Jenkins getJenkinsInstance() {
         return Jenkins.getInstance();
@@ -159,13 +150,13 @@ public class Utils {
         File jenkinsRoot;
         jenkinsRoot = Utils.getJenkinsInstance().root;
         if (jenkinsRoot == null) {
-            throw new IllegalStateException("Root isn't configured. Couldn't find Jenkins work directory."); 
+            throw new IllegalStateException("Root isn't configured. Couldn't find Jenkins work directory.");
         }
-        
+
         return jenkinsRoot.getAbsolutePath();
-        
+
     }
-    
+
     public static String getPluginInstance() {
         String instanceId = null;
         try {
@@ -179,15 +170,15 @@ public class Utils {
         }
         return instanceId;
     }
-    
+
     public static String getPluginVersion() {
         String version = Utils.class.getPackage().getImplementationVersion();
         return version;
     }
-            
+
     public static OperationContext updateUserAgent() throws IOException {
-                    
-        String userInfo = BaseRequest.getUserAgent();       
+
+        String userInfo = BaseRequest.getUserAgent();
         String version = null;
         String instanceId = null;
 
@@ -201,7 +192,7 @@ public class Utils {
         }
 
         String pluginInfo = Constants.PLUGIN_NAME + "/" + version + "/" + instanceId;
-        
+
         if (userInfo == null) {
             userInfo = pluginInfo;
         } else {
@@ -214,6 +205,6 @@ public class Utils {
 
         opContext.setUserHeaders(temp);
         return opContext;
-    }    
+    }
 
 }

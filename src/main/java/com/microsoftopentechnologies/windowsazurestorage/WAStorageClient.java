@@ -108,11 +108,11 @@ public class WAStorageClient {
 
         credentials = new StorageCredentialsAccountAndKey(accName, storageAccount.getStorageAccountKey());
 
-        if (Utils.isNullOrEmpty(blobURL) || blobURL.equals(Constants.DEF_BLOB_URL)) {
+        if (StringUtils.isBlank(blobURL) || blobURL.equals(Constants.DEF_BLOB_URL)) {
             cloudStorageAccount = new CloudStorageAccount(credentials);
         } else {
             String endpointSuffix = getEndpointSuffix(blobURL);
-            if (Utils.isNullOrEmpty(endpointSuffix))
+            if (StringUtils.isBlank(endpointSuffix))
                 throw new URISyntaxException(blobURL, "The blob endpoint is not correct!");
             cloudStorageAccount = new CloudStorageAccount(credentials, false, endpointSuffix);
         }
@@ -273,7 +273,7 @@ public class WAStorageClient {
                         embeddedVP = fileName.substring(embVPSepIndex + 2,
                                 fileName.length());
 
-                        if (Utils.isNullOrEmpty(embeddedVP)) {
+                        if (StringUtils.isBlank(embeddedVP)) {
                             embeddedVP = null;
                         } else if (!embeddedVP.endsWith(Constants.FWD_SLASH)) {
                             embeddedVP = embeddedVP + Constants.FWD_SLASH;
@@ -302,14 +302,14 @@ public class WAStorageClient {
 
                         CloudBlockBlob blob;
                         String srcPrefix = srcURI.getPath();
-                        if (Utils.isNullOrEmpty(expVP)
-                                && Utils.isNullOrEmpty(embeddedVP)) {
+                        if (StringUtils.isBlank(expVP)
+                                && StringUtils.isBlank(embeddedVP)) {
                             blob = container.getBlockBlobReference(srcPrefix);
                         } else {
                             String prefix = expVP;
 
-                            if (!Utils.isNullOrEmpty(embeddedVP)) {
-                                if (Utils.isNullOrEmpty(expVP)) {
+                            if (!StringUtils.isBlank(embeddedVP)) {
+                                if (StringUtils.isBlank(expVP)) {
                                     prefix = embeddedVP;
                                 } else {
                                     prefix = expVP + embeddedVP;
@@ -331,13 +331,13 @@ public class WAStorageClient {
                                 final String resolvedValue = Util.replaceMacro(pair.getValue(), env);
 
                                 // Azure does not allow null, empty or whitespace metadata key
-                                if (resolvedKey == null || resolvedKey.trim().length() == 0) {
+                                if (StringUtils.isBlank(resolvedKey)) {
                                     listener.getLogger().println("Ignoring blank metadata key");
                                     continue;
                                 }
 
                                 // Azure does not allow null, empty or whitespace metadata value
-                                if (resolvedValue == null || resolvedValue.trim().length() == 0) {
+                                if (StringUtils.isBlank(resolvedValue)) {
                                     listener.getLogger().println("Ignoring blank metadata value, key: " + resolvedKey);
                                     continue;
                                 }
@@ -366,7 +366,7 @@ public class WAStorageClient {
                 // blob reference.
                 String blobURI = zipPath.getName();
 
-                if (!Utils.isNullOrEmpty(expVP)) {
+                if (!StringUtils.isBlank(expVP)) {
                     blobURI = expVP + blobURI;
                 }
 

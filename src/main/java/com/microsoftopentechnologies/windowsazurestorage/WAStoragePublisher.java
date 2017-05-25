@@ -55,6 +55,7 @@ import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -324,7 +325,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         // Resolve virtual path
         String expVP = replaceMacro(virtualPath, envVars);
 
-        if (!(Utils.isNullOrEmpty(expVP) || expVP.endsWith(Constants.FWD_SLASH))) {
+        if (!(StringUtils.isBlank(expVP) || expVP.endsWith(Constants.FWD_SLASH))) {
             expVP += Constants.FWD_SLASH;
         }
 
@@ -379,7 +380,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         // Validate files path
-        if (Utils.isNullOrEmpty(filesPath)) {
+        if (StringUtils.isBlank(filesPath)) {
             listener.getLogger().println(
                     Messages.WAStoragePublisher_filepath_err());
             return false;
@@ -391,7 +392,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        if (Utils.isNullOrEmpty(expContainerName)) {
+        if (StringUtils.isBlank(expContainerName)) {
             listener.getLogger().println("Container name is null or empty");
             return false;
         }
@@ -469,12 +470,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 @QueryParameter String was_blobEndPointURL) throws IOException,
                 ServletException {
 
-            if (Utils.isNullOrEmpty(was_storageAccName)) {
+            if (StringUtils.isBlank(was_storageAccName)) {
                 return FormValidation.error(Messages
                         .WAStoragePublisher_storage_name_req());
             }
 
-            if (Utils.isNullOrEmpty(was_storageAccountKey)) {
+            if (StringUtils.isBlank(was_storageAccountKey)) {
                 return FormValidation.error(Messages
                         .WAStoragePublisher_storage_key_req());
             }
@@ -500,7 +501,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          */
         public FormValidation doCheckName(@QueryParameter String val)
                 throws IOException, ServletException {
-            if (!Utils.isNullOrEmpty(val)) {
+            if (!StringUtils.isBlank(val)) {
                 // Token resolution happens dynamically at runtime , so for
                 // basic validations
                 // if text contain tokens considering it as valid input.
@@ -518,7 +519,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         public FormValidation doCheckPath(@QueryParameter String val) {
-            if (Utils.isNullOrEmpty(val)) {
+            if (StringUtils.isBlank(val)) {
                 return FormValidation.error(Messages
                         .WAStoragePublisher_artifacts_req());
             }
@@ -526,7 +527,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         public FormValidation doCheckBlobName(@QueryParameter String val) {
-            if (Utils.isNullOrEmpty(val)) {
+            if (StringUtils.isBlank(val)) {
                 return FormValidation.error(Messages
                         .AzureStorageBuilder_blobName_req());
             } else if (!Utils.validateBlobName(val)) {
