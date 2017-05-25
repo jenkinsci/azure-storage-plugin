@@ -197,6 +197,46 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     }
 
     @Test
+    public void testEmptyBlobMetadata() {
+        try {
+            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
+            Run mockRun = mock(Run.class);
+            Launcher mockLauncher = mock(Launcher.class);
+            List<AzureBlob> individualBlobs = new ArrayList<>();
+            List<AzureBlob> archiveBlobs = new ArrayList<>();
+            AzureBlobProperties blobProperties = new AzureBlobProperties(null, null, null, null);
+            List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                    new AzureBlobMetadataPair(null, "v1"),
+                    new AzureBlobMetadataPair("", "v1"),
+                    new AzureBlobMetadataPair(" ", "v1"),
+                    new AzureBlobMetadataPair("k1", null),
+                    new AzureBlobMetadataPair("k2", ""),
+                    new AzureBlobMetadataPair("k2", " ")
+            );
+
+            Iterator it = testEnv.uploadFileList.entrySet().iterator();
+            Map.Entry firstPair = (Map.Entry) it.next();
+            File firstFile = (File) firstPair.getValue();
+            File workspaceDir = new File(containerName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false,
+                    firstFile.getName(), // Upload the first file only for efficiency
+                    "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
+            downloadedBlob.downloadAttributes();
+
+            HashMap<String, String> downloadedMeta = downloadedBlob.getMetadata();
+            assertTrue(downloadedMeta.isEmpty());
+
+            testEnv.container.deleteIfExists();
+
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
     public void testEnvVarResolve() {
         try {
             WAStorageClient mockStorageClient = spy(WAStorageClient.class);

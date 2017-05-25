@@ -46,6 +46,7 @@ import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.*;
+import org.apache.commons.lang.StringUtils;
 
 public class WAStorageClient {
 
@@ -319,17 +320,29 @@ public class WAStorageClient {
 
                         // Set blob properties
                         if (blobProperties != null) {
-                            blobProperties.configure(blob);
+                            blobProperties.configure(blob, env);
                         }
 
                         // Set blob metadata
                         if (metadata != null) {
                             HashMap<String, String> metadataMap = blob.getMetadata();
                             for (AzureBlobMetadataPair pair : metadata) {
-                                metadataMap.put(
-                                    Util.replaceMacro(pair.getKey(), env),
-                                    Util.replaceMacro(pair.getValue(), env)
-                                );
+                                final String resolvedKey = Util.replaceMacro(pair.getKey(), env);
+                                final String resolvedValue = Util.replaceMacro(pair.getValue(), env);
+
+                                // Azure does not allow null, empty or whitespace metadata key
+                                if (resolvedKey == null || resolvedKey.trim().length() == 0) {
+                                    listener.getLogger().println("Ignoring blank metadata key");
+                                    continue;
+                                }
+
+                                // Azure does not allow null, empty or whitespace metadata value
+                                if (resolvedValue == null || resolvedValue.trim().length() == 0) {
+                                    listener.getLogger().println("Ignoring blank metadata value, key: " + resolvedKey);
+                                    continue;
+                                }
+
+                                metadataMap.put(resolvedKey, resolvedValue);
                             }
                             blob.setMetadata(metadataMap);
                         }
