@@ -129,6 +129,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         public void setProjectName(String projectName) {
             this.projectName = projectName;
         }
+        
         public BuildSelector getBuildSelector() {
             return buildSelector;
         }
