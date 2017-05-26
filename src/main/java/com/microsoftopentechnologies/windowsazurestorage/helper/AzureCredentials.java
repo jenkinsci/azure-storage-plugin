@@ -21,19 +21,20 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
-import com.microsoftopentechnologies.windowsazurestorage.WAStorageClient;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.exceptions.*;
+import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
+import com.microsoftopentechnologies.windowsazurestorage.service.StoragePluginService;
 import hudson.Extension;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import java.util.Collections;
-import java.util.List;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -187,7 +188,7 @@ public class AzureCredentials extends BaseStandardCredentials {
 
             try {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(storageAccountName, storageKey, blobEndpointURL);
-                WAStorageClient.validateStorageAccount(storageAccount);
+                AzureUtils.validateStorageAccount(storageAccount);
                 //AzureCredentials.StorageAccountCredential storageCreds = new AzureCredentials.StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
             } catch (Exception e) {
                 return FormValidation.error(e.getMessage());

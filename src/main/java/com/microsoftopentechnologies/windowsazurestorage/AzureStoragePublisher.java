@@ -19,23 +19,14 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
-import com.microsoftopentechnologies.windowsazurestorage.helper.CredentialMigration;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
+import com.microsoftopentechnologies.windowsazurestorage.helper.*;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadBlobService;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
+import hudson.*;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
-import hudson.Launcher;
-import hudson.Util;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.Item;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -62,8 +53,22 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.*;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import jenkins.tasks.SimpleBuildStep;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
-public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
+import javax.annotation.Nonnull;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.util.*;
+
+public class AzureStoragePublisher extends Recorder implements SimpleBuildStep {
 
     private final transient String storageAccName;
 
@@ -102,25 +107,17 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     private transient AzureCredentials.StorageAccountCredential storageCreds;
 
-    public enum UploadType {
-
-        INDIVIDUAL,
-        ZIP,
-        BOTH,
-        INVALID;
-    }
-
     @Deprecated
-    public WAStoragePublisher(final String storageAccName,
-                              final String storageCredentialId, final String filesPath, final String excludeFilesPath,
-                              final String containerName, final boolean cntPubAccess, final String virtualPath,
-                              final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
-                              final boolean cleanUpContainer, final boolean allowAnonymousAccess,
-                              final boolean uploadArtifactsOnlyIfSuccessful,
-                              final boolean doNotFailIfArchivingReturnsNothing,
-                              final boolean doNotUploadIndividualFiles,
-                              final boolean uploadZips,
-                              final boolean doNotWaitForPreviousBuild) {
+    public AzureStoragePublisher(final String storageAccName,
+                                 final String storageCredentialId, final String filesPath, final String excludeFilesPath,
+                                 final String containerName, final boolean cntPubAccess, final String virtualPath,
+                                 final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
+                                 final boolean cleanUpContainer, final boolean allowAnonymousAccess,
+                                 final boolean uploadArtifactsOnlyIfSuccessful,
+                                 final boolean doNotFailIfArchivingReturnsNothing,
+                                 final boolean doNotUploadIndividualFiles,
+                                 final boolean uploadZips,
+                                 final boolean doNotWaitForPreviousBuild) {
         super();
         this.filesPath = filesPath.trim();
         this.excludeFilesPath = excludeFilesPath.trim();
@@ -142,8 +139,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundConstructor
-    public WAStoragePublisher(final String storageCredentialId, final String filesPath,
-                              final String containerName) {
+    public AzureStoragePublisher(final String storageCredentialId, final String filesPath,
+                                 final String containerName) {
         super();
         this.filesPath = filesPath.trim();
         this.containerName = containerName.trim();
@@ -382,57 +379,56 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         final EnvVars envVars = run.getEnvironment(listener);
 
         // Get storage account and set formatted blob endpoint url.
-        StorageAccountInfo strAcc = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
+        final StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
         // Resolve container name
         String expContainerName = replaceMacro(containerName, envVars, Locale.ENGLISH);
 
-        if (!validateData(run, listener, strAcc, expContainerName)) {
+        if (!validateData(run, listener, storageAccountInfo, expContainerName)) {
             throw new IOException("Plugin can not continue, until previous errors are addressed");
         }
 
-        // Resolve file path
-        String expFP = replaceMacro(filesPath, envVars);
-
-        // Resolve exclude paths
-        String excludeFP = replaceMacro(excludeFilesPath, envVars);
-
+        final PublisherServiceData serviceData = new PublisherServiceData(run, ws, launcher, listener, storageAccountInfo);
+        serviceData.setContainerName(expContainerName);
+        serviceData.setFilePath(replaceMacro(filesPath, envVars));
+        serviceData.setExcludedFilesPath(replaceMacro(excludeFilesPath, envVars));
+        serviceData.setBlobProperties(blobProperties);
+        serviceData.setPubAccessible(cntPubAccess);
+        serviceData.setCleanUpContainer(cleanUpContainer);
+        serviceData.setUploadType(getArtifactUploadType());
+        serviceData.setAzureBlobMetadata(metadata);
         // Resolve virtual path
         String expVP = replaceMacro(virtualPath, envVars);
 
         if (!(StringUtils.isBlank(expVP) || expVP.endsWith(Constants.FWD_SLASH))) {
             expVP += Constants.FWD_SLASH;
         }
+        serviceData.setVirtualPath(expVP);
 
+        final UploadBlobService service = new UploadBlobService(serviceData);
         try {
-            List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
-            List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
-
-            int filesUploaded = WAStorageClient.upload(run, launcher, listener, strAcc,
-                    expContainerName, blobProperties, metadata, cntPubAccess, cleanUpContainer, expFP,
-                    expVP, excludeFP, getArtifactUploadType(), individualBlobs, archiveBlobs, ws);
+            int filesUploaded = service.execute();
 
             // Mark build unstable if no files are uploaded and the user
             // doesn't want the build not to fail in that case.
             if (filesUploaded == 0) {
-                listener.getLogger().println(
-                        Messages.WAStoragePublisher_nofiles_uploaded());
+                listener.getLogger().println(Messages.WAStoragePublisher_nofiles_uploaded());
                 if (!doNotFailIfArchivingReturnsNothing) {
                     throw new IOException(Messages.WAStoragePublisher_nofiles_uploaded());
                 }
             } else {
                 AzureBlob zipArchiveBlob = null;
                 if (getArtifactUploadType() != UploadType.INDIVIDUAL) {
-                    zipArchiveBlob = archiveBlobs.get(0);
+                    zipArchiveBlob = serviceData.getArchiveBlobs().get(0);
                 }
                 listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
 
-                run.getActions().add(new AzureBlobAction(run, strAcc.getStorageAccName(),
-                        expContainerName, individualBlobs, zipArchiveBlob, allowAnonymousAccess, storageCredentialId));
+                run.getActions().add(new AzureBlobAction(run, storageAccountInfo.getStorageAccName(), expContainerName,
+                        serviceData.getIndividualBlobs(), zipArchiveBlob, allowAnonymousAccess, storageCredentialId));
             }
         } catch (Exception e) {
             e.printStackTrace(listener.error(Messages
-                    .WAStoragePublisher_uploaded_err(strAcc.getStorageAccName())));
-            throw new IOException(Messages.WAStoragePublisher_uploaded_err(strAcc.getStorageAccName()));
+                    .WAStoragePublisher_uploaded_err(storageAccountInfo.getStorageAccName())));
+            throw new IOException(Messages.WAStoragePublisher_uploaded_err(storageAccountInfo.getStorageAccName()));
         }
     }
 
@@ -478,7 +474,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         // Check if storage account credentials are valid
         try {
-            WAStorageClient.validateStorageAccount(storageAccount);
+            AzureUtils.validateStorageAccount(storageAccount);
         } catch (Exception e) {
             listener.getLogger().println(Messages.Client_SA_val_fail());
             listener.getLogger().println(
@@ -532,9 +528,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         /**
          * Validates storage account details.
          *
-         * @param storageAccountName
-         * @param blobEndPointURL
-         * @param storageAccountKey
+         * @param was_storageAccName
+         * @param was_storageAccountKey
+         * @param was_blobEndPointURL
          * @return
          * @throws IOException
          * @throws ServletException
@@ -559,7 +555,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 // Get formatted blob end point URL.
                 was_blobEndPointURL = Utils.getBlobEP(was_blobEndPointURL);
                 StorageAccountInfo storageAccount = new StorageAccountInfo(was_storageAccName, was_storageAccountKey, was_blobEndPointURL);
-                WAStorageClient.validateStorageAccount(storageAccount);
+                AzureUtils.validateStorageAccount(storageAccount);
             } catch (Exception e) {
                 return FormValidation.error("Error : " + e.getMessage());
             }
