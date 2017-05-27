@@ -22,11 +22,10 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.RetryNoRetry;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.*;
 import com.microsoft.azure.storage.blob.*;
+import com.microsoft.azure.storage.file.CloudFileClient;
+import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -66,17 +65,8 @@ public class AzureUtils {
         return true;
     }
 
-    public static CloudBlobContainer getBlobContainerReference(final StorageAccountInfo storageAccount,
-                                                               final String containerName,
-                                                               final boolean createCnt,
-                                                               final boolean allowRetry,
-                                                               final Boolean cntPubAccess)
-            throws URISyntaxException, StorageException, IOException {
-
+    public static CloudStorageAccount getCloudStorageAccount(final StorageAccountInfo storageAccount) throws URISyntaxException {
         CloudStorageAccount cloudStorageAccount;
-        CloudBlobClient serviceClient;
-        CloudBlobContainer container;
-
         final String accName = storageAccount.getStorageAccName();
         final String blobURL = storageAccount.getBlobEndPointURL();
         final StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(accName,
@@ -88,7 +78,19 @@ public class AzureUtils {
             cloudStorageAccount = new CloudStorageAccount(credentials, false, getEndpointSuffix(blobURL));
         }
 
-        serviceClient = cloudStorageAccount.createCloudBlobClient();
+        return cloudStorageAccount;
+    }
+
+    public static CloudBlobContainer getBlobContainerReference(final StorageAccountInfo storageAccount,
+                                                               final String containerName,
+                                                               final boolean createIfNotExist,
+                                                               final boolean allowRetry,
+                                                               final Boolean cntPubAccess)
+            throws URISyntaxException, StorageException, IOException {
+
+        final CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+        final CloudBlobClient serviceClient = cloudStorageAccount.createCloudBlobClient();
+
         if (!allowRetry) {
             // Setting no retry policy
             final RetryNoRetry rnr = new RetryNoRetry();
@@ -96,10 +98,10 @@ public class AzureUtils {
             serviceClient.getDefaultRequestOptions().setRetryPolicyFactory(rnr);
         }
 
-        container = serviceClient.getContainerReference(containerName);
+        final CloudBlobContainer container = serviceClient.getContainerReference(containerName);
 
         boolean cntExists = container.exists();
-        if (createCnt && !cntExists) {
+        if (createIfNotExist && !cntExists) {
             container.createIfNotExists(null, Utils.updateUserAgent());
         }
 
@@ -107,6 +109,29 @@ public class AzureUtils {
         setContainerPermission(container, cntExists, cntPubAccess);
 
         return container;
+    }
+
+    public static CloudFileShare getFileShareReference(final StorageAccountInfo storageAccountInfo,
+                                                       final String shareName,
+                                                       final boolean allowRetry,
+                                                       final boolean createIfNotExit)
+            throws URISyntaxException, StorageException {
+        final CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccountInfo);
+        final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
+
+        if (!allowRetry) {
+            // Setting no retry policy
+            final RetryNoRetry retryNoRetry = new RetryNoRetry();
+            cloudFileClient.getDefaultRequestOptions().setRetryPolicyFactory(retryNoRetry);
+        }
+
+        final CloudFileShare fileShare = cloudFileClient.getShareReference(shareName);
+
+        if (createIfNotExit) {
+            fileShare.createIfNotExists();
+        }
+
+        return fileShare;
     }
 
     /**

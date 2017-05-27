@@ -10,12 +10,12 @@
     <f:entry title="${%containerName_title}" field="containerName"
              help="/plugin/windows-azure-storage/help-containerName.html">
         <f:textbox
-                checkUrl="'${rootURL}/publisher/AzureStoragePublisher/checkName?val='+encodeURIComponent(this.value)"/>
+                checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)"/>
     </f:entry>
 
     <f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
         <f:textbox
-                checkUrl="'${rootURL}/publisher/AzureStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
+                checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
     </f:entry>
 
     <f:section title="${%blobPropertiesMetadata_title}">

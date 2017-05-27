@@ -44,7 +44,6 @@ import static org.mockito.Mockito.when;
 public class WAStorageClientUploadIT extends IntegrationTest {
 
     private static final Logger LOGGER = Logger.getLogger(WAStorageClientUploadIT.class.getName());
-
     private String containerName;
 
     @Before

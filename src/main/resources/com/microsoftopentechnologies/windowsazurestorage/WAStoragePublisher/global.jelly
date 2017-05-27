@@ -10,7 +10,7 @@
                             <sf:select class="display: none !important" expressionAllowed="false" />
                         </div>
                     </f:entry> 
-                    <j:set var="storagePublisher" value="${app.getDescriptorByName('com.microsoftopentechnologies.windowsazurestorage.WaStoragePublisher.WAStorageDescriptor')}"/>
+                    <j:set var="storagePublisher" value="${app.getDescriptorByName('com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.WAStorageDescriptor')}"/>
                     <j:set var="storageCreds" value="${instance.getStorageCredentials()}"/>
                 </table>
                 <div align="left" style="font-size:110%">

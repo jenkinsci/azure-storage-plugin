@@ -5,28 +5,28 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
-import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import hudson.security.ACL;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.ClassRule;
-import org.jvnet.hudson.test.JenkinsRule;
-
-import jenkins.model.Jenkins;
-import org.apache.commons.io.FileUtils;
-import org.junit.rules.TemporaryFolder;
-
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import hudson.security.ACL;
+import jenkins.model.Jenkins;
+import org.apache.commons.io.FileUtils;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -38,7 +38,7 @@ public class CredentialMigrationTest {
     public static File input = new File("src/test/resources/com/microsoftopentechnologies/helper/correctFormatOldConfig.xml");
     private Jenkins jenkinsInstance;
     private static final String correctConfigContent = "<?xml version='1.0' encoding='UTF-8'?>\n" +
-    "<com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher_-WAStorageDescriptor plugin='windows-azure-storage@0.3.3-SNAPSHOT'>\n" +
+    "<com.microsoftopentechnologies.windowsazurestorage.AzureStoragePublisher_-WAStorageDescriptor plugin='windows-azure-storage@0.3.3-SNAPSHOT'>\n" +
     "<storageAccounts>\n" +
     "<com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>\n" +
     "<storageAccName>abcdef</storageAccName>\n" +
@@ -51,16 +51,16 @@ public class CredentialMigrationTest {
     "<blobEndPointURL>http://test2/</blobEndPointURL>\n" +
     "</com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>\n" +
     "</storageAccounts>\n" +
-    "</com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher_-WAStorageDescriptor>";
+    "</com.microsoftopentechnologies.windowsazurestorage.AzureStoragePublisher_-WAStorageDescriptor>";
     
     private static final String wrongConfigContent = "<?xml version='1.0' encoding='UTF-8'?>\n" +
-    "<com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher_-WAStorageDescriptor plugin='windows-azure-storage@0.3.3-SNAPSHOT'>\n" +
+    "<com.microsoftopentechnologies.windowsazurestorage.AzureStoragePublisher_-WAStorageDescriptor plugin='windows-azure-storage@0.3.3-SNAPSHOT'>\n" +
     "<storageAccounts>\n" +
     "<storageAccName>abcdef</storageAccName>\n" +
     "<storageAccountKey>12345</storageAccountKey>\n" +
     "<blobEndPointURL>http://blob.core.windows.net/</blobEndPointURL>\n" +
     "</storageAccounts>\n" +
-    "</com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher_-WAStorageDescriptor>";
+    "</com.microsoftopentechnologies.windowsazurestorage.AzureStoragePublisher_-WAStorageDescriptor>";
     
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();

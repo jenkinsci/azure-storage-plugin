@@ -18,6 +18,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.*;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadBlobService;
@@ -68,7 +69,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 
-public class AzureStoragePublisher extends Recorder implements SimpleBuildStep {
+public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     private final transient String storageAccName;
 
@@ -108,16 +109,16 @@ public class AzureStoragePublisher extends Recorder implements SimpleBuildStep {
     private transient AzureCredentials.StorageAccountCredential storageCreds;
 
     @Deprecated
-    public AzureStoragePublisher(final String storageAccName,
-                                 final String storageCredentialId, final String filesPath, final String excludeFilesPath,
-                                 final String containerName, final boolean cntPubAccess, final String virtualPath,
-                                 final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
-                                 final boolean cleanUpContainer, final boolean allowAnonymousAccess,
-                                 final boolean uploadArtifactsOnlyIfSuccessful,
-                                 final boolean doNotFailIfArchivingReturnsNothing,
-                                 final boolean doNotUploadIndividualFiles,
-                                 final boolean uploadZips,
-                                 final boolean doNotWaitForPreviousBuild) {
+    public WAStoragePublisher(final String storageAccName,
+                              final String storageCredentialId, final String filesPath, final String excludeFilesPath,
+                              final String containerName, final boolean cntPubAccess, final String virtualPath,
+                              final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
+                              final boolean cleanUpContainer, final boolean allowAnonymousAccess,
+                              final boolean uploadArtifactsOnlyIfSuccessful,
+                              final boolean doNotFailIfArchivingReturnsNothing,
+                              final boolean doNotUploadIndividualFiles,
+                              final boolean uploadZips,
+                              final boolean doNotWaitForPreviousBuild) {
         super();
         this.filesPath = filesPath.trim();
         this.excludeFilesPath = excludeFilesPath.trim();
@@ -139,8 +140,8 @@ public class AzureStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundConstructor
-    public AzureStoragePublisher(final String storageCredentialId, final String filesPath,
-                                 final String containerName) {
+    public WAStoragePublisher(final String storageCredentialId, final String filesPath,
+                              final String containerName) {
         super();
         this.filesPath = filesPath.trim();
         this.containerName = containerName.trim();
@@ -442,7 +443,6 @@ public class AzureStoragePublisher extends Recorder implements SimpleBuildStep {
                     Messages.WAStoragePublisher_build_failed_err());
             return false;
         }
-
         if (storageAccount == null) {
             listener.getLogger().println(
                     Messages.WAStoragePublisher_storage_account_err());

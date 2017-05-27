@@ -105,7 +105,6 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
         }
     }
 
-
     @Test
     public void testDownloadfromContainerwithZIP() {
         System.out.print("download with archive ZIP");

@@ -393,8 +393,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
 
         public StorageAccountInfo[] getStorageAccounts() {
-            AzureStoragePublisher.WAStorageDescriptor publisherDescriptor = Utils.getJenkinsInstance().getDescriptorByType(
-                    AzureStoragePublisher.WAStorageDescriptor.class);
+            WAStoragePublisher.WAStorageDescriptor publisherDescriptor = Utils.getJenkinsInstance().getDescriptorByType(
+                    WAStoragePublisher.WAStorageDescriptor.class);
 
             StorageAccountInfo[] sa = publisherDescriptor.getStorageAccounts();
 
