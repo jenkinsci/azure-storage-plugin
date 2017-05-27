@@ -37,8 +37,10 @@ import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -51,40 +53,94 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     private final transient String storageAccName;
     private final String downloadType;
-    private final String containerName;
-    private final String includeFilesPattern;
-    private final String excludeFilesPattern;
-    private final String downloadDirLoc;
-    private final boolean flattenDirectories;
-    private final boolean includeArchiveZips;
-    private final boolean deleteFromAzureAfterDownload;
-    private final BuildSelector buildSelector;
-    private final String projectName;
+    private boolean deleteFromAzureAfterDownload;
     private String storageCredentialId;
+    private String containerName = "";
+    private String includeFilesPattern = "";
+    private String excludeFilesPattern = "";
+    private String downloadDirLoc = "";
+    private boolean flattenDirectories;
+    private boolean includeArchiveZips;
+    private BuildSelector buildSelector;
+    private String projectName = "";
 
     private transient AzureCredentials.StorageAccountCredential storageCreds;
+
+    @DataBoundSetter
+    public void setIncludeFilesPattern(String includeFilesPattern) {
+        this.includeFilesPattern = includeFilesPattern;
+    }
+
+    @DataBoundSetter
+    public void setExcludeFilesPattern(String excludeFilesPattern) {
+        this.excludeFilesPattern = excludeFilesPattern;
+    }
+
+    @DataBoundSetter
+    public void setDownloadDirLoc(String downloadDirLoc) {
+        this.downloadDirLoc = downloadDirLoc;
+    }
+
+    @DataBoundSetter
+    public void setFlattenDirectories(boolean flattenDirectories) {
+        this.flattenDirectories = flattenDirectories;
+    }
+
+    @DataBoundSetter
+    public void setIncludeArchiveZips(boolean includeArchiveZips) {
+        this.includeArchiveZips = includeArchiveZips;
+    }
+
+    public boolean isDeleteFromAzureAfterDownload() {
+        return deleteFromAzureAfterDownload;
+    }
+
+    @DataBoundSetter
+    public void setDeleteFromAzureAfterDownload(boolean deleteFromAzureAfterDownload) {
+        this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
+    }
 
     public static class DownloadType {
 
         public final String type;
-        public final String containerName;
-        public final String projectName;
-        BuildSelector buildSelector;
+        private String containerName = "";
+        private String projectName = "";
+        private BuildSelector buildSelector = new StatusBuildSelector(true);
 
         @DataBoundConstructor
-        public DownloadType(final String value, final String containerName, final String projectName, final BuildSelector buildSelector) {
+        public DownloadType(final String value) {
             this.type = value;
+        }
+
+        public String getContainerName() {
+            return containerName;
+        }
+
+        @DataBoundSetter
+        public void setContainerName(String containerName) {
             this.containerName = containerName;
+        }
+
+        public String getProjectName() {
+            return projectName;
+        }
+
+        @DataBoundSetter
+        public void setProjectName(String projectName) {
             this.projectName = projectName;
-            if (buildSelector == null) {
-                this.buildSelector = new StatusBuildSelector(true);
-            } else {
-                this.buildSelector = buildSelector;
-            }
+        }
+        
+        public BuildSelector getBuildSelector() {
+            return buildSelector;
+        }
+
+        @DataBoundSetter
+        public void setBuildSelector(BuildSelector buildSelector) {
+            this.buildSelector = buildSelector;
         }
     }
 
-    @DataBoundConstructor
+    @Deprecated
     public AzureStorageBuilder(
             final String strAccName,
             final String storageCredentialId,
@@ -106,6 +162,19 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         this.flattenDirectories = flattenDirectories;
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
         this.includeArchiveZips = includeArchiveZips;
+        this.projectName = downloadType.projectName;
+        this.buildSelector = downloadType.buildSelector;
+    }
+
+    @DataBoundConstructor
+    public AzureStorageBuilder(
+            final String storageCredentialId,
+            final DownloadType downloadType) {
+        this.storageCredentialId = storageCredentialId;
+        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
+        this.storageAccName = storageCreds.getStorageAccountName();
+        this.downloadType = downloadType.type;
+        this.containerName = downloadType.containerName;
         this.projectName = downloadType.projectName;
         this.buildSelector = downloadType.buildSelector;
     }
@@ -299,6 +368,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     @Extension
+    @Symbol("azureDownload")
     public static final class AzureStorageBuilderDesc extends
             BuildStepDescriptor<Builder> {
 
