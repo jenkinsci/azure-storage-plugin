@@ -13,6 +13,7 @@ import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import hudson.security.ACL;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContext;
 import org.acegisecurity.context.SecurityContextHolder;
@@ -34,12 +36,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- *
  * @author arroyc
  */
-public class CredentialMigration {
+public final class CredentialMigration {
     private static final Logger LOGGER = Logger.getLogger(CredentialMigration.class.getName());
-    
+
     protected static List<StorageAccountInfo> getOldStorageConfig(File inputFile) throws SAXException, IOException, ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -76,17 +77,15 @@ public class CredentialMigration {
 
     private static File backupFile(String sourceFile) throws IOException {
         String backupFile = sourceFile + ".backup";
-        LOGGER.log(Level.INFO, sourceFile+".backup has been created for backup.");
+        LOGGER.log(Level.INFO, sourceFile + ".backup has been created for backup.");
         File backUp = new File(backupFile);
         FileUtils.copyFile(new File(sourceFile), backUp);
         return backUp;
     }
 
     /**
-     *
      * Take the legacy local storage credential configuration and create an
-     * equivalent global credential in Jenkins Credential Store
-     *
+     * equivalent global credential in Jenkins Credential Store.
      */
     private static void removeFile(String sourceFile) throws IOException {
         File file = new File(sourceFile);
@@ -99,7 +98,7 @@ public class CredentialMigration {
     }
 
     public static void upgradeStorageConfig() throws Exception {
-        
+
         File sourceFile = new File(Utils.getWorkDirectory(), Constants.LEGACY_STORAGE_CONFIG_FILE);
         try {
             //check if we need to upgrade (i.e. if we have prior version of 0.3.2 storage plugin)
@@ -148,7 +147,7 @@ public class CredentialMigration {
                 } //end for
 
             } // end if
-            
+
             LOGGER.log(Level.INFO, "Migrated successfully, deleting legacy config files...");
             removeFile(sourceFile.getCanonicalPath());
             removeFile(backUp.getCanonicalPath());
@@ -161,4 +160,7 @@ public class CredentialMigration {
 
     }
 
+    private CredentialMigration() {
+        // hide constructor
+    }
 }

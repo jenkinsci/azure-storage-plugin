@@ -36,33 +36,33 @@ public class StorageAccountInfo {
 
     @DataBoundConstructor
     public StorageAccountInfo(final String storageAccName, final String storageAccountKey,
-	    final String blobEndPointURL) {
-	this.storageAccName = storageAccName;
-	this.blobEndPointURL = blobEndPointURL;
-	this.storageAccountKey = storageAccountKey;
+                              final String blobEndPointURL) {
+        this.storageAccName = storageAccName;
+        this.blobEndPointURL = blobEndPointURL;
+        this.storageAccountKey = storageAccountKey;
     }
 
     public String getStorageAccName() {
-	return storageAccName;
+        return storageAccName;
     }
 
     public void setStorageAccName(final String storageAccName) {
-	this.storageAccName = storageAccName;
+        this.storageAccName = storageAccName;
     }
 
     public String getStorageAccountKey() {
-	return storageAccountKey;
+        return storageAccountKey;
     }
 
     public void setStorageAccountKey(final String storageAccountKey) {
-	this.storageAccountKey = storageAccountKey;
+        this.storageAccountKey = storageAccountKey;
     }
 
     public String getBlobEndPointURL() {
-	return blobEndPointURL;
+        return blobEndPointURL;
     }
 
     public void setBlobEndPointURL(final String blobEndPointURL) {
-	this.blobEndPointURL = blobEndPointURL;
+        this.blobEndPointURL = blobEndPointURL;
     }
 }

@@ -17,7 +17,6 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -43,13 +42,13 @@ public class AzureStorageBuilderContext {
     boolean flattenDirectories;
     boolean deleteFromAzureAfterDownload;
 
-    public AzureStorageBuilderContext(final Launcher launcher, final Run<?, ?> run, final TaskListener taskListener){
+    public AzureStorageBuilderContext(final Launcher launcher, final Run<?, ?> run, final TaskListener taskListener) {
         this.launcher = launcher;
         this.run = run;
         this.listener = taskListener;
     }
 
-    public FilePath getWorkspacePath(){
+    public FilePath getWorkspacePath() {
         return new FilePath(launcher.getChannel(), workspace.getRemote());
     }
 
@@ -94,6 +93,7 @@ public class AzureStorageBuilderContext {
     public void setLauncher(Launcher launcher) {
         this.launcher = launcher;
     }
+
     public TaskListener getListener() {
         return listener;
     }

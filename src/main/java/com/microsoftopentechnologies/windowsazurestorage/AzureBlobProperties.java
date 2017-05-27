@@ -40,11 +40,11 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
 
     @DataBoundConstructor
     public AzureBlobProperties(
-        String cacheControl,
-        String contentEncoding,
-        String contentLanguage,
-        String contentType,
-        boolean detectContentType
+            String cacheControl,
+            String contentEncoding,
+            String contentLanguage,
+            String contentType,
+            boolean detectContentType
     ) {
         this.cacheControl = cacheControl;
         this.contentEncoding = contentEncoding;

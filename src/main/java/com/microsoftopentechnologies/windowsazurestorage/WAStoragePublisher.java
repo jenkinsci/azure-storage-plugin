@@ -234,7 +234,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * Windows Azure storage blob properties
+     * Windows Azure storage blob properties.
      */
     public AzureBlobProperties getBlobProperties() {
         return blobProperties;
@@ -282,14 +282,14 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * If true, artifacts will also be uploaded as a zip rollup *
+     * If true, artifacts will also be uploaded as a zip rollup.
      */
     public boolean isUploadZips() {
         return uploadZips;
     }
 
     /**
-     * If true, artifacts will not be uploaded as individual files *
+     * If true, artifacts will not be uploaded as individual files.
      */
     public boolean isDoNotUploadIndividualFiles() {
         return doNotUploadIndividualFiles;
@@ -300,8 +300,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     public String getStorageCredentialId() {
-        if (this.storageCredentialId == null && this.storageAccName != null)
+        if (this.storageCredentialId == null && this.storageAccName != null) {
             return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
+        }
         return storageCredentialId;
     }
 
@@ -329,7 +330,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * File Path prefix
+     * File Path prefix.
      */
     public String getVirtualPath() {
         return virtualPath;
@@ -350,7 +351,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     /**
      * Returns storage account object based on the name selected in job
-     * configuration
+     * configuration.
      *
      * @return StorageAccount
      */
@@ -502,7 +503,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     public static final class WAStorageDescriptor extends
             BuildStepDescriptor<Publisher> {
 
-        private static final CopyOnWriteList<StorageAccountInfo> storageAccounts = new CopyOnWriteList<StorageAccountInfo>();
+        private static final CopyOnWriteList<StorageAccountInfo> STORAGE_ACCOUNTS = new CopyOnWriteList<StorageAccountInfo>();
 
         @Initializer(before = InitMilestone.PLUGINS_STARTED)
         public static void doUpgrade() {
@@ -523,7 +524,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         public boolean configure(StaplerRequest req, JSONObject formData)
                 throws FormException {
 
-            storageAccounts.replaceBy(req.bindParametersToList(
+            STORAGE_ACCOUNTS.replaceBy(req.bindParametersToList(
                     StorageAccountInfo.class, "was_"));
             save();
             return super.configure(req, formData);
@@ -626,8 +627,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         public StorageAccountInfo[] getStorageAccounts() {
-            return storageAccounts
-                    .toArray(new StorageAccountInfo[storageAccounts.size()]);
+            return STORAGE_ACCOUNTS
+                    .toArray(new StorageAccountInfo[STORAGE_ACCOUNTS.size()]);
         }
 
         public StorageAccountInfo getStorageAccount(String name) {
@@ -658,10 +659,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         public ListBoxModel doFillStorageAccNameItems() {
             ListBoxModel m = new ListBoxModel();
-            StorageAccountInfo[] StorageAccounts = getStorageAccounts();
+            StorageAccountInfo[] storageAccounts = getStorageAccounts();
 
-            if (StorageAccounts != null) {
-                for (StorageAccountInfo storageAccount : StorageAccounts) {
+            if (storageAccounts != null) {
+                for (StorageAccountInfo storageAccount : storageAccounts) {
                     m.add(storageAccount.getStorageAccName());
                 }
             }

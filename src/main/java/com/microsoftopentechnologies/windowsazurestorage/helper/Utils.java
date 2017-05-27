@@ -17,16 +17,18 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.core.BaseRequest;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
 import javax.annotation.Nonnull;
+
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
-public class Utils {
+public final class Utils {
 
     /* Regular expression for valid container name */
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
@@ -40,6 +42,9 @@ public class Utils {
     public static final String HTTP_PRT = "http://";
     // http Protocol separator
     public static final String PRT_SEP = "://";
+
+    private static final int BLOB_NAME_LENGTH_LIMIT = 1024;
+    private static final int BYTE_MASK = 0xFF;
 
     /**
      * Checks for validity of container name after converting the input into
@@ -65,12 +70,12 @@ public class Utils {
     }
 
     public static boolean validateBlobName(final String blobName) {
-        return blobName != null && (blobName.length() > 0 && blobName.length() <= 1024);
+        return blobName != null && (blobName.length() > 0 && blobName.length() <= BLOB_NAME_LENGTH_LIMIT);
     }
 
     /**
      * This method checks if text contains tokens in the form of $TOKEN or
-     * ${TOKEN}
+     * ${TOKEN}.
      *
      * @param text
      * @return true if tokens exist in input string
@@ -113,7 +118,7 @@ public class Utils {
     }
 
     /**
-     * Returns default blob url
+     * Returns default blob url.
      *
      * @return
      */
@@ -127,7 +132,7 @@ public class Utils {
     }
 
     /**
-     * Returns md5 hash in string format for a given string
+     * Returns md5 hash in string format for a given string.
      *
      * @param plainText
      * @return
@@ -138,7 +143,11 @@ public class Utils {
             byte[] array = md.digest(plainText.getBytes(Charset.forName("UTF-8")));
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < array.length; ++i) {
-                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+                String hex = Integer.toHexString(((int) array[i]) & BYTE_MASK);
+                if (hex.length() < 2) {
+                    sb.append('0');
+                }
+                sb.append(hex);
             }
             return sb.toString();
         } catch (java.security.NoSuchAlgorithmException e) {
@@ -160,10 +169,9 @@ public class Utils {
     public static String getPluginInstance() {
         String instanceId = null;
         try {
-            if(Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
+            if (Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
                 instanceId = "local";
-            }
-            else {
+            } else {
                 instanceId = Utils.getJenkinsInstance().getLegacyInstanceId();
             }
         } catch (Exception e) {
@@ -207,4 +215,7 @@ public class Utils {
         return opContext;
     }
 
+    private Utils() {
+        // hide constructor
+    }
 }

@@ -20,14 +20,14 @@ public class WAStorageException extends Exception {
     private static final long serialVersionUID = 1582215285822395979L;
 
     public WAStorageException() {
-	super();
+        super();
     }
 
     public WAStorageException(final String message, final Throwable cause) {
-	super(message, cause);
+        super(message, cause);
     }
 
     public WAStorageException(final String message) {
-	super(message);
+        super(message);
     }
 }
