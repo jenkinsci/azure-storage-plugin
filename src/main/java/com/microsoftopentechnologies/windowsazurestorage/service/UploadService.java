@@ -32,10 +32,10 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 
 public abstract class UploadService extends StoragePluginService<UploadServiceData> {
-    protected static final String zipFolderName = "artifactsArchive";
-    protected static final String zipName = "archive.zip";
+    protected static final String ZIP_FOLDER_NAME = "artifactsArchive";
+    protected static final String ZIP_NAME = "archive.zip";
 
-    protected UploadService(UploadServiceData serviceData) {
+    protected UploadService(final UploadServiceData serviceData) {
         super(serviceData);
     }
 
@@ -45,6 +45,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
     @Override
     public final int execute() throws WAStorageException {
+        final UploadServiceData serviceData = getServiceData();
+
         if (serviceData.getUploadType() == UploadType.INVALID) {
             // no files are uploaded
             println("Upload type is INVALID, nothing to do.");
@@ -63,7 +65,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
             final StringBuilder archiveIncludes = new StringBuilder();
 
-            StringTokenizer strTokens = new StringTokenizer(serviceData.getFilePath(), fpSeparator);
+            StringTokenizer strTokens = new StringTokenizer(serviceData.getFilePath(), FP_SEPARATOR);
             while (strTokens.hasMoreElements()) {
                 String fileName = strTokens.nextToken();
                 String embeddedVP = null;
@@ -108,8 +110,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     }
 
     protected String excludedFilesAndZip() {
+        final UploadServiceData serviceData = getServiceData();
         // Make sure we exclude the tempPath from archiving.
-        String excludesWithoutZip = "**/" + zipFolderName + "*/" + zipName;
+        String excludesWithoutZip = "**/" + ZIP_FOLDER_NAME + "*/" + ZIP_NAME;
         if (serviceData.getExcludedFilesPath() != null) {
             excludesWithoutZip = serviceData.getExcludedFilesPath() + "," + excludesWithoutZip;
         }
@@ -125,12 +128,18 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
      */
     protected String getItemPath(final FilePath path, final String embeddedVP)
             throws IOException, InterruptedException {
+        final UploadServiceData serviceData = getServiceData();
         final URI workspaceURI = serviceData.getRemoteWorkspace().toURI();
 
         // Remove the workspace bit of this path
         final URI srcURI = workspaceURI.relativize(path.toURI());
         final String srcURIPath = srcURI.getPath();
-        String prefix = StringUtils.isBlank(serviceData.getVirtualPath()) ? "" : serviceData.getVirtualPath();
+        String prefix;
+        if (StringUtils.isBlank(serviceData.getVirtualPath())) {
+            prefix = "";
+        } else {
+            prefix = serviceData.getVirtualPath();
+        }
         if (!StringUtils.isBlank(embeddedVP)) {
             prefix += embeddedVP;
         }
@@ -140,6 +149,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
     protected HashMap<String, String> updateMetadata(final HashMap<String, String> metadata)
             throws IOException, InterruptedException {
+        final UploadServiceData serviceData = getServiceData();
         final EnvVars env = serviceData.getRun().getEnvironment(serviceData.getTaskListener());
 
         if (serviceData.getAzureBlobMetadata() != null) {

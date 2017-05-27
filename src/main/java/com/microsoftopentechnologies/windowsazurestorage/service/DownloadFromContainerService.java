@@ -32,14 +32,20 @@ public class DownloadFromContainerService extends DownloadService {
 
     @Override
     public int execute() {
+        final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
         try {
             println(Messages.AzureStorageBuilder_downloading());
-            final CloudBlobContainer container = AzureUtils.getBlobContainerReference(serviceData.getStorageAccountInfo(),
-                    serviceData.getContainerName(), false, true, null);
+            final CloudBlobContainer container = AzureUtils.getBlobContainerReference(
+                    serviceData.getStorageAccountInfo(),
+                    serviceData.getContainerName(),
+                    false,
+                    true,
+                    null);
             filesDownloaded = downloadBlobs(container.listBlobs());
         } catch (StorageException | URISyntaxException | IOException | WAStorageException e) {
-            e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(serviceData.getStorageAccountInfo().getStorageAccName())));
+            e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(
+                    serviceData.getStorageAccountInfo().getStorageAccName())));
             setRunUnstable();
         }
 

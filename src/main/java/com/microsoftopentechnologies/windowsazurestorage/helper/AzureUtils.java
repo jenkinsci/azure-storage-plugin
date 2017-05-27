@@ -20,7 +20,13 @@ import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.RetryNoRetry;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.*;
+import com.microsoft.azure.storage.blob.BlobContainerPermissions;
+import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
+import com.microsoft.azure.storage.blob.CloudBlob;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
+import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -30,9 +36,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
-public class AzureUtils {
+public final class AzureUtils {
     private static final String TEST_CNT_NAME = "testcheckfromjenkins";
     private static final String BLOB = "blob";
     private static final String QUEUE = "queue";
@@ -60,7 +70,8 @@ public class AzureUtils {
         return true;
     }
 
-    public static CloudStorageAccount getCloudStorageAccount(final StorageAccountInfo storageAccount) throws URISyntaxException {
+    public static CloudStorageAccount getCloudStorageAccount(
+            final StorageAccountInfo storageAccount) throws URISyntaxException {
         CloudStorageAccount cloudStorageAccount;
         final String accName = storageAccount.getStorageAccName();
         final String blobURL = storageAccount.getBlobEndPointURL();
@@ -115,12 +126,18 @@ public class AzureUtils {
      * @return SAS URL
      * @throws Exception
      */
-    public static String generateSASURL(StorageAccountInfo storageAccount, String containerName, String blobName) throws Exception {
+    public static String generateSASURL(
+            final StorageAccountInfo storageAccount,
+            final String containerName,
+            final String blobName) throws Exception {
         String storageAccountName = storageAccount.getStorageAccName();
-        StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
+        StorageCredentialsAccountAndKey credentials =
+                new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
         URL blobURL = new URL(storageAccount.getBlobEndPointURL());
-        String saBlobURI = new StringBuilder().append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
-                .append(blobURL.getHost()).append("/").toString();
+        String saBlobURI = new StringBuilder()
+                .append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
+                .append(blobURL.getHost()).append("/")
+                .toString();
         CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI),
                 new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)),
                 new URI(getCustomURI(storageAccountName, TABLE, saBlobURI)));
@@ -152,8 +169,10 @@ public class AzureUtils {
         return policy;
     }
 
-    private static void setContainerPermission(final CloudBlobContainer container, final boolean cntExists, final Boolean cntPubAccess)
-            throws StorageException {
+    private static void setContainerPermission(
+            final CloudBlobContainer container,
+            final boolean cntExists,
+            final Boolean cntPubAccess) throws StorageException {
         if (!cntExists && cntPubAccess != null) {
             // Set access permissions on container.
             final BlobContainerPermissions cntPerm = new BlobContainerPermissions();
@@ -196,5 +215,9 @@ public class AzureUtils {
         } else {
             return null;
         }
+    }
+
+    private AzureUtils() {
+        // hide constructor
     }
 }

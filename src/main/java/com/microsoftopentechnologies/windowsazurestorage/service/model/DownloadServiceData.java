@@ -30,16 +30,16 @@ import org.apache.commons.lang.StringUtils;
 import java.io.IOException;
 
 public class DownloadServiceData extends ServiceData {
-    String includeFilesPattern;
-    String excludeFilesPattern;
-    String containerName;
-    String downloadDirLoc;
-    boolean flattenDirectories;
-    boolean deleteFromAzureAfterDownload;
-    String downloadType;
-    String projectName;
-    BuildSelector buildSelector;
-    boolean includeArchiveZips;
+    private String includeFilesPattern;
+    private String excludeFilesPattern;
+    private String containerName;
+    private String downloadDirLoc;
+    private boolean flattenDirectories;
+    private boolean deleteFromAzureAfterDownload;
+    private String downloadType;
+    private String projectName;
+    private BuildSelector buildSelector;
+    private boolean includeArchiveZips;
 
     public DownloadServiceData(final Run<?, ?> run,
                                final FilePath workspace,
@@ -53,7 +53,7 @@ public class DownloadServiceData extends ServiceData {
         FilePath downloadDir = getRemoteWorkspace();
         try {
             if (!StringUtils.isBlank(downloadDirLoc)) {
-                final EnvVars envVars = run.getEnvironment(taskListener);
+                final EnvVars envVars = getRun().getEnvironment(getTaskListener());
                 downloadDir = new FilePath(getRemoteWorkspace(), Util.replaceMacro(downloadDirLoc, envVars));
             }
 
@@ -61,7 +61,7 @@ public class DownloadServiceData extends ServiceData {
                 downloadDir.mkdirs();
             }
         } catch (IOException | InterruptedException e) {
-            run.setResult(Result.UNSTABLE);
+            getRun().setResult(Result.UNSTABLE);
         }
 
         return downloadDir;
@@ -71,7 +71,7 @@ public class DownloadServiceData extends ServiceData {
         return includeFilesPattern;
     }
 
-    public void setIncludeFilesPattern(String includeFilesPattern) {
+    public void setIncludeFilesPattern(final String includeFilesPattern) {
         this.includeFilesPattern = includeFilesPattern;
     }
 
@@ -79,7 +79,7 @@ public class DownloadServiceData extends ServiceData {
         return excludeFilesPattern;
     }
 
-    public void setExcludeFilesPattern(String excludeFilesPattern) {
+    public void setExcludeFilesPattern(final String excludeFilesPattern) {
         this.excludeFilesPattern = excludeFilesPattern;
     }
 
@@ -87,7 +87,7 @@ public class DownloadServiceData extends ServiceData {
         return downloadDirLoc;
     }
 
-    public void setDownloadDirLoc(String downloadDirLoc) {
+    public void setDownloadDirLoc(final String downloadDirLoc) {
         this.downloadDirLoc = downloadDirLoc;
     }
 
@@ -95,7 +95,7 @@ public class DownloadServiceData extends ServiceData {
         return flattenDirectories;
     }
 
-    public void setFlattenDirectories(boolean flattenDirectories) {
+    public void setFlattenDirectories(final boolean flattenDirectories) {
         this.flattenDirectories = flattenDirectories;
     }
 
@@ -103,7 +103,7 @@ public class DownloadServiceData extends ServiceData {
         return containerName;
     }
 
-    public void setContainerName(String containerName) {
+    public void setContainerName(final String containerName) {
         this.containerName = containerName;
     }
 
@@ -111,7 +111,7 @@ public class DownloadServiceData extends ServiceData {
         return deleteFromAzureAfterDownload;
     }
 
-    public void setDeleteFromAzureAfterDownload(boolean deleteFromAzureAfterDownload) {
+    public void setDeleteFromAzureAfterDownload(final boolean deleteFromAzureAfterDownload) {
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
     }
 
@@ -119,7 +119,7 @@ public class DownloadServiceData extends ServiceData {
         return downloadType;
     }
 
-    public void setDownloadType(String downloadType) {
+    public void setDownloadType(final String downloadType) {
         this.downloadType = downloadType;
     }
 
@@ -127,7 +127,7 @@ public class DownloadServiceData extends ServiceData {
         return projectName;
     }
 
-    public void setProjectName(String projectName) {
+    public void setProjectName(final String projectName) {
         this.projectName = projectName;
     }
 
@@ -135,7 +135,7 @@ public class DownloadServiceData extends ServiceData {
         return buildSelector;
     }
 
-    public void setBuildSelector(BuildSelector buildSelector) {
+    public void setBuildSelector(final BuildSelector buildSelector) {
         this.buildSelector = buildSelector;
     }
 
@@ -143,7 +143,7 @@ public class DownloadServiceData extends ServiceData {
         return includeArchiveZips;
     }
 
-    public void setIncludeArchiveZips(boolean includeArchiveZips) {
+    public void setIncludeArchiveZips(final boolean includeArchiveZips) {
         this.includeArchiveZips = includeArchiveZips;
     }
 }

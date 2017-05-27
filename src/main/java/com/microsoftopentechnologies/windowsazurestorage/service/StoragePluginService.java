@@ -29,11 +29,11 @@ public abstract class StoragePluginService<T extends ServiceData> {
      * A random name for container name to test validity of storage account
      * details
      */
-    protected static final String fpSeparator = ",";
+    protected static final String FP_SEPARATOR = ",";
 
-    protected T serviceData;
+    private T serviceData;
 
-    protected StoragePluginService(T serviceData) {
+    protected StoragePluginService(final T serviceData) {
         this.serviceData = serviceData;
     }
 
@@ -51,7 +51,7 @@ public abstract class StoragePluginService<T extends ServiceData> {
         return serviceData.getTaskListener().error(message);
     }
 
-    protected String getTime(long timeInMills) {
+    protected String getTime(final long timeInMills) {
         return DurationFormatUtils.formatDuration(timeInMills, "HH:mm:ss.S")
                 + " (HH:mm:ss.S)";
     }
@@ -67,5 +67,13 @@ public abstract class StoragePluginService<T extends ServiceData> {
         options.setConcurrentRequestCount(Runtime.getRuntime().availableProcessors());
 
         return options;
+    }
+
+    public T getServiceData() {
+        return serviceData;
+    }
+
+    public void setServiceData(final T serviceData) {
+        this.serviceData = serviceData;
     }
 }

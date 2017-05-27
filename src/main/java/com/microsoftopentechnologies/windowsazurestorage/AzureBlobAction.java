@@ -3,6 +3,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import hudson.model.Api;
 import hudson.model.Run;
 import hudson.model.RunAction;
@@ -28,9 +29,14 @@ public class AzureBlobAction implements RunAction {
     private final List<AzureBlob> individualBlobs;
     private final String storageCredentialId;
 
-    public AzureBlobAction(Run build, String storageAccountName, String containerName,
-                           List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
-                           boolean allowAnonymousAccess, String storageCredentialId) {
+    public AzureBlobAction(
+            final Run build,
+            final String storageAccountName,
+            final String containerName,
+            final List<AzureBlob> individualBlobs,
+            final AzureBlob zipArchiveBlob,
+            final boolean allowAnonymousAccess,
+            final String storageCredentialId) {
         this.storageAccountName = storageAccountName;
         this.containerName = containerName;
         this.individualBlobs = individualBlobs;
@@ -65,7 +71,7 @@ public class AzureBlobAction implements RunAction {
     }
 
     @Override
-    public void onAttached(Run arg0) {
+    public void onAttached(final Run arg0) {
     }
 
     @Override
@@ -93,11 +99,15 @@ public class AzureBlobAction implements RunAction {
         return allowAnonymousAccess;
     }
 
-    public void doProcessDownloadRequest(final StaplerRequest request, final StaplerResponse response) throws IOException, ServletException {
-        AzureCredentials.StorageAccountCredential accountCredentials = AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
+    public void doProcessDownloadRequest(
+            final StaplerRequest request,
+            final StaplerResponse response) throws IOException, ServletException {
+        AzureCredentials.StorageAccountCredential accountCredentials =
+                AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
 
         if (accountCredentials == null) {
-            response.sendError(500, "Azure Storage account global configuration is missing");
+            response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
+                    "Azure Storage account global configuration is missing");
             return;
         }
 
@@ -123,7 +133,8 @@ public class AzureBlobAction implements RunAction {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
                         + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
             } catch (Exception e) {
-                response.sendError(500, "Error occurred while downloading artifact " + e.getMessage());
+                response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
+                        "Error occurred while downloading artifact " + e.getMessage());
             }
             return;
         }
@@ -134,16 +145,17 @@ public class AzureBlobAction implements RunAction {
                     response.sendRedirect2(blob.getBlobURL() + "?"
                             + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
                 } catch (Exception e) {
-                    response.sendError(500, "Error occurred while downloading artifact " + e.getMessage());
+                    response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
+                            "Error occurred while downloading artifact " + e.getMessage());
                 }
                 return;
             }
         }
 
-        response.sendError(404, "Azure artifact is not available");
+        response.sendError(Constants.HTTP_NOT_FOUND, "Azure artifact is not available");
     }
 
-    public boolean isAnonymousAccess(Authentication auth) {
+    public boolean isAnonymousAccess(final Authentication auth) {
         return auth != null && auth.getName() != null && "anonymous".equals(auth.getName());
     }
 

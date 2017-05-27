@@ -17,7 +17,12 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.*;
+import com.microsoft.azure.storage.file.CloudFile;
+import com.microsoft.azure.storage.file.CloudFileClient;
+import com.microsoft.azure.storage.file.CloudFileDirectory;
+import com.microsoft.azure.storage.file.CloudFileShare;
+import com.microsoft.azure.storage.file.FileRequestOptions;
+import com.microsoft.azure.storage.file.ListFileItem;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -37,12 +42,13 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 
 public class UploadToFileService extends UploadService {
-    public UploadToFileService(UploadServiceData serviceData) {
+    public UploadToFileService(final UploadServiceData serviceData) {
         super(serviceData);
     }
 
     @Override
-    protected void uploadIndividuals(String embeddedVP, FilePath[] paths) throws WAStorageException {
+    protected void uploadIndividuals(final String embeddedVP, final FilePath[] paths) throws WAStorageException {
+        final UploadServiceData serviceData = getServiceData();
         try {
             final CloudFileShare fileShare = getCloudFileShare();
 
@@ -50,7 +56,12 @@ public class UploadToFileService extends UploadService {
                 final String filePath = getItemPath(src, embeddedVP);
                 final CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(filePath);
                 final String hash = uploadCloudFile(cloudFile, src);
-                AzureBlob azureBlob = new AzureBlob(cloudFile.getName(), cloudFile.getUri().toString().replace("http://", "https://"), hash, src.length(), Constants.FILE_STORAGE);
+                AzureBlob azureBlob = new AzureBlob(
+                        cloudFile.getName(),
+                        cloudFile.getUri().toString().replace("http://", "https://"),
+                        hash,
+                        src.length(),
+                        Constants.FILE_STORAGE);
                 serviceData.getIndividualBlobs().add(azureBlob);
             }
         } catch (URISyntaxException | StorageException | IOException | InterruptedException e) {
@@ -59,14 +70,15 @@ public class UploadToFileService extends UploadService {
     }
 
     @Override
-    protected void uploadArchive(String archiveIncludes) throws WAStorageException {
+    protected void uploadArchive(final String archiveIncludes) throws WAStorageException {
+        final UploadServiceData serviceData = getServiceData();
         try {
             final CloudFileShare fileShare = getCloudFileShare();
 
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
             // Create a temp dir for the upload
-            final FilePath tempDir = workspacePath.createTempDir(zipFolderName, null);
-            final FilePath zipPath = tempDir.child(zipName);
+            final FilePath tempDir = workspacePath.createTempDir(ZIP_FOLDER_NAME, null);
+            final FilePath zipPath = tempDir.child(ZIP_NAME);
 
             // zip included files into archive.zip file.
             final DirScanner.Glob globScanner = new DirScanner.Glob(archiveIncludes, excludedFilesAndZip());
@@ -82,7 +94,12 @@ public class UploadToFileService extends UploadService {
             String uploadedFileHash = uploadCloudFile(cloudFile, zipPath);
             // Make sure to note the new blob as an archive blob,
             // so that it can be specially marked on the azure storage page.
-            AzureBlob azureBlob = new AzureBlob(cloudFile.getName(), cloudFile.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length(), Constants.FILE_STORAGE);
+            AzureBlob azureBlob = new AzureBlob(
+                    cloudFile.getName(),
+                    cloudFile.getUri().toString().replace("http://", "https://"),
+                    uploadedFileHash,
+                    zipPath.length(),
+                    Constants.FILE_STORAGE);
             serviceData.getArchiveBlobs().add(azureBlob);
 
             tempDir.deleteRecursive();
@@ -99,8 +116,14 @@ public class UploadToFileService extends UploadService {
 
             final MessageDigest md = DigestUtils.getMd5Digest();
             long startTime = System.currentTimeMillis();
-            try (InputStream inputStream = localPath.read(); DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
-                cloudFile.upload(digestInputStream, localPath.length(), null, new FileRequestOptions(), Utils.updateUserAgent());
+            try (InputStream inputStream = localPath.read();
+                 DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
+                cloudFile.upload(
+                        digestInputStream,
+                        localPath.length(),
+                        null,
+                        new FileRequestOptions(),
+                        Utils.updateUserAgent());
             }
             long endTime = System.currentTimeMillis();
 
@@ -125,7 +148,9 @@ public class UploadToFileService extends UploadService {
     }
 
     private CloudFileShare getCloudFileShare() throws URISyntaxException, StorageException {
-        final CloudStorageAccount cloudStorageAccount = AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
+        final UploadServiceData serviceData = getServiceData();
+        final CloudStorageAccount cloudStorageAccount =
+                AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
         final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
         final CloudFileShare fileShare = cloudFileClient.getShareReference(serviceData.getFileShareName());
 

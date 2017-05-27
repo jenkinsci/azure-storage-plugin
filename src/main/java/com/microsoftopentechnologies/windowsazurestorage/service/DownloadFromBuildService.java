@@ -46,8 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DownloadFromBuildService extends DownloadService {
-    CloudBlobContainer cloudBlobContainer;
-    CloudFileShare cloudFileShare;
+    private CloudBlobContainer cloudBlobContainer;
+    private CloudFileShare cloudFileShare;
 
     public DownloadFromBuildService(final DownloadServiceData data) {
         super(data);
@@ -55,6 +55,7 @@ public class DownloadFromBuildService extends DownloadService {
 
     @Override
     public int execute() {
+        final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
 
         try {
@@ -77,13 +78,15 @@ public class DownloadFromBuildService extends DownloadService {
                 setRunUnstable();
             }
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(serviceData.getStorageAccountInfo().getStorageAccName())));
+            e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(
+                    serviceData.getStorageAccountInfo().getStorageAccName())));
             setRunUnstable();
         }
         return filesDownloaded;
     }
 
     private int downloadArtifacts(final Run<?, ?> source) {
+        final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
         try {
 
@@ -102,6 +105,7 @@ public class DownloadFromBuildService extends DownloadService {
     }
 
     private int downloadBlobs(final List<AzureBlob> azureBlobs) throws WAStorageException {
+        final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
 
         for (final AzureBlob blob : azureBlobs) {
@@ -111,23 +115,34 @@ public class DownloadFromBuildService extends DownloadService {
                 final URL blobURL = new URL(blob.getBlobURL());
                 final String filePath = blobURL.getFile();
 
-                if (shouldDownload(serviceData.getIncludeFilesPattern(), serviceData.getExcludeFilesPattern(), blob.getBlobName(), true)) {
+                if (shouldDownload(
+                        serviceData.getIncludeFilesPattern(),
+                        serviceData.getExcludeFilesPattern(),
+                        blob.getBlobName(),
+                        true)) {
                     if (Constants.BLOB_STORAGE.equalsIgnoreCase(blob.getStorageType())) {
                         if (cloudBlobContainer == null) {
-                            cloudBlobContainer = AzureUtils.getBlobContainerReference(serviceData.getStorageAccountInfo(),
-                                    filePath.split("/")[1], false, true, null);
+                            cloudBlobContainer = AzureUtils.getBlobContainerReference(
+                                    serviceData.getStorageAccountInfo(),
+                                    filePath.split("/")[1],
+                                    false,
+                                    true,
+                                    null);
                         }
                         final CloudBlockBlob cbb = cloudBlobContainer.getBlockBlobReference(blob.getBlobName());
                         downloadBlob(cbb);
                         filesDownloaded++;
                     } else if (Constants.FILE_STORAGE.equalsIgnoreCase(blob.getStorageType())) {
                         if (cloudFileShare == null) {
-                            final CloudStorageAccount cloudStorageAccount = AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
+                            final CloudStorageAccount cloudStorageAccount =
+                                    AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
                             final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
                             cloudFileShare = cloudFileClient.getShareReference(filePath.split("/")[1]);
                         }
-                        final String cloudFileName = filePath.substring(filePath.indexOf(cloudFileShare.getName()) + cloudFileShare.getName().length() + 1);
-                        final CloudFile cloudFile = cloudFileShare.getRootDirectoryReference().getFileReference(cloudFileName);
+                        final String cloudFileName = filePath.substring(
+                                filePath.indexOf(cloudFileShare.getName()) + cloudFileShare.getName().length() + 1);
+                        final CloudFile cloudFile =
+                                cloudFileShare.getRootDirectoryReference().getFileReference(cloudFileName);
                         downloadFile(cloudFile);
                         filesDownloaded++;
                     }
@@ -140,6 +155,7 @@ public class DownloadFromBuildService extends DownloadService {
     }
 
     private void downloadFile(final CloudFile cloudFile) throws WAStorageException {
+        final DownloadServiceData serviceData = getServiceData();
         try {
             final FilePath destDir = serviceData.getDownloadDir();
             FilePath destFile = new FilePath(destDir, cloudFile.getName());
@@ -155,7 +171,9 @@ public class DownloadFromBuildService extends DownloadService {
                 cloudFile.download(fos, null, new FileRequestOptions(), Utils.updateUserAgent());
             }
             final long endTime = System.currentTimeMillis();
-            println(String.format("blob %s is downloaded to %s in %s", cloudFile.getName(), destDir, getTime(endTime - startTime)));
+            println(String.format(
+                    "blob %s is downloaded to %s in %s",
+                    cloudFile.getName(), destDir, getTime(endTime - startTime)));
 
             if (serviceData.isDeleteFromAzureAfterDownload()) {
                 cloudFile.deleteIfExists();

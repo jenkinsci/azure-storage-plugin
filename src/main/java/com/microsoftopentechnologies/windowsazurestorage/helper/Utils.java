@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
 
-public class Utils {
+public final class Utils {
 
     /* Regular expression for valid container name */
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
@@ -41,6 +41,8 @@ public class Utils {
     public static final String HTTP_PRT = "http://";
     // http Protocol separator
     public static final String PRT_SEP = "://";
+
+    public static final int BLOB_NAME_LENGTH_LIMIT = 1024;
 
     /**
      * Checks for validity of container name after converting the input into
@@ -71,6 +73,7 @@ public class Utils {
      * 2. can contain only lowercase letters, numbers, and hyphens
      * 3. must begin and end with a letter or a number.
      * 4. cannot contain two consecutive hyphens.
+     *
      * @param fileShareName
      * @return
      */
@@ -79,7 +82,7 @@ public class Utils {
     }
 
     public static boolean validateBlobName(final String blobName) {
-        return blobName != null && (blobName.length() > 0 && blobName.length() <= 1024);
+        return blobName != null && (blobName.length() > 0 && blobName.length() <= BLOB_NAME_LENGTH_LIMIT);
     }
 
     /**
@@ -89,7 +92,7 @@ public class Utils {
      * @param text
      * @return true if tokens exist in input string
      */
-    public static boolean containTokens(String text) {
+    public static boolean containTokens(final String text) {
         if (StringUtils.isBlank(text)) {
             return false;
         }
@@ -104,26 +107,24 @@ public class Utils {
      * @return DEF_BLOB_URL if blobURL is empty or blobURL is default one else
      * returns formatted blob url.
      */
-    public static String getBlobEP(String blobURL) {
+    public static String getBlobEP(final String blobURL) {
 
         if (StringUtils.isBlank(blobURL)) {
             return Constants.DEF_BLOB_URL;
         }
 
+        String preparedURL = blobURL;
         // Append forward slash
-        if (!blobURL.endsWith(Constants.FWD_SLASH)) {
-            blobURL = blobURL.concat(Constants.FWD_SLASH);
+        if (!preparedURL.endsWith(Constants.FWD_SLASH)) {
+            preparedURL = preparedURL.concat(Constants.FWD_SLASH);
         }
 
         // prepend http protocol if missing
-        if (!blobURL.contains(Constants.PRT_SEP)) {
-            blobURL = new StringBuilder()
-                    .append(Constants.HTTP_PRT)
-                    .append(blobURL)
-                    .toString();
+        if (!preparedURL.contains(Constants.PRT_SEP)) {
+            preparedURL = Constants.HTTP_PRT + preparedURL;
         }
 
-        return blobURL;
+        return preparedURL;
     }
 
     /**
@@ -146,13 +147,16 @@ public class Utils {
      * @param plainText
      * @return
      */
-    public static String getMD5(String plainText) {
+    public static String getMD5(final String plainText) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance(Constants.HASH_TYPE);
             byte[] array = md.digest(plainText.getBytes(Charset.forName("UTF-8")));
             StringBuilder sb = new StringBuilder();
+            final int byteMask = 0xFF;
+            final int byteExtended = 0x100;
+            final int length = 3;
             for (int i = 0; i < array.length; ++i) {
-                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+                sb.append(Integer.toHexString((array[i] & byteMask) | byteExtended).substring(1, length));
             }
             return sb.toString();
         } catch (java.security.NoSuchAlgorithmException e) {
@@ -220,4 +224,7 @@ public class Utils {
         return opContext;
     }
 
+    private Utils() {
+        // hide constructor
+    }
 }
