@@ -197,6 +197,8 @@ public class UploadBlobService extends StoragePluginService<PublisherServiceData
                     println("Ignoring blank metadata value, key: " + resolvedKey);
                     continue;
                 }
+
+                metadataMap.put(resolvedKey, resolvedValue);
             }
             blob.setMetadata(metadataMap);
         }
