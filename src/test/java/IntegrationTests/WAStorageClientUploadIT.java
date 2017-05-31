@@ -12,7 +12,7 @@ import com.microsoftopentechnologies.windowsazurestorage.AzureBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
-import com.microsoftopentechnologies.windowsazurestorage.service.UploadBlobService;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
@@ -134,14 +134,14 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
-            serviceData.setCleanUpContainer(false);
+            serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath("*.txt");
             serviceData.setVirtualPath("");
             serviceData.setExcludedFilesPath("");
             serviceData.setUploadType(UploadType.INDIVIDUAL);
             serviceData.setAzureBlobMetadata(metadata);
 
-            UploadBlobService service = new UploadBlobService(serviceData);
+            UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
             for (ListBlobItem blobItem : testEnv.container.listBlobs()) {
@@ -194,14 +194,14 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
-            serviceData.setCleanUpContainer(false);
+            serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
             serviceData.setVirtualPath("");
             serviceData.setExcludedFilesPath("");
             serviceData.setUploadType(UploadType.INDIVIDUAL);
             serviceData.setAzureBlobMetadata(metadata);
 
-            UploadBlobService service = new UploadBlobService(serviceData);
+            UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
@@ -252,14 +252,14 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
-            serviceData.setCleanUpContainer(false);
+            serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
             serviceData.setVirtualPath("");
             serviceData.setExcludedFilesPath("");
             serviceData.setUploadType(UploadType.INDIVIDUAL);
             serviceData.setAzureBlobMetadata(metadata);
 
-            UploadBlobService service = new UploadBlobService(serviceData);
+            UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
@@ -309,14 +309,14 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
-            serviceData.setCleanUpContainer(false);
+            serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
             serviceData.setVirtualPath("");
             serviceData.setExcludedFilesPath("");
             serviceData.setUploadType(UploadType.INDIVIDUAL);
             serviceData.setAzureBlobMetadata(metadata);
 
-            UploadBlobService service = new UploadBlobService(serviceData);
+            UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());

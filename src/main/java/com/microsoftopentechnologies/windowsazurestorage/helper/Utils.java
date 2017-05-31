@@ -17,14 +17,15 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.core.BaseRequest;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
+
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
-import javax.annotation.Nonnull;
-import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
 
 public class Utils {
 
@@ -62,6 +63,19 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    /**
+     * Check for the validity of file share name. Rules:
+     * 1. must be from 3 through 63 characters long
+     * 2. can contain only lowercase letters, numbers, and hyphens
+     * 3. must begin and end with a letter or a number.
+     * 4. cannot contain two consecutive hyphens.
+     * @param fileShareName
+     * @return
+     */
+    public static boolean validateFileShareName(final String fileShareName) {
+        return StringUtils.isNotBlank(fileShareName) && fileShareName.matches(Constants.VAL_SHARE_NAME);
     }
 
     public static boolean validateBlobName(final String blobName) {
@@ -160,10 +174,9 @@ public class Utils {
     public static String getPluginInstance() {
         String instanceId = null;
         try {
-            if(Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
+            if (Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
                 instanceId = "local";
-            }
-            else {
+            } else {
                 instanceId = Utils.getJenkinsInstance().getLegacyInstanceId();
             }
         } catch (Exception e) {

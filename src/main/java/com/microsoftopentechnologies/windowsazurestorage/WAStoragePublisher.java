@@ -18,10 +18,11 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.*;
-import com.microsoftopentechnologies.windowsazurestorage.service.UploadBlobService;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.*;
@@ -36,33 +37,13 @@ import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
-
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.*;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import jenkins.tasks.SimpleBuildStep;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
@@ -70,48 +51,66 @@ import java.io.IOException;
 import java.util.*;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
+    private final static String BLOB_STORAGE = "blobstorage";
+    private final static String FILE_STORAGE = "filestorage";
 
     private final transient String storageAccName;
-
+    private final String storageType;
     private final String containerName;
-
+    private final String fileShareName;
     private AzureBlobProperties blobProperties;
-
     private List<AzureBlobMetadataPair> metadata;
-
     /**
      * Windows Azure storage container access.
      */
     private boolean cntPubAccess;
-
     private boolean cleanUpContainer;
-
     private boolean allowAnonymousAccess;
-
     private boolean uploadArtifactsOnlyIfSuccessful;
-
     private boolean doNotFailIfArchivingReturnsNothing;
-
     private boolean uploadZips;
-
     private boolean doNotUploadIndividualFiles;
-
     private final String filesPath;
-
     private String excludeFilesPath = "";
-
     private String virtualPath = "";
-
     private boolean doNotWaitForPreviousBuild;
-
     private final String storageCredentialId;
-
     private transient AzureCredentials.StorageAccountCredential storageCreds;
+
+    public static class StorageType {
+        public final String type;
+        private String containerName = "";
+        private String fileShareName = "";
+
+        @DataBoundConstructor
+        public StorageType(final String value) {
+            this.type = value;
+        }
+
+        public String getContainerName() {
+            return containerName;
+        }
+
+        @DataBoundSetter
+        public void setContainerName(String containerName) {
+            this.containerName = containerName;
+        }
+
+        public String getfileShareName() {
+            return fileShareName;
+        }
+
+        @DataBoundSetter
+        public void setFileShareName(String fileShareName) {
+            this.fileShareName = fileShareName;
+        }
+    }
 
     @Deprecated
     public WAStoragePublisher(final String storageAccName,
                               final String storageCredentialId, final String filesPath, final String excludeFilesPath,
                               final String containerName, final boolean cntPubAccess, final String virtualPath,
+                              final String storageType, final String fileShareName,
                               final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
                               final boolean cleanUpContainer, final boolean allowAnonymousAccess,
                               final boolean uploadArtifactsOnlyIfSuccessful,
@@ -122,6 +121,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         super();
         this.filesPath = filesPath.trim();
         this.excludeFilesPath = excludeFilesPath.trim();
+        this.storageType = storageType;
+        this.fileShareName = fileShareName.trim();
         this.containerName = containerName.trim();
         this.cntPubAccess = cntPubAccess;
         this.virtualPath = virtualPath.trim();
@@ -141,10 +142,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     @DataBoundConstructor
     public WAStoragePublisher(final String storageCredentialId, final String filesPath,
-                              final String containerName) {
+                              final StorageType storageType) {
         super();
         this.filesPath = filesPath.trim();
-        this.containerName = containerName.trim();
+        this.containerName = storageType.getContainerName().trim();
+        this.fileShareName = storageType.getfileShareName().trim();
+        this.storageType = storageType.type;
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
         this.storageAccName = this.storageCreds.getStorageAccountName();
@@ -229,6 +232,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      */
     public String getContainerName() {
         return containerName;
+    }
+
+    public String getStorageType() {
+        return storageType;
     }
 
     /**
@@ -381,20 +388,23 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         // Get storage account and set formatted blob endpoint url.
         final StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
-        // Resolve container name
-        String expContainerName = replaceMacro(containerName, envVars, Locale.ENGLISH);
 
-        if (!validateData(run, listener, storageAccountInfo, expContainerName)) {
+        // Resolve container name or share name
+        final String expContainerName = replaceMacro(containerName, envVars, Locale.ENGLISH);
+        final String expShareName = replaceMacro(fileShareName, envVars, Locale.ENGLISH);
+
+        if (!validateData(run, listener, storageAccountInfo, expContainerName, expShareName)) {
             throw new IOException("Plugin can not continue, until previous errors are addressed");
         }
 
         final PublisherServiceData serviceData = new PublisherServiceData(run, ws, launcher, listener, storageAccountInfo);
         serviceData.setContainerName(expContainerName);
+        serviceData.setFileShareName(expShareName);
         serviceData.setFilePath(replaceMacro(filesPath, envVars));
         serviceData.setExcludedFilesPath(replaceMacro(excludeFilesPath, envVars));
         serviceData.setBlobProperties(blobProperties);
         serviceData.setPubAccessible(cntPubAccess);
-        serviceData.setCleanUpContainer(cleanUpContainer);
+        serviceData.setCleanUpContainerOrShare(cleanUpContainer);
         serviceData.setUploadType(getArtifactUploadType());
         serviceData.setAzureBlobMetadata(metadata);
         // Resolve virtual path
@@ -405,7 +415,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
         serviceData.setVirtualPath(expVP);
 
-        final UploadBlobService service = new UploadBlobService(serviceData);
+        final UploadService service = getUploadService(serviceData);
         try {
             int filesUploaded = service.execute();
 
@@ -433,8 +443,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
     }
 
-    private boolean validateData(Run<?, ?> run,
-                                 TaskListener listener, StorageAccountInfo storageAccount, String expContainerName) throws IOException, InterruptedException {
+    private boolean validateData(final Run<?, ?> run, final TaskListener listener, final StorageAccountInfo storageAccount,
+                                 final String expContainerName, final String expShareName)
+            throws IOException, InterruptedException {
 
         // No need to upload artifacts if build failed and the job is
         // set to not upload on success.
@@ -462,13 +473,28 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        if (StringUtils.isBlank(expContainerName)) {
-            listener.getLogger().println("Container name is null or empty");
-            return false;
-        }
+        if (BLOB_STORAGE.equalsIgnoreCase(this.getStorageType())) {
+            if (StringUtils.isBlank(expContainerName)) {
+                listener.getLogger().println("Container name is null or empty");
+                return false;
+            }
 
-        if (!Utils.validateContainerName(expContainerName)) {
-            listener.getLogger().println("Container name contains invalid characters");
+            if (!Utils.validateContainerName(expContainerName)) {
+                listener.getLogger().println("Container name contains invalid characters");
+                return false;
+            }
+        } else if (FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
+            if (StringUtils.isBlank(expShareName)) {
+                listener.getLogger().println("Share name is null or empty");
+                return false;
+            }
+
+            if (!Utils.validateFileShareName(expShareName)) {
+                listener.getLogger().println("Share name contains invalid characters");
+                return false;
+            }
+        } else {
+            listener.getLogger().println("Invalid storage type.");
             return false;
         }
 
@@ -491,6 +517,14 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return doNotWaitForPreviousBuild ? BuildStepMonitor.NONE : BuildStepMonitor.STEP;
+    }
+
+    private UploadService getUploadService(final PublisherServiceData data) {
+        if (FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
+            return new UploadToFileService(data);
+        }
+
+        return new UploadToBlobService(data);
     }
 
     @Extension
@@ -570,22 +604,36 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          * @throws IOException
          * @throws ServletException
          */
-        public FormValidation doCheckName(@QueryParameter String val)
+        public FormValidation doCheckContainerName(final StaplerRequest request)
                 throws IOException, ServletException {
-            if (!StringUtils.isBlank(val)) {
+            final String containerName = request.getParameter("val");
+            if (!StringUtils.isBlank(containerName)) {
                 // Token resolution happens dynamically at runtime , so for
                 // basic validations
                 // if text contain tokens considering it as valid input.
-                if (Utils.containTokens(val)
-                        || Utils.validateContainerName(val)) {
+                if (Utils.containTokens(containerName) || Utils.validateContainerName(containerName)) {
                     return FormValidation.ok();
                 } else {
-                    return FormValidation.error(Messages
-                            .WAStoragePublisher_container_name_invalid());
+                    return FormValidation.error(Messages.WAStoragePublisher_container_name_invalid());
                 }
             } else {
-                return FormValidation.error(Messages
-                        .WAStoragePublisher_container_name_req());
+                return FormValidation.error(Messages.WAStoragePublisher_container_name_req());
+            }
+        }
+
+        public FormValidation doCheckFileShareName(final StaplerRequest request) {
+            final String fileShareName = request.getParameter("val");
+            if (!StringUtils.isBlank(fileShareName)) {
+                // Token resolution happens dynamically at runtime , so for
+                // basic validations
+                // if text contain tokens considering it as valid input.
+                if (Utils.containTokens(fileShareName) || Utils.validateFileShareName(fileShareName)) {
+                    return FormValidation.ok();
+                } else {
+                    return FormValidation.error(Messages.WAStoragePublisher_share_name_invalid());
+                }
+            } else {
+                return FormValidation.error(Messages.WAStoragePublisher_share_name_req());
             }
         }
 

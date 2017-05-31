@@ -29,9 +29,10 @@ import java.util.List;
 
 public class PublisherServiceData extends ServiceData {
     String containerName;
+    String fileShareName;
     AzureBlobProperties blobProperties;
     boolean pubAccessible;
-    boolean cleanUpContainer;
+    boolean cleanUpContainerOrShare;
     String filePath;
     String virtualPath;
     String excludedFilesPath;
@@ -78,12 +79,12 @@ public class PublisherServiceData extends ServiceData {
         this.pubAccessible = pubAccessible;
     }
 
-    public boolean isCleanUpContainer() {
-        return cleanUpContainer;
+    public boolean isCleanUpContainerOrShare() {
+        return cleanUpContainerOrShare;
     }
 
-    public void setCleanUpContainer(boolean cleanUpContainer) {
-        this.cleanUpContainer = cleanUpContainer;
+    public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
+        this.cleanUpContainerOrShare = cleanUpContainerOrShare;
     }
 
     public String getFilePath() {
@@ -132,5 +133,13 @@ public class PublisherServiceData extends ServiceData {
 
     public void setAzureBlobMetadata(List<AzureBlobMetadataPair> azureBlobMetadata) {
         this.azureBlobMetadata = azureBlobMetadata;
+    }
+
+    public String getFileShareName() {
+        return fileShareName;
+    }
+
+    public void setFileShareName(String fileShareName) {
+        this.fileShareName = fileShareName;
     }
 }

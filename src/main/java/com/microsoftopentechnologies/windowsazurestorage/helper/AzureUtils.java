@@ -22,10 +22,11 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
-import com.microsoft.azure.storage.*;
+import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.RetryNoRetry;
+import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
+import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.*;
-import com.microsoft.azure.storage.file.CloudFileClient;
-import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -111,29 +112,6 @@ public class AzureUtils {
         return container;
     }
 
-    public static CloudFileShare getFileShareReference(final StorageAccountInfo storageAccountInfo,
-                                                       final String shareName,
-                                                       final boolean allowRetry,
-                                                       final boolean createIfNotExit)
-            throws URISyntaxException, StorageException {
-        final CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccountInfo);
-        final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
-
-        if (!allowRetry) {
-            // Setting no retry policy
-            final RetryNoRetry retryNoRetry = new RetryNoRetry();
-            cloudFileClient.getDefaultRequestOptions().setRetryPolicyFactory(retryNoRetry);
-        }
-
-        final CloudFileShare fileShare = cloudFileClient.getShareReference(shareName);
-
-        if (createIfNotExit) {
-            fileShare.createIfNotExists();
-        }
-
-        return fileShare;
-    }
-
     /**
      * Generates SAS URL for blob in Azure storage account
      *
@@ -178,27 +156,6 @@ public class AzureUtils {
         policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
 
         return policy;
-    }
-
-
-    /**
-     * Deletes contents of container
-     *
-     * @param blobItems list of blobs to delete
-     * @throws StorageException
-     * @throws URISyntaxException
-     */
-    public static void deleteBlobs(final Iterable<ListBlobItem> blobItems)
-            throws StorageException, URISyntaxException, IOException {
-
-        for (ListBlobItem blobItem : blobItems) {
-            if (blobItem instanceof CloudBlob) {
-                ((CloudBlob) blobItem).uploadProperties(null, null, Utils.updateUserAgent());
-                ((CloudBlob) blobItem).delete();
-            } else if (blobItem instanceof CloudBlobDirectory) {
-                deleteBlobs(((CloudBlobDirectory) blobItem).listBlobs());
-            }
-        }
     }
 
     private static void setContainerPermission(final CloudBlobContainer container, final boolean cntExists, final Boolean cntPubAccess)

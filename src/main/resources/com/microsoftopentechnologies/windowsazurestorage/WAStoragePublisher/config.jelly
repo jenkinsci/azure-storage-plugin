@@ -6,17 +6,34 @@
              help="/plugin/windows-azure-storage/help-storagecredential.html">
         <c:select expressionAllowed="false"/>
     </f:entry>
-
-    <f:entry title="${%containerName_title}" field="containerName"
-             help="/plugin/windows-azure-storage/help-containerName.html">
-        <f:textbox
-                checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkName?val='+encodeURIComponent(this.value)"/>
-    </f:entry>
-
     <f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
         <f:textbox
                 checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
     </f:entry>
+
+    <f:section title="${%storageType_title}">
+        <f:radioBlock name="storageType" title="Upload to Azure blob storage" value="blobstorage"
+                      checked="${instance.getStorageType() == null || instance.getStorageType() == 'blobStorage'}"
+                      help="/plugin/windows-azure-storage/help-azureblobstorage.html">
+            <f:nested>
+                <f:entry title="${%containerName_title}" field="containerName"
+                         help="/plugin/windows-azure-storage/help-containerName.html">
+                    <f:textbox
+                            checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkContainerName?val='+escape(this.value)"/>
+                </f:entry>
+            </f:nested>
+        </f:radioBlock>
+        <f:radioBlock name="storageType" title="Upload to Azure File Storage" value="filestorage"
+                      checked="${instance.getStorageType() == 'filestorage'}" help="/plugin/windows-azure-storage/help-azurefilestorage.html">
+            <f:nested>
+                <f:entry title="${%fileShareName_title}" field="fileShareName"
+                         help="/plugin/windows-azure-storage/help-azureFileShareName.html">
+                    <f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkFileShareName?val='+escape(this.value)"/>
+                </f:entry>
+            </f:nested>
+        </f:radioBlock>
+    </f:section>
+
 
     <f:section title="${%blobPropertiesMetadata_title}">
         <f:advanced title="${%edit_title}">
@@ -56,7 +73,7 @@
                 </div>
             </f:entry>
 
-            <f:entry field="cleanUpContainer" help="/plugin/windows-azure-storage/help-cleanContainer.html">
+            <f:entry field="cleanUpContainerOrShare" help="/plugin/windows-azure-storage/help-cleanContainer.html">
                 <div align="left">
                     <f:checkbox title="${%cleanContainer_title}"/>
                 </div>

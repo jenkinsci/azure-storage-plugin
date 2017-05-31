@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -68,10 +69,15 @@ public class FileStorageUploadIT extends IntegrationTest {
     public void testComplexDirPath() {
         try {
             final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
-            CloudFileDirectory subDir = rootDir.getDirectoryReference("sub1");
-            subDir.createIfNotExists();
-            CloudFile cloudFile = subDir.getFileReference("test233");
-            cloudFile.downloadAttributes();
+            CloudFile cloudFile= rootDir.getFileReference("sub/sub2/test.txt");
+            cloudFile.getParent().getParent().createIfNotExists();
+            cloudFile.getParent().createIfNotExists();
+            cloudFile.setMetadata(null);
+            cloudFile.uploadFromFile("D:\\temp\\1111.txt");
+            String name = cloudFile.getName();
+            String parent = cloudFile.getParent().getName();
+            URI uri = cloudFile.getUri();
+            String a="1";
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
