@@ -89,7 +89,7 @@ public class UploadToBlobService extends UploadService {
             for (FilePath src : paths) {
                 final String blobPath = getItemPath(src, embeddedVP);
                 final CloudBlockBlob blob = container.getBlockBlobReference(blobPath);
-                configureBlobPropertiesAndMetadata(blob);
+                configureBlobPropertiesAndMetadata(blob, src);
                 String uploadedFileHash = uploadBlob(blob, src);
                 AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, src.length(), Constants.BLOB_STORAGE);
                 serviceData.getIndividualBlobs().add(azureBlob);
@@ -99,12 +99,12 @@ public class UploadToBlobService extends UploadService {
         }
     }
 
-    private void configureBlobPropertiesAndMetadata(final CloudBlockBlob blob) throws IOException, InterruptedException {
+    private void configureBlobPropertiesAndMetadata(final CloudBlockBlob blob, final FilePath src) throws IOException, InterruptedException {
         final EnvVars env = serviceData.getRun().getEnvironment(serviceData.getTaskListener());
 
         // Set blob properties
         if (serviceData.getBlobProperties() != null) {
-            serviceData.getBlobProperties().configure(blob, env);
+            serviceData.getBlobProperties().configure(blob, src, env);
         }
 
         // Set blob metadata
