@@ -20,6 +20,7 @@ import com.microsoft.azure.storage.blob.*;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
 import hudson.EnvVars;
@@ -70,7 +71,7 @@ public class UploadToBlobService extends UploadService {
             String uploadedFileHash = uploadBlob(blob, zipPath);
             // Make sure to note the new blob as an archive blob,
             // so that it can be specially marked on the azure storage page.
-            AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length());
+            AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length(), Constants.BLOB_STORAGE);
             serviceData.getArchiveBlobs().add(azureBlob);
 
             tempDir.deleteRecursive();
@@ -90,7 +91,7 @@ public class UploadToBlobService extends UploadService {
                 final CloudBlockBlob blob = container.getBlockBlobReference(blobPath);
                 configureBlobPropertiesAndMetadata(blob);
                 String uploadedFileHash = uploadBlob(blob, src);
-                AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, src.length());
+                AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, src.length(), Constants.BLOB_STORAGE);
                 serviceData.getIndividualBlobs().add(azureBlob);
             }
         } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {

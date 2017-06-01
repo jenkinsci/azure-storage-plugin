@@ -51,9 +51,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
-    private final static String BLOB_STORAGE = "blobstorage";
-    private final static String FILE_STORAGE = "filestorage";
-
     private final transient String storageAccName;
     private final String storageType;
     private final String containerName;
@@ -63,8 +60,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     /**
      * Windows Azure storage container access.
      */
-    private boolean cntPubAccess;
-    private boolean cleanUpContainer;
+    private boolean pubAccessible;
+    private boolean cleanUpContainerOrShare;
     private boolean allowAnonymousAccess;
     private boolean uploadArtifactsOnlyIfSuccessful;
     private boolean doNotFailIfArchivingReturnsNothing;
@@ -96,7 +93,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             this.containerName = containerName;
         }
 
-        public String getfileShareName() {
+        public String getFileShareName() {
             return fileShareName;
         }
 
@@ -109,10 +106,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     @Deprecated
     public WAStoragePublisher(final String storageAccName,
                               final String storageCredentialId, final String filesPath, final String excludeFilesPath,
-                              final String containerName, final boolean cntPubAccess, final String virtualPath,
+                              final String containerName, final boolean pubAccessible, final String virtualPath,
                               final String storageType, final String fileShareName,
                               final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
-                              final boolean cleanUpContainer, final boolean allowAnonymousAccess,
+                              final boolean cleanUpContainerOrShare, final boolean allowAnonymousAccess,
                               final boolean uploadArtifactsOnlyIfSuccessful,
                               final boolean doNotFailIfArchivingReturnsNothing,
                               final boolean doNotUploadIndividualFiles,
@@ -124,11 +121,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.storageType = storageType;
         this.fileShareName = fileShareName.trim();
         this.containerName = containerName.trim();
-        this.cntPubAccess = cntPubAccess;
+        this.pubAccessible = pubAccessible;
         this.virtualPath = virtualPath.trim();
         this.blobProperties = blobProperties;
         this.metadata = metadata;
-        this.cleanUpContainer = cleanUpContainer;
+        this.cleanUpContainerOrShare = cleanUpContainerOrShare;
         this.allowAnonymousAccess = allowAnonymousAccess;
         this.uploadArtifactsOnlyIfSuccessful = uploadArtifactsOnlyIfSuccessful;
         this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
@@ -146,7 +143,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         super();
         this.filesPath = filesPath.trim();
         this.containerName = storageType.getContainerName().trim();
-        this.fileShareName = storageType.getfileShareName().trim();
+        this.fileShareName = storageType.getFileShareName().trim();
         this.storageType = storageType.type;
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
@@ -159,13 +156,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setCntPubAccess(boolean cntPubAccess) {
-        this.cntPubAccess = cntPubAccess;
+    public void setPubAccessible(boolean pubAccessible) {
+        this.pubAccessible = pubAccessible;
     }
 
     @DataBoundSetter
-    public void setCleanUpContainer(boolean cleanUpContainer) {
-        this.cleanUpContainer = cleanUpContainer;
+    public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
+        this.cleanUpContainerOrShare = cleanUpContainerOrShare;
     }
 
     @DataBoundSetter
@@ -234,6 +231,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return containerName;
     }
 
+    public String getFileShareName(){
+        return this.fileShareName;
+    }
+
     public String getStorageType() {
         return storageType;
     }
@@ -253,15 +254,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     /**
      * Windows Azure storage container access.
      */
-    public boolean isCntPubAccess() {
-        return cntPubAccess;
+    public boolean isPubAccessible() {
+        return pubAccessible;
     }
 
     /**
      * Windows Azure storage container cleanup option.
      */
-    public boolean isCleanUpContainer() {
-        return cleanUpContainer;
+    public boolean isCleanUpContainerOrShare() {
+        return cleanUpContainerOrShare;
     }
 
     /**
@@ -403,8 +404,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setFilePath(replaceMacro(filesPath, envVars));
         serviceData.setExcludedFilesPath(replaceMacro(excludeFilesPath, envVars));
         serviceData.setBlobProperties(blobProperties);
-        serviceData.setPubAccessible(cntPubAccess);
-        serviceData.setCleanUpContainerOrShare(cleanUpContainer);
+        serviceData.setPubAccessible(pubAccessible);
+        serviceData.setCleanUpContainerOrShare(cleanUpContainerOrShare);
         serviceData.setUploadType(getArtifactUploadType());
         serviceData.setAzureBlobMetadata(metadata);
         // Resolve virtual path
@@ -473,7 +474,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        if (BLOB_STORAGE.equalsIgnoreCase(this.getStorageType())) {
+        if (Constants.BLOB_STORAGE.equalsIgnoreCase(this.getStorageType())) {
             if (StringUtils.isBlank(expContainerName)) {
                 listener.getLogger().println("Container name is null or empty");
                 return false;
@@ -483,7 +484,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 listener.getLogger().println("Container name contains invalid characters");
                 return false;
             }
-        } else if (FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
+        } else if (Constants.FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
             if (StringUtils.isBlank(expShareName)) {
                 listener.getLogger().println("Share name is null or empty");
                 return false;
@@ -520,7 +521,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     private UploadService getUploadService(final PublisherServiceData data) {
-        if (FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
+        if (Constants.FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
             return new UploadToFileService(data);
         }
 
@@ -599,7 +600,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         /**
          * Checks for valid container name.
          *
-         * @param val name of the container
+         * @param request
          * @return FormValidation result
          * @throws IOException
          * @throws ServletException

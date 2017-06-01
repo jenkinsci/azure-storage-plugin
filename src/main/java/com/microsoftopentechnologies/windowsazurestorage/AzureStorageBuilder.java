@@ -279,9 +279,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             builderServiceData.setDeleteFromAzureAfterDownload(deleteFromAzureAfterDownload);
             builderServiceData.setDownloadType(downloadType);
             builderServiceData.setProjectName(Util.replaceMacro(projectName, envVars));
+            builderServiceData.setBuildSelector(buildSelector);
 
-            final StoragePluginService downloadBlobService = getBuilderService(builderServiceData);
-            int filesDownloaded = downloadBlobService.execute();
+            final StoragePluginService downloadService = getBuilderService(builderServiceData);
+            int filesDownloaded = downloadService.execute();
 
             if (filesDownloaded == 0) { // Mark build unstable if no files are
                 // downloaded
@@ -303,7 +304,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     private boolean isDownloadFromContainer() {
-        return StringUtils.isBlank(this.downloadType) || this.downloadDirLoc.equals(CONTAINER);
+        return StringUtils.isBlank(this.downloadType) || this.downloadType.equals(CONTAINER);
     }
 
     private void validateData(final Run<?, ?> run,

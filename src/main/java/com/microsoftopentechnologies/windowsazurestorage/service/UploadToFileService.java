@@ -21,6 +21,7 @@ import com.microsoft.azure.storage.file.*;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
 import hudson.FilePath;
@@ -49,7 +50,7 @@ public class UploadToFileService extends UploadService {
                 final String filePath = getItemPath(src, embeddedVP);
                 final CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(filePath);
                 final String hash = uploadCloudFile(cloudFile, src);
-                AzureBlob azureBlob = new AzureBlob(cloudFile.getName(), cloudFile.getUri().toString().replace("http://", "https://"), hash, src.length());
+                AzureBlob azureBlob = new AzureBlob(cloudFile.getName(), cloudFile.getUri().toString().replace("http://", "https://"), hash, src.length(), Constants.FILE_STORAGE);
                 serviceData.getIndividualBlobs().add(azureBlob);
             }
         } catch (URISyntaxException | StorageException | IOException | InterruptedException e) {
@@ -81,7 +82,7 @@ public class UploadToFileService extends UploadService {
             String uploadedFileHash = uploadCloudFile(cloudFile, zipPath);
             // Make sure to note the new blob as an archive blob,
             // so that it can be specially marked on the azure storage page.
-            AzureBlob azureBlob = new AzureBlob(cloudFile.getName(), cloudFile.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length());
+            AzureBlob azureBlob = new AzureBlob(cloudFile.getName(), cloudFile.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length(), Constants.FILE_STORAGE);
             serviceData.getArchiveBlobs().add(azureBlob);
 
             tempDir.deleteRecursive();
@@ -130,6 +131,7 @@ public class UploadToFileService extends UploadService {
 
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare() && fileShare.exists()) {
+            println("Clean up existing files in  file share " + serviceData.getFileShareName());
             deleteFiles(fileShare.getRootDirectoryReference().listFilesAndDirectories());
         }
 
