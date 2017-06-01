@@ -196,6 +196,7 @@ public class WAStorageClient {
      */
     protected static String upload(TaskListener listener, CloudBlockBlob blob, FilePath src)
             throws StorageException, IOException, InterruptedException {
+        listener.getLogger().println("Uploading file: " + src.getName());
         MessageDigest md = DigestUtils.getMd5Digest();
         long startTime = System.currentTimeMillis();
         try (InputStream inputStream = src.read(); DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
@@ -231,6 +232,11 @@ public class WAStorageClient {
                              boolean cntPubAccess, boolean cleanUpContainer, String expFP,
                              String expVP, String excludeFP, UploadType uploadType,
                              List<AzureBlob> individualBlobs, List<AzureBlob> archiveBlobs, FilePath workspace) throws WAStorageException {
+
+        listener.getLogger().println(Messages.WAStoragePublisher_container_name(expContainerName));
+        listener.getLogger().println(Messages.WAStoragePublisher_filepath(expFP));
+        listener.getLogger().println(Messages.WAStoragePublisher_virtualpath(expVP));
+        listener.getLogger().println(Messages.WAStoragePublisher_excludepath(excludeFP));
 
         int filesUploaded = 0; // Counter to track no. of files that are uploaded
 
