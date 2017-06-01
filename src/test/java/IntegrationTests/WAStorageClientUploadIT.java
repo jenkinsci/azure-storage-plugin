@@ -122,8 +122,6 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         try {
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
-            List<AzureBlob> individualBlobs = new ArrayList<>();
-            List<AzureBlob> archiveBlobs = new ArrayList<>();
             AzureBlobProperties blobProperties = mock(AzureBlobProperties.class);
             List<AzureBlobMetadataPair> metadata = new ArrayList<>();
 

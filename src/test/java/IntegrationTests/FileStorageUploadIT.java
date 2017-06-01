@@ -18,7 +18,17 @@ package IntegrationTests;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.file.CloudFile;
 import com.microsoft.azure.storage.file.CloudFileDirectory;
+import com.microsoft.azure.storage.file.ListFileItem;
+import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -27,14 +37,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class FileStorageUploadIT extends IntegrationTest {
     private static final Logger LOGGER = Logger.getLogger(FileStorageUploadIT.class.getName());
@@ -66,18 +75,131 @@ public class FileStorageUploadIT extends IntegrationTest {
     }
 
     @Test
-    public void testComplexDirPath() {
+    public void testUploadFile() {
         try {
             final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
-            CloudFile cloudFile= rootDir.getFileReference("sub/sub2/test.txt");
-            cloudFile.getParent().getParent().createIfNotExists();
-            cloudFile.getParent().createIfNotExists();
-            cloudFile.setMetadata(null);
-            cloudFile.uploadFromFile("D:\\temp\\1111.txt");
-            String name = cloudFile.getName();
-            String parent = cloudFile.getParent().getName();
-            URI uri = cloudFile.getUri();
-            String a="1";
+            Run mockRun = mock(Run.class);
+            Launcher mockLauncher = mock(Launcher.class);
+            List<AzureBlobMetadataPair> metadata = new ArrayList<>();
+
+            File workspaceDir = new File(fileShareName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+
+            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setFileShareName(fileShareName);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath("*.txt");
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadService service = new UploadToFileService(serviceData);
+            int uploaded = service.execute();
+
+            assertEquals(testEnv.uploadFileList.size(), uploaded);
+            for (ListFileItem item : testEnv.fileShare.getRootDirectoryReference().listFilesAndDirectories()) {
+                if (item instanceof CloudFile) {
+                    CloudFile cloudFile = (CloudFile) item;
+                    String downloadedContent = cloudFile.downloadText();
+                    File temp = testEnv.uploadFileList.get(downloadedContent);
+                    String tempContent = FileUtils.readFileToString(temp, "utf-8");
+                    //check for filenames
+                    assertEquals(tempContent, downloadedContent);
+                    //check for file contents
+                    assertEquals("upload" + downloadedContent + ".txt", temp.getName());
+                    temp.delete();
+                }
+            }
+
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUploadFileWithMetaData() {
+        try {
+            final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
+            Run mockRun = mock(Run.class);
+            Launcher mockLauncher = mock(Launcher.class);
+            List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                    new AzureBlobMetadataPair("k1", "v1"),
+                    new AzureBlobMetadataPair("k2", "v2")
+            );
+
+            Iterator it = testEnv.uploadFileList.entrySet().iterator();
+            Map.Entry firstPair = (Map.Entry) it.next();
+            File firstFile = (File) firstPair.getValue();
+
+            File workspaceDir = new File(fileShareName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+
+            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setFileShareName(fileShareName);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath(firstFile.getName());
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadService service = new UploadToFileService(serviceData);
+            int uploaded = service.execute();
+
+            assertEquals(1, uploaded);
+            CloudFile cloudFile = testEnv.fileShare.getRootDirectoryReference().getFileReference(firstFile.getName());
+            cloudFile.downloadAttributes();
+
+            HashMap<String, String> downloadedMeta = cloudFile.getMetadata();
+            for (AzureBlobMetadataPair pair : metadata) {
+                assertEquals(pair.getValue(), downloadedMeta.get(pair.getKey()));
+            }
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUploadFileWithEmptyMetaData() {
+        try {
+            final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
+            Run mockRun = mock(Run.class);
+            Launcher mockLauncher = mock(Launcher.class);
+            List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                    new AzureBlobMetadataPair(null, "v1"),
+                    new AzureBlobMetadataPair("", "v1"),
+                    new AzureBlobMetadataPair(" ", "v1"),
+                    new AzureBlobMetadataPair("k1", null),
+                    new AzureBlobMetadataPair("k2", ""),
+                    new AzureBlobMetadataPair("k2", " ")
+            );
+
+            Iterator it = testEnv.uploadFileList.entrySet().iterator();
+            Map.Entry firstPair = (Map.Entry) it.next();
+            File firstFile = (File) firstPair.getValue();
+
+            File workspaceDir = new File(fileShareName);
+            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+
+            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setFileShareName(fileShareName);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath(firstFile.getName());
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadService service = new UploadToFileService(serviceData);
+            int uploaded = service.execute();
+
+            assertEquals(1, uploaded);
+            CloudFile cloudFile = testEnv.fileShare.getRootDirectoryReference().getFileReference(firstFile.getName());
+            cloudFile.downloadAttributes();
+
+            HashMap<String, String> downloadedMeta = cloudFile.getMetadata();
+            assertTrue(downloadedMeta.isEmpty());
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
