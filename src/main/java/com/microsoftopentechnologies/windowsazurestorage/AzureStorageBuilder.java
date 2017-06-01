@@ -224,8 +224,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     public String getStorageCredentialId() {
-        if (this.storageCredentialId == null && this.storageAccName != null)
+        if (this.storageCredentialId == null && this.storageAccName != null) {
             return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
+        }
         return storageCredentialId;
     }
 
@@ -385,10 +386,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         public ListBoxModel doFillStorageAccNameItems() {
             ListBoxModel m = new ListBoxModel();
-            StorageAccountInfo[] StorageAccounts = getStorageAccounts();
+            StorageAccountInfo[] storageAccounts = getStorageAccounts();
 
-            if (StorageAccounts != null) {
-                for (StorageAccountInfo storageAccount : StorageAccounts) {
+            if (storageAccounts != null) {
+                for (StorageAccountInfo storageAccount : storageAccounts) {
                     m.add(storageAccount.getStorageAccName());
                 }
             }
@@ -430,7 +431,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
 
         /**
-         * Returns storage account object
+         * Returns storage account object.
          *
          * @param storageAccountName
          * @return StorageAccount
@@ -442,10 +443,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             }
 
             StorageAccountInfo storageAcc = null;
-            StorageAccountInfo[] StorageAccounts = getStorageAccounts();
+            StorageAccountInfo[] storageAccounts = getStorageAccounts();
 
-            if (StorageAccounts != null) {
-                for (StorageAccountInfo sa : StorageAccounts) {
+            if (storageAccounts != null) {
+                for (StorageAccountInfo sa : storageAccounts) {
                     if (sa.getStorageAccName().equals(storageAccountName)) {
                         storageAcc = sa;
 

@@ -9,7 +9,7 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
  *
  * @author arroyc
  */
-public class Constants {
+public final class Constants {
 
     /* Regular expression for valid container name */
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
@@ -27,4 +27,9 @@ public class Constants {
     public static final String CREDENTIALS_AJAX_URI = "/descriptor/com.cloudbees.plugins.credentials.CredentialsSelectHelper/resolver/com.cloudbees.plugins.credentials.CredentialsSelectHelper$SystemContextResolver/provider/com.cloudbees.plugins.credentials.SystemCredentialsProvider$ProviderImpl/context/jenkins/dialog";
     public static final String PLUGIN_NAME = "AzureJenkinsStorage";
 
+    public static final int HTTP_INTERNAL_SERVER_ERROR = 500;
+    public static final int HTTP_NOT_FOUND = 404;
+
+    private Constants() {
+    }
 }

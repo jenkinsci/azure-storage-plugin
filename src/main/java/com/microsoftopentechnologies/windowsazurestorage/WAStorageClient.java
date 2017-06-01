@@ -46,9 +46,10 @@ import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.*;
+
 import org.apache.commons.lang.StringUtils;
 
-public class WAStorageClient {
+public final class WAStorageClient {
 
     /*
      * A random name for container name to test validity of storage account
@@ -59,7 +60,7 @@ public class WAStorageClient {
     private static final String QUEUE = "queue";
     private static final String TABLE = "table";
 
-    private static final String fpSeparator = ",";
+    private static final String FP_SEPARATOR = ",";
 
     /**
      * This method validates Storage Account credentials by checking for a dummy
@@ -112,8 +113,9 @@ public class WAStorageClient {
             cloudStorageAccount = new CloudStorageAccount(credentials);
         } else {
             String endpointSuffix = getEndpointSuffix(blobURL);
-            if (StringUtils.isBlank(endpointSuffix))
+            if (StringUtils.isBlank(endpointSuffix)) {
                 throw new URISyntaxException(blobURL, "The blob endpoint is not correct!");
+            }
             cloudStorageAccount = new CloudStorageAccount(credentials, false, endpointSuffix);
         }
 
@@ -259,7 +261,7 @@ public class WAStorageClient {
             }
             String archiveIncludes = "";
 
-            StringTokenizer strTokens = new StringTokenizer(expFP, fpSeparator);
+            StringTokenizer strTokens = new StringTokenizer(expFP, FP_SEPARATOR);
             while (strTokens.hasMoreElements()) {
                 String fileName = strTokens.nextToken();
 
@@ -387,7 +389,7 @@ public class WAStorageClient {
     }
 
     /**
-     * Deletes contents of container
+     * Deletes contents of container.
      *
      * @param container
      * @throws StorageException
@@ -407,7 +409,7 @@ public class WAStorageClient {
     }
 
     /**
-     * Deletes contents of virtual directory
+     * Deletes contents of virtual directory.
      *
      * @param cloudBlobDirectory
      * @throws StorageException
@@ -442,7 +444,7 @@ public class WAStorageClient {
     }
 
     /**
-     * Downloads from Azure blob
+     * Downloads from Azure blob.
      *
      * @param azureBlobs blobs from build
      * @param context    the download context
@@ -536,11 +538,11 @@ public class WAStorageClient {
     }
 
     private static boolean shouldDownload(String includePattern, String excludePattern, String blobName, boolean isFullPath) {
-        String[] includePatterns = includePattern.split(fpSeparator);
+        String[] includePatterns = includePattern.split(FP_SEPARATOR);
         String[] excludePatterns = null;
 
         if (excludePattern != null) {
-            excludePatterns = excludePattern.split(fpSeparator);
+            excludePatterns = excludePattern.split(FP_SEPARATOR);
         }
 
         return blobPathMatches(blobName, includePatterns, excludePatterns, isFullPath);
@@ -559,7 +561,7 @@ public class WAStorageClient {
 
     /**
      * Determines whether the path is a potential match to any of the provided
-     * patterns
+     * patterns.
      *
      * @param path
      * @param patterns
@@ -577,7 +579,7 @@ public class WAStorageClient {
 
     /**
      * Determines whether the path is an exact match to any of the provided
-     * patterns
+     * patterns.
      *
      * @param path
      * @param patterns
@@ -594,7 +596,7 @@ public class WAStorageClient {
     }
 
     /**
-     * Generates SAS URL for blob in Azure storage account
+     * Generates SAS URL for blob in Azure storage account.
      *
      * @param storageAccount
      * @param blobName
@@ -641,7 +643,7 @@ public class WAStorageClient {
 
     /**
      * Returns Blob requests options - primarily sets concurrentRequestCount to
-     * number of available cores
+     * number of available cores.
      *
      * @return
      */
@@ -655,5 +657,9 @@ public class WAStorageClient {
     public static String getTime(long timeInMills) {
         return DurationFormatUtils.formatDuration(timeInMills, "HH:mm:ss.S")
                 + " (HH:mm:ss.S)";
+    }
+
+    private WAStorageClient() {
+        // hide constructor
     }
 }
