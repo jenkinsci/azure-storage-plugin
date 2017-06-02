@@ -420,6 +420,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         try {
             int filesUploaded = service.execute();
 
+            listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
+
             // Mark build unstable if no files are uploaded and the user
             // doesn't want the build not to fail in that case.
             if (filesUploaded == 0) {
@@ -432,7 +434,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 if (getArtifactUploadType() != UploadType.INDIVIDUAL) {
                     zipArchiveBlob = serviceData.getArchiveBlobs().get(0);
                 }
-                listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
 
                 run.getActions().add(new AzureBlobAction(run, storageAccountInfo.getStorageAccName(), expContainerName,
                         serviceData.getIndividualBlobs(), zipArchiveBlob, allowAnonymousAccess, storageCredentialId));

@@ -51,6 +51,11 @@ public abstract class UploadService extends StoragePluginService<PublisherServic
             return 0;
         }
 
+        println(Messages.WAStoragePublisher_container_name(serviceData.getContainerName()));
+        println(Messages.WAStoragePublisher_share_name(serviceData.getFileShareName()));
+        println(Messages.WAStoragePublisher_filepath(serviceData.getFilePath()));
+        println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
+        println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
         int filesUploaded = 0; // Counter to track no. of files that are uploaded
         try {
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
