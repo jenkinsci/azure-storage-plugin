@@ -22,7 +22,7 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.util.DirScanner;
@@ -42,7 +42,7 @@ import java.security.MessageDigest;
 public class UploadToBlobService extends UploadService {
 
 
-    public UploadToBlobService(PublisherServiceData serviceData) {
+    public UploadToBlobService(UploadServiceData serviceData) {
         super(serviceData);
     }
 

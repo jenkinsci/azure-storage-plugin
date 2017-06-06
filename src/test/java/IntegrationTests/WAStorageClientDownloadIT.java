@@ -5,7 +5,7 @@ import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromContainerService;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.BuilderServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
@@ -75,7 +75,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
 
-            BuilderServiceData serviceData = new BuilderServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setIncludeFilesPattern("*.txt");
             serviceData.setExcludeFilesPattern("archive.zip");
             serviceData.setContainerName(testEnv.containerName);
@@ -118,7 +118,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
 
-            BuilderServiceData serviceData = new BuilderServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setIncludeFilesPattern("*.txt");
             serviceData.setContainerName(testEnv.containerName);
 
@@ -160,7 +160,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
 
-            BuilderServiceData serviceData = new BuilderServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setIncludeFilesPattern("*.txt");
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setFlattenDirectories(true);

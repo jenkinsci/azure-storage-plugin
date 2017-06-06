@@ -23,7 +23,7 @@ import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -85,7 +85,7 @@ public class FileStorageUploadIT extends IntegrationTest {
             File workspaceDir = new File(fileShareName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setFileShareName(fileShareName);
             serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath("*.txt");
@@ -135,7 +135,7 @@ public class FileStorageUploadIT extends IntegrationTest {
             File workspaceDir = new File(fileShareName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setFileShareName(fileShareName);
             serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath(firstFile.getName());
@@ -182,7 +182,7 @@ public class FileStorageUploadIT extends IntegrationTest {
             File workspaceDir = new File(fileShareName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setFileShareName(fileShareName);
             serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath(firstFile.getName());

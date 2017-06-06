@@ -21,16 +21,16 @@ import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.BuilderServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.FilePath;
 import org.springframework.util.AntPathMatcher;
 
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 
-public abstract class DownloadService extends StoragePluginService<BuilderServiceData> {
+public abstract class DownloadService extends StoragePluginService<DownloadServiceData> {
 
-    public DownloadService(BuilderServiceData data) {
+    public DownloadService(DownloadServiceData data) {
         super(data);
     }
 

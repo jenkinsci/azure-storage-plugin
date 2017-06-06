@@ -26,7 +26,7 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromBuildService;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromContainerService;
 import com.microsoftopentechnologies.windowsazurestorage.service.StoragePluginService;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.BuilderServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.*;
 import hudson.model.*;
 import hudson.plugins.copyartifact.BuildSelector;
@@ -131,7 +131,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         public void setProjectName(String projectName) {
             this.projectName = projectName;
         }
-        
+
         public BuildSelector getBuildSelector() {
             return buildSelector;
         }
@@ -250,7 +250,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                 throw new IllegalStateException("Failed to capture information about running environment.");
             }
 
-            final BuilderServiceData builderServiceData = new BuilderServiceData(run, workspace, launcher, listener, storageAccountInfo);
+            final DownloadServiceData builderServiceData = new DownloadServiceData(run, workspace, launcher, listener, storageAccountInfo);
 
             // Resolve include patterns
             String expIncludePattern = Util.replaceMacro(includeFilesPattern, envVars);
@@ -281,7 +281,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             builderServiceData.setProjectName(Util.replaceMacro(projectName, envVars));
             builderServiceData.setBuildSelector(buildSelector);
 
-            final StoragePluginService downloadService = getBuilderService(builderServiceData);
+            final StoragePluginService downloadService = getDownloadService(builderServiceData);
             int filesDownloaded = downloadService.execute();
 
             if (filesDownloaded == 0) { // Mark build unstable if no files are
@@ -297,7 +297,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
     }
 
-    private StoragePluginService getBuilderService(final BuilderServiceData data) {
+    private StoragePluginService getDownloadService(final DownloadServiceData data) {
         if (isDownloadFromContainer())
             return new DownloadFromContainerService(data);
         return new DownloadFromBuildService(data);

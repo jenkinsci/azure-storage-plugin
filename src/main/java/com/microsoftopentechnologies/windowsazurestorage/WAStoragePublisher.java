@@ -23,7 +23,7 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.*;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.*;
 import hudson.init.InitMilestone;
@@ -398,7 +398,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             throw new IOException("Plugin can not continue, until previous errors are addressed");
         }
 
-        final PublisherServiceData serviceData = new PublisherServiceData(run, ws, launcher, listener, storageAccountInfo);
+        final UploadServiceData serviceData = new UploadServiceData(run, ws, launcher, listener, storageAccountInfo);
         serviceData.setContainerName(expContainerName);
         serviceData.setFileShareName(expShareName);
         serviceData.setFilePath(replaceMacro(filesPath, envVars));
@@ -521,7 +521,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return doNotWaitForPreviousBuild ? BuildStepMonitor.NONE : BuildStepMonitor.STEP;
     }
 
-    private UploadService getUploadService(final PublisherServiceData data) {
+    private UploadService getUploadService(final UploadServiceData data) {
         if (Constants.FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
             return new UploadToFileService(data);
         }

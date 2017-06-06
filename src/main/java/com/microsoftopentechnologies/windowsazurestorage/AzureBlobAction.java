@@ -29,39 +29,39 @@ public class AzureBlobAction implements RunAction {
     private final String storageCredentialId;
 
     public AzureBlobAction(Run build, String storageAccountName, String containerName,
-        List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
-        boolean allowAnonymousAccess, String storageCredentialId) {
-    this.storageAccountName = storageAccountName;
-    this.containerName = containerName;
-    this.individualBlobs = individualBlobs;
-    this.allowAnonymousAccess = allowAnonymousAccess;
-    this.zipArchiveBlob = zipArchiveBlob;
-    this.build = build;
+                           List<AzureBlob> individualBlobs, AzureBlob zipArchiveBlob,
+                           boolean allowAnonymousAccess, String storageCredentialId) {
+        this.storageAccountName = storageAccountName;
+        this.containerName = containerName;
+        this.individualBlobs = individualBlobs;
+        this.allowAnonymousAccess = allowAnonymousAccess;
+        this.zipArchiveBlob = zipArchiveBlob;
+        this.build = build;
         this.storageCredentialId = storageCredentialId;
     }
 
     public Run<?, ?> getBuild() {
-    return build;
+        return build;
     }
 
     @Override
     public String getDisplayName() {
-    return "Azure Artifacts";
+        return "Azure Artifacts";
     }
 
     @Override
     public String getIconFileName() {
-    return "/plugin/windows-azure-storage/images/24x24/Azure.png";
+        return "/plugin/windows-azure-storage/images/24x24/Azure.png";
     }
 
     @Override
     public String getUrlName() {
-    return "Azure";
+        return "Azure";
     }
 
     @Exported
     public AzureBlob getZipArchiveBlob() {
-    return zipArchiveBlob;
+        return zipArchiveBlob;
     }
 
     @Override
@@ -77,77 +77,77 @@ public class AzureBlobAction implements RunAction {
     }
 
     public String getStorageAccountName() {
-    return storageAccountName;
+        return storageAccountName;
     }
 
     public String getContainerName() {
-    return containerName;
+        return containerName;
     }
 
     @Exported
     public List<AzureBlob> getIndividualBlobs() {
-    return individualBlobs;
+        return individualBlobs;
     }
 
     public boolean getAllowAnonymousAccess() {
-    return allowAnonymousAccess;
+        return allowAnonymousAccess;
     }
 
     public void doProcessDownloadRequest(final StaplerRequest request, final StaplerResponse response) throws IOException, ServletException {
-    AzureCredentials.StorageAccountCredential accountCredentials = AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
+        AzureCredentials.StorageAccountCredential accountCredentials = AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
 
-    if (accountCredentials == null) {
-        response.sendError(500, "Azure Storage account global configuration is missing");
-        return;
-    }
-
-    StorageAccountInfo accountInfo = AzureCredentials.convertToStorageAccountInfo(accountCredentials);
-
-    if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
-        String url = request.getOriginalRequestURI();
-        response.sendRedirect("/login?from=" + url);
-        return;
-    }
-
-    String queryPath = request.getRestOfPath();
-
-    if (queryPath == null) {
-        return;
-    }
-
-    String blobName = queryPath.substring(1);
-
-    // Check the archive blob if it is non-null
-    if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
-        try {
-        response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-            + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
-        } catch (Exception e) {
-        response.sendError(500, "Error occurred while downloading artifact " + e.getMessage());
+        if (accountCredentials == null) {
+            response.sendError(500, "Azure Storage account global configuration is missing");
+            return;
         }
-        return;
-    }
 
-    for (AzureBlob blob : individualBlobs) {
-        if (blob.getBlobName().equals(blobName)) {
-        try {
-            response.sendRedirect2(blob.getBlobURL() + "?"
-                + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
-        } catch (Exception e) {
-            response.sendError(500, "Error occurred while downloading artifact " + e.getMessage());
-        }
-        return;
-        }
-    }
+        StorageAccountInfo accountInfo = AzureCredentials.convertToStorageAccountInfo(accountCredentials);
 
-    response.sendError(404, "Azure artifact is not available");
+        if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
+            String url = request.getOriginalRequestURI();
+            response.sendRedirect("/login?from=" + url);
+            return;
+        }
+
+        String queryPath = request.getRestOfPath();
+
+        if (queryPath == null) {
+            return;
+        }
+
+        String blobName = queryPath.substring(1);
+
+        // Check the archive blob if it is non-null
+        if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
+            try {
+                response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
+                        + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
+            } catch (Exception e) {
+                response.sendError(500, "Error occurred while downloading artifact " + e.getMessage());
+            }
+            return;
+        }
+
+        for (AzureBlob blob : individualBlobs) {
+            if (blob.getBlobName().equals(blobName)) {
+                try {
+                    response.sendRedirect2(blob.getBlobURL() + "?"
+                            + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
+                } catch (Exception e) {
+                    response.sendError(500, "Error occurred while downloading artifact " + e.getMessage());
+                }
+                return;
+            }
+        }
+
+        response.sendError(404, "Azure artifact is not available");
     }
 
     public boolean isAnonymousAccess(Authentication auth) {
-    return auth != null && auth.getName() != null && "anonymous".equals(auth.getName());
+        return auth != null && auth.getName() != null && "anonymous".equals(auth.getName());
     }
 
     public Api getApi() {
-    return new Api(this);
+        return new Api(this);
     }
 }

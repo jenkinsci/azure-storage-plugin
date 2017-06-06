@@ -23,7 +23,7 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import hudson.FilePath;
 import hudson.util.DirScanner;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -37,7 +37,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 
 public class UploadToFileService extends UploadService {
-    public UploadToFileService(PublisherServiceData serviceData) {
+    public UploadToFileService(UploadServiceData serviceData) {
         super(serviceData);
     }
 

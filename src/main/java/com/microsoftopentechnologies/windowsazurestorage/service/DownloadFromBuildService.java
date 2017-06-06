@@ -30,7 +30,7 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.BuilderServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.matrix.MatrixBuild;
@@ -49,7 +49,7 @@ public class DownloadFromBuildService extends DownloadService {
     CloudBlobContainer cloudBlobContainer;
     CloudFileShare cloudFileShare;
 
-    public DownloadFromBuildService(final BuilderServiceData data) {
+    public DownloadFromBuildService(final DownloadServiceData data) {
         super(data);
     }
 

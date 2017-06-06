@@ -13,7 +13,7 @@ import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInf
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -128,7 +128,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
@@ -188,7 +188,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
@@ -246,7 +246,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);
@@ -303,7 +303,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            PublisherServiceData serviceData = new PublisherServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setContainerName(testEnv.containerName);
             serviceData.setBlobProperties(blobProperties);
             serviceData.setPubAccessible(false);

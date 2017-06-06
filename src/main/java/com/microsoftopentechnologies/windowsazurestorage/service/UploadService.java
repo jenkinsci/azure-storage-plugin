@@ -19,7 +19,7 @@ import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.PublisherServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -31,11 +31,11 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-public abstract class UploadService extends StoragePluginService<PublisherServiceData> {
+public abstract class UploadService extends StoragePluginService<UploadServiceData> {
     protected static final String zipFolderName = "artifactsArchive";
     protected static final String zipName = "archive.zip";
 
-    protected UploadService(PublisherServiceData serviceData) {
+    protected UploadService(UploadServiceData serviceData) {
         super(serviceData);
     }
 

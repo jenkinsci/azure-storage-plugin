@@ -20,13 +20,13 @@ import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
-import com.microsoftopentechnologies.windowsazurestorage.service.model.BuilderServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
 public class DownloadFromContainerService extends DownloadService {
-    public DownloadFromContainerService(final BuilderServiceData data) {
+    public DownloadFromContainerService(final DownloadServiceData data) {
         super(data);
     }
 

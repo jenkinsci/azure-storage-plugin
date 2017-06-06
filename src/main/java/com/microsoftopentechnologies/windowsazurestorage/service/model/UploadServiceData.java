@@ -27,7 +27,7 @@ import hudson.model.TaskListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PublisherServiceData extends ServiceData {
+public class UploadServiceData extends ServiceData {
     String containerName;
     String fileShareName;
     AzureBlobProperties blobProperties;
@@ -41,11 +41,11 @@ public class PublisherServiceData extends ServiceData {
     List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
     List<AzureBlobMetadataPair> azureBlobMetadata;
 
-    public PublisherServiceData(final Run<?, ?> run,
-                                final FilePath workspace,
-                                final Launcher launcher,
-                                final TaskListener taskListener,
-                                final StorageAccountInfo storageAccountInfo) {
+    public UploadServiceData(final Run<?, ?> run,
+                             final FilePath workspace,
+                             final Launcher launcher,
+                             final TaskListener taskListener,
+                             final StorageAccountInfo storageAccountInfo) {
         super(run, workspace, launcher, taskListener, storageAccountInfo);
     }
 

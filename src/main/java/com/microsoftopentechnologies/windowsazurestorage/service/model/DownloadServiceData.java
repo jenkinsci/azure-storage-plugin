@@ -17,7 +17,6 @@
 package com.microsoftopentechnologies.windowsazurestorage.service.model;
 
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -25,12 +24,12 @@ import hudson.Util;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.apache.commons.lang.StringUtils;
 import hudson.plugins.copyartifact.BuildSelector;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 
-public class BuilderServiceData extends ServiceData {
+public class DownloadServiceData extends ServiceData {
     String includeFilesPattern;
     String excludeFilesPattern;
     String containerName;
@@ -42,11 +41,11 @@ public class BuilderServiceData extends ServiceData {
     BuildSelector buildSelector;
     boolean includeArchiveZips;
 
-    public BuilderServiceData(final Run<?, ?> run,
-                              final FilePath workspace,
-                              final Launcher launcher,
-                              final TaskListener taskListener,
-                              final StorageAccountInfo storageAccountInfo) {
+    public DownloadServiceData(final Run<?, ?> run,
+                               final FilePath workspace,
+                               final Launcher launcher,
+                               final TaskListener taskListener,
+                               final StorageAccountInfo storageAccountInfo) {
         super(run, workspace, launcher, taskListener, storageAccountInfo);
     }
 

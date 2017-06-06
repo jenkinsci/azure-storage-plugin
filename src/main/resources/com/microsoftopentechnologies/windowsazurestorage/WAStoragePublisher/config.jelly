@@ -12,7 +12,7 @@
     </f:entry>
 
     <f:section title="${%storageType_title}">
-        <f:radioBlock name="storageType" title="Upload to Azure blob storage" value="blobstorage"
+        <f:radioBlock name="storageType" title="${%blobStorageType_Title}" value="blobstorage"
                       checked="${instance.getStorageType() == null || instance.getStorageType() == 'blobstorage'}"
                       help="/plugin/windows-azure-storage/help-azureblobstorage.html">
             <f:nested>
@@ -23,7 +23,7 @@
                 </f:entry>
             </f:nested>
         </f:radioBlock>
-        <f:radioBlock name="storageType" title="Upload to Azure File Storage" value="filestorage"
+        <f:radioBlock name="storageType" title="${%fileStorageType_Title}" value="filestorage"
                       checked="${instance.getStorageType() == 'filestorage'}" help="/plugin/windows-azure-storage/help-azurefilestorage.html">
             <f:nested>
                 <f:entry title="${%fileShareName_title}" field="fileShareName"
