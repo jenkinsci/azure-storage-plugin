@@ -30,7 +30,6 @@ import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadS
 import hudson.*;
 import hudson.model.*;
 import hudson.plugins.copyartifact.BuildSelector;
-import hudson.plugins.copyartifact.StatusBuildSelector;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -41,11 +40,7 @@ import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -102,83 +97,52 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
     }
 
-    public static class DownloadType {
+    @DataBoundSetter
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
+    }
 
-        public final String type;
-        private String containerName = "";
-        private String projectName = "";
-        private BuildSelector buildSelector = new StatusBuildSelector(true);
+    @DataBoundSetter
+    public void setBuildSelector(BuildSelector buildSelector) {
+        this.buildSelector = buildSelector;
+    }
 
-        @DataBoundConstructor
-        public DownloadType(final String value) {
-            this.type = value;
-        }
-
-        public String getContainerName() {
-            return containerName;
-        }
-
-        @DataBoundSetter
-        public void setContainerName(String containerName) {
-            this.containerName = containerName;
-        }
-
-        public String getProjectName() {
-            return projectName;
-        }
-
-        @DataBoundSetter
-        public void setProjectName(String projectName) {
-            this.projectName = projectName;
-        }
-
-        public BuildSelector getBuildSelector() {
-            return buildSelector;
-        }
-
-        @DataBoundSetter
-        public void setBuildSelector(BuildSelector buildSelector) {
-            this.buildSelector = buildSelector;
-        }
+    @DataBoundSetter
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     @Deprecated
     public AzureStorageBuilder(
             final String strAccName,
             final String storageCredentialId,
-            final DownloadType downloadType,
             final String includeFilesPattern,
             final String excludeFilesPattern,
             final String downloadDirLoc,
+            final String downloadType,
             final boolean flattenDirectories,
             final boolean deleteFromAzureAfterDownload,
             final boolean includeArchiveZips) {
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, strAccName);
         this.storageAccName = storageCreds.getStorageAccountName();
-        this.downloadType = downloadType.type;
-        this.containerName = downloadType.containerName;
         this.includeFilesPattern = includeFilesPattern;
         this.excludeFilesPattern = excludeFilesPattern;
         this.downloadDirLoc = downloadDirLoc;
         this.flattenDirectories = flattenDirectories;
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
         this.includeArchiveZips = includeArchiveZips;
-        this.projectName = downloadType.projectName;
-        this.buildSelector = downloadType.buildSelector;
+        this.downloadType = downloadType;
     }
 
     @DataBoundConstructor
     public AzureStorageBuilder(
             final String storageCredentialId,
-            final DownloadType downloadType) {
+            final String downloadType) {
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
         this.storageAccName = storageCreds.getStorageAccountName();
-        this.downloadType = downloadType.type;
-        this.containerName = downloadType.containerName;
-        this.projectName = downloadType.projectName;
-        this.buildSelector = downloadType.buildSelector;
+        this.downloadType = downloadType;
     }
 
     public BuildSelector getBuildSelector() {

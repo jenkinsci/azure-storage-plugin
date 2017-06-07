@@ -1,7 +1,6 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:c="/lib/credentials"
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-
     <f:entry title="${%storageCredentials_title}" field="storageCredentialId"
              help="/plugin/windows-azure-storage/help-storagecredential.html">
         <c:select expressionAllowed="false"/>
@@ -18,7 +17,7 @@
             <f:nested>
                 <f:entry title="${%containerName_title}" field="containerName"
                          help="/plugin/windows-azure-storage/help-containerName.html">
-                    <f:textbox
+                    <f:textbox name="textbox00001"
                             checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkContainerName?val='+escape(this.value)"/>
                 </f:entry>
             </f:nested>
@@ -118,5 +117,4 @@
             </f:entry>
         </f:advanced>
     </f:section>
-
 </j:jelly>
