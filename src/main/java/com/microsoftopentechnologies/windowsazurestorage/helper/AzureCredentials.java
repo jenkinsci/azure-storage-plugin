@@ -182,11 +182,12 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         public FormValidation doVerifyConfiguration(
                 @QueryParameter String storageAccountName,
-                @QueryParameter String storageKey,
+                @QueryParameter Secret storageKey,
                 @QueryParameter String blobEndpointURL) {
 
             try {
-                StorageAccountInfo storageAccount = new StorageAccountInfo(storageAccountName, storageKey, blobEndpointURL);
+                StorageAccountInfo storageAccount = new StorageAccountInfo(
+                        storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 WAStorageClient.validateStorageAccount(storageAccount);
                 //AzureCredentials.StorageAccountCredential storageCreds = new AzureCredentials.StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
             } catch (Exception e) {
