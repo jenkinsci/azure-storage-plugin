@@ -17,17 +17,19 @@
             <f:nested>
                 <f:entry title="${%containerName_title}" field="containerName"
                          help="/plugin/windows-azure-storage/help-containerName.html">
-                    <f:textbox name="textbox00001"
+                    <f:textbox
                             checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkContainerName?val='+escape(this.value)"/>
                 </f:entry>
             </f:nested>
         </f:radioBlock>
         <f:radioBlock name="storageType" title="${%fileStorageType_Title}" value="filestorage"
-                      checked="${instance.getStorageType() == 'filestorage'}" help="/plugin/windows-azure-storage/help-azurefilestorage.html">
+                      checked="${instance.getStorageType() == 'filestorage'}"
+                      help="/plugin/windows-azure-storage/help-azurefilestorage.html">
             <f:nested>
                 <f:entry title="${%fileShareName_title}" field="fileShareName"
                          help="/plugin/windows-azure-storage/help-azureFileShareName.html">
-                    <f:textbox checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkFileShareName?val='+escape(this.value)"/>
+                    <f:textbox
+                            checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkFileShareName?val='+escape(this.value)"/>
                 </f:entry>
             </f:nested>
         </f:radioBlock>
