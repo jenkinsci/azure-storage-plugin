@@ -5,23 +5,21 @@
     </f:entry> 
 
     <f:section title="${%downloadType_title}">
-        <f:radioBlock name="downloadType" title="Download from container" value="container" checked="${instance.getDownloadType() == null || instance.getDownloadType() == 'container'}">
+        <f:radioBlock name="downloadType" title="Download from container" value="container" inline="true"
+                      checked="${instance.getDownloadType() == null || instance.getDownloadType() == 'container'}">
             <f:nested>
-
-                <f:entry title="${%containerName_title}" field="containerName" name="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
+                <f:entry title="${%containerName_title}" field="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">
                     <f:textbox />
                 </f:entry>
-
             </f:nested>
         </f:radioBlock>
-        <f:radioBlock name="downloadType" title="Download artifact from build" value="project" checked="${instance.getDownloadType() == 'project'}" >
+        <f:radioBlock name="downloadType" title="Download artifact from build" value="project" inline="true"
+                      checked="${instance.getDownloadType() == 'project'}" >
             <f:nested>
-
-                <f:entry title="${%projectName_title}" field="projectName" name="projectName" help="/plugin/windows-azure-storage/help-builderProjectName.html">
+                <f:entry title="${%projectName_title}" field="projectName" help="/plugin/windows-azure-storage/help-builderProjectName.html">
                     <f:textbox />
                 </f:entry>
-                <f:dropdownDescriptorSelector field="buildSelector" name="buildSelector" title="Build to download" descriptors="${descriptor.availableBuildSelectorList}" />
-
+                <f:dropdownDescriptorSelector field="buildSelector" title="Build to download" descriptors="${descriptor.availableBuildSelectorList}" />
             </f:nested>
         </f:radioBlock>
     </f:section>

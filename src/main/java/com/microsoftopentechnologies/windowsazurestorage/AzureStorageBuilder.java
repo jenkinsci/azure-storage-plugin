@@ -48,6 +48,9 @@ import java.util.Collections;
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     final static String CONTAINER = "container";
 
+    public static final String DOWNLOAD_TYPE_CONTAINER = "container";
+    public static final String DOWNLOAD_TYPE_PROJECT = "project";
+
     private final transient String storageAccName;
     private final String downloadType;
     private boolean deleteFromAzureAfterDownload;
@@ -62,6 +65,16 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private String projectName = "";
 
     private transient AzureCredentials.StorageAccountCredential storageCreds;
+
+    @DataBoundConstructor
+    public AzureStorageBuilder(
+            final String storageCredentialId,
+            final String downloadType) {
+        this.storageCredentialId = storageCredentialId;
+        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
+        this.storageAccName = storageCreds.getStorageAccountName();
+        this.downloadType = downloadType;
+    }
 
     @DataBoundSetter
     public void setIncludeFilesPattern(String includeFilesPattern) {
@@ -88,6 +101,27 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         this.includeArchiveZips = includeArchiveZips;
     }
 
+    @DataBoundSetter
+    public void setContainerName(String containerName) {
+        if (downloadType.equals(DOWNLOAD_TYPE_CONTAINER)) {
+            this.containerName = containerName;
+        }
+    }
+
+    @DataBoundSetter
+    public void setBuildSelector(BuildSelector buildSelector) {
+        if (downloadType.equals(DOWNLOAD_TYPE_PROJECT)) {
+            this.buildSelector = buildSelector;
+        }
+    }
+
+    @DataBoundSetter
+    public void setProjectName(String projectName) {
+        if (downloadType.equals(DOWNLOAD_TYPE_PROJECT)) {
+            this.projectName = projectName;
+        }
+    }
+
     public boolean isDeleteFromAzureAfterDownload() {
         return deleteFromAzureAfterDownload;
     }
@@ -95,54 +129,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     @DataBoundSetter
     public void setDeleteFromAzureAfterDownload(boolean deleteFromAzureAfterDownload) {
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
-    }
-
-    @DataBoundSetter
-    public void setContainerName(String containerName) {
-        this.containerName = containerName;
-    }
-
-    @DataBoundSetter
-    public void setBuildSelector(BuildSelector buildSelector) {
-        this.buildSelector = buildSelector;
-    }
-
-    @DataBoundSetter
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
-    }
-
-    @Deprecated
-    public AzureStorageBuilder(
-            final String strAccName,
-            final String storageCredentialId,
-            final String includeFilesPattern,
-            final String excludeFilesPattern,
-            final String downloadDirLoc,
-            final String downloadType,
-            final boolean flattenDirectories,
-            final boolean deleteFromAzureAfterDownload,
-            final boolean includeArchiveZips) {
-        this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, strAccName);
-        this.storageAccName = storageCreds.getStorageAccountName();
-        this.includeFilesPattern = includeFilesPattern;
-        this.excludeFilesPattern = excludeFilesPattern;
-        this.downloadDirLoc = downloadDirLoc;
-        this.flattenDirectories = flattenDirectories;
-        this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
-        this.includeArchiveZips = includeArchiveZips;
-        this.downloadType = downloadType;
-    }
-
-    @DataBoundConstructor
-    public AzureStorageBuilder(
-            final String storageCredentialId,
-            final String downloadType) {
-        this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
-        this.storageAccName = storageCreds.getStorageAccountName();
-        this.downloadType = downloadType;
     }
 
     public BuildSelector getBuildSelector() {
