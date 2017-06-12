@@ -74,35 +74,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final String storageCredentialId;
     private transient AzureCredentials.StorageAccountCredential storageCreds;
 
-    public static class StorageType {
-        public final String type;
-        private String containerName = "";
-        private String fileShareName = "";
-
-        @DataBoundConstructor
-        public StorageType(final String value) {
-            this.type = value;
-        }
-
-        public String getContainerName() {
-            return containerName;
-        }
-
-        @DataBoundSetter
-        public void setContainerName(String containerName) {
-            this.containerName = containerName;
-        }
-
-        public String getFileShareName() {
-            return fileShareName;
-        }
-
-        @DataBoundSetter
-        public void setFileShareName(String fileShareName) {
-            this.fileShareName = fileShareName;
-        }
-    }
-
     @Deprecated
     public WAStoragePublisher(final String storageAccName,
                               final String storageCredentialId, final String filesPath, final String excludeFilesPath,
@@ -139,12 +110,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     @DataBoundConstructor
     public WAStoragePublisher(final String storageCredentialId, final String filesPath,
-                              final StorageType storageType) {
+                              final String storageType, final String containerName, final String fileShareName) {
         super();
         this.filesPath = filesPath.trim();
-        this.containerName = storageType.getContainerName().trim();
-        this.fileShareName = storageType.getFileShareName().trim();
-        this.storageType = storageType.type;
+        this.storageType = storageType;
+        this.containerName = containerName == null ? "" : containerName.trim();
+        this.fileShareName = fileShareName == null ? "" : fileShareName.trim();
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
         this.storageAccName = this.storageCreds.getStorageAccountName();
@@ -213,6 +184,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     /**
      * Files path. Ant glob syntax.
      */
+
     public String getFilesPath() {
         return filesPath;
     }
@@ -231,7 +203,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return containerName;
     }
 
-    public String getFileShareName(){
+    public String getFileShareName() {
         return this.fileShareName;
     }
 
