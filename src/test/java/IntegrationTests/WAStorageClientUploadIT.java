@@ -3,41 +3,47 @@ package IntegrationTests;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.*;
-import com.microsoftopentechnologies.windowsazurestorage.*;
+import com.microsoft.azure.storage.blob.BlobProperties;
+import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
+import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
+import com.microsoftopentechnologies.windowsazurestorage.AzureBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
+import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyVararg;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
- *
  * @author arroyc
  */
 public class WAStorageClientUploadIT extends IntegrationTest {
 
     private static final Logger LOGGER = Logger.getLogger(WAStorageClientUploadIT.class.getName());
-
     private String containerName;
 
     @Before
@@ -46,7 +52,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             containerName = "testupload" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(containerName);
             File directory = new File(containerName);
-            if(!directory.exists())
+            if (!directory.exists())
                 directory.mkdir();
 
             testEnv.account = new CloudStorageAccount(new StorageCredentialsAccountAndKey(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1));
@@ -61,7 +67,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, null, e);
-            Assert.assertTrue(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -72,39 +78,39 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     public void testValidateStorageAccount() throws Exception {
         System.out.println("validateStorageAccount");
         StorageAccountInfo storageAccount = testEnv.sampleStorageAccount;
-        boolean result = WAStorageClient.validateStorageAccount(storageAccount);
+        boolean result = AzureUtils.validateStorageAccount(storageAccount);
         assertEquals(true, result);
-        assertEquals(true,WAStorageClient.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1, "")));
+        assertEquals(true, AzureUtils.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1, "")));
         testEnv.container.deleteIfExists();
     }
 
     /**
      * Test of validateStorageAccount method, of class WAStorageClient.
      */
-    @Test(expected=WAStorageException.class)
+    @Test(expected = WAStorageException.class)
     public void testInvalidateStorageAccount1() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
-        WAStorageClient.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, "asdhasdh@asdas!@234=", testEnv.blobURL));
+        AzureUtils.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, "asdhasdh@asdas!@234=", testEnv.blobURL));
         testEnv.container.deleteIfExists();
     }
 
     /**
      * Test of validateStorageAccount method, of class WAStorageClient.
      */
-    @Test(expected=WAStorageException.class)
+    @Test(expected = WAStorageException.class)
     public void testInvalidateStorageAccount2() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
-        WAStorageClient.validateStorageAccount(new StorageAccountInfo("rfguthio123", testEnv.azureStorageAccountKey2, testEnv.blobURL));
+        AzureUtils.validateStorageAccount(new StorageAccountInfo("rfguthio123", testEnv.azureStorageAccountKey2, testEnv.blobURL));
         testEnv.container.deleteIfExists();
     }
 
     /**
      * Test of validateStorageAccount method, of class WAStorageClient.
      */
-    @Test(expected=WAStorageException.class)
+    @Test(expected = WAStorageException.class)
     public void testInvalidateStorageAccount3() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
-        WAStorageClient.validateStorageAccount(new StorageAccountInfo(null, null, null));
+        AzureUtils.validateStorageAccount(new StorageAccountInfo(null, null, null));
         testEnv.container.deleteIfExists();
     }
 
@@ -114,17 +120,27 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Test
     public void testUpload() {
         try {
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
-            List<AzureBlob> individualBlobs = new ArrayList<>();
-            List<AzureBlob> archiveBlobs = new ArrayList<>();
             AzureBlobProperties blobProperties = mock(AzureBlobProperties.class);
             List<AzureBlobMetadataPair> metadata = new ArrayList<>();
 
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false, "*.txt", "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setContainerName(testEnv.containerName);
+            serviceData.setBlobProperties(blobProperties);
+            serviceData.setPubAccessible(false);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath("*.txt");
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadToBlobService service = new UploadToBlobService(serviceData);
+            service.execute();
 
             for (ListBlobItem blobItem : testEnv.container.listBlobs()) {
                 if (blobItem instanceof CloudBlockBlob) {
@@ -143,14 +159,13 @@ public class WAStorageClientUploadIT extends IntegrationTest {
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, null, e);
-            Assert.assertTrue(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
     @Test
     public void testBlobPropertiesAndMetadata() {
         try {
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
             List<AzureBlob> individualBlobs = new ArrayList<>();
@@ -163,8 +178,8 @@ public class WAStorageClientUploadIT extends IntegrationTest {
                 false
             );
             List<AzureBlobMetadataPair> metadata = Arrays.asList(
-                new AzureBlobMetadataPair("k1", "v1"),
-                new AzureBlobMetadataPair("k2", "v2")
+                    new AzureBlobMetadataPair("k1", "v1"),
+                    new AzureBlobMetadataPair("k2", "v2")
             );
 
             Iterator it = testEnv.uploadFileList.entrySet().iterator();
@@ -172,9 +187,20 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File firstFile = (File) firstPair.getValue();
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false,
-                firstFile.getName(), // Upload the first file only for efficiency
-                "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setContainerName(testEnv.containerName);
+            serviceData.setBlobProperties(blobProperties);
+            serviceData.setPubAccessible(false);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadToBlobService service = new UploadToBlobService(serviceData);
+            service.execute();
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
             downloadedBlob.downloadAttributes();
@@ -200,7 +226,6 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Test
     public void testEmptyBlobMetadata() {
         try {
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
             List<AzureBlob> individualBlobs = new ArrayList<>();
@@ -220,9 +245,20 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File firstFile = (File) firstPair.getValue();
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false,
-                    firstFile.getName(), // Upload the first file only for efficiency
-                    "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setContainerName(testEnv.containerName);
+            serviceData.setBlobProperties(blobProperties);
+            serviceData.setPubAccessible(false);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadToBlobService service = new UploadToBlobService(serviceData);
+            service.execute();
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
             downloadedBlob.downloadAttributes();
@@ -240,11 +276,10 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Test
     public void testEnvVarResolve() {
         try {
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
             EnvVars mockEnv = new EnvVars(
-                "MY_CONTENT_TYPE", "text/plain",
-                "MY_META_KEY", "foo",
-                "MY_META_VALUE", "bar"
+                    "MY_CONTENT_TYPE", "text/plain",
+                    "MY_META_KEY", "foo",
+                    "MY_META_VALUE", "bar"
             );
             Run mockRun = mock(Run.class);
             when(mockRun.getEnvironment(any(TaskListener.class))).thenReturn(mockEnv);
@@ -267,9 +302,20 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             File firstFile = (File) firstPair.getValue();
             File workspaceDir = new File(containerName);
             FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-            mockStorageClient.upload(mockRun, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount, testEnv.containerName, blobProperties, metadata, false, false,
-                    firstFile.getName(), // Upload the first file only for efficiency
-                    "", "", WAStoragePublisher.UploadType.INDIVIDUAL, individualBlobs, archiveBlobs, workspace);
+
+            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setContainerName(testEnv.containerName);
+            serviceData.setBlobProperties(blobProperties);
+            serviceData.setPubAccessible(false);
+            serviceData.setCleanUpContainerOrShare(false);
+            serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
+            serviceData.setVirtualPath("");
+            serviceData.setExcludedFilesPath("");
+            serviceData.setUploadType(UploadType.INDIVIDUAL);
+            serviceData.setAzureBlobMetadata(metadata);
+
+            UploadToBlobService service = new UploadToBlobService(serviceData);
+            service.execute();
 
             CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
             downloadedBlob.downloadAttributes();
@@ -300,7 +346,8 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             } catch (IOException ex) {
                 Logger.getLogger(WAStorageClientUploadIT.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }/*
+        }
+        /*
         ResultSegment<CloudBlobContainer> containerList = blobClient.listContainersSegmented("testupload");
         int totalContainers = containerList.getLength();
         while(totalContainers > 0){

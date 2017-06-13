@@ -10,9 +10,16 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
  * @author arroyc
  */
 public class Constants {
+    public final static String BLOB_STORAGE = "blobstorage";
+    public final static String FILE_STORAGE = "filestorage";
 
     /* Regular expression for valid container name */
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
+
+    /**
+     * Regular expression for valid file share name
+     */
+    public static final String VAL_SHARE_NAME = "^[a-z0-9]((-(?=[a-z\\d]))|[a-z0-9]){2,62}$";
 
     /* Regular expression to match tokens in the format of $TOKEN or ${TOKEN} */
     public static final String TOKEN_FORMAT = "\\$([A-Za-z0-9_]+|\\{[A-Za-z0-9_]+\\})";

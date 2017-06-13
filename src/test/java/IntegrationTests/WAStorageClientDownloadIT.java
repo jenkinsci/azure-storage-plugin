@@ -4,8 +4,8 @@ import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoftopentechnologies.windowsazurestorage.AzureStorageBuilderContext;
-import com.microsoftopentechnologies.windowsazurestorage.WAStorageClient;
+import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromContainerService;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
@@ -26,16 +26,14 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 /**
- *
  * @author arroyc
  */
-public class WAStorageClientDownloadIT extends IntegrationTest{
-    
+public class WAStorageClientDownloadIT extends IntegrationTest {
+
     private static final Logger LOGGER = Logger.getLogger(WAStorageClientDownloadIT.class.getName());
-    
+
     @Before
     public void setUp() throws IOException {
         try {
@@ -44,7 +42,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
             testEnv.account = new CloudStorageAccount(new StorageCredentialsAccountAndKey(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1));
             testEnv.blobClient = testEnv.account.createCloudBlobClient();
             File directory = new File(containerName);
-            if(!directory.exists())
+            if (!directory.exists())
                 directory.mkdir();
             testEnv.container = testEnv.blobClient.getContainerReference(containerName);
             testEnv.container.createIfNotExists();
@@ -53,12 +51,12 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
                 File file = new File(directory, "download" + UUID.randomUUID().toString() + ".txt");
                 FileUtils.writeStringToFile(file, content);
                 testEnv.downloadFileList.put(content, file);
-                
+
                 LOGGER.log(Level.INFO, file.getAbsolutePath());
                 CloudBlockBlob blob = testEnv.container.getBlockBlobReference(file.getName());
                 blob.uploadFromFile(file.getAbsolutePath());
-            }    
-        } catch (Exception e){
+            }
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, null, e);
             Assert.assertTrue(e.getMessage(), false);
         }
@@ -67,70 +65,23 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
     @Test
     public void testDownloadfromContainer() {
         System.out.print("download without zip and flatten directory");
-        try 
-        {             
-            //try to download the same file  
-            LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainer: "+testEnv.containerName);
-            Run mockRun = mock(Run.class);
-            Launcher mockLauncher = mock(Launcher.class);
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
-
-            AzureStorageBuilderContext context = new AzureStorageBuilderContext(mockLauncher, mockRun, TaskListener.NULL);
-            context.setStorageAccountInfo(testEnv.sampleStorageAccount);
-            context.setIncludeFilesPattern("*.txt");
-            context.setExcludeFilesPattern("archive.zip");
-
-            File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
-            downloaded.mkdir();
-            FilePath workspace= new FilePath(downloaded.getAbsoluteFile());
-            context.setWorkspace(workspace);
-            context.setContainerName(testEnv.containerName);
-            int totalFiles = mockStorageClient.downloadFromContainer(context);
-            
-            
-            assertEquals(testEnv.downloadFileList.size(),totalFiles);
-            File[] listofFiles = downloaded.listFiles();
-            assertEquals(testEnv.downloadFileList.size(),listofFiles.length);
-            
-            for(File each: listofFiles){
-                assertEquals(true, each.isFile());
-                String tempContent = FileUtils.readFileToString(each, "utf-8");
-                File tempFile = testEnv.downloadFileList.get(tempContent);
-                assertEquals(each.getName(), tempFile.getName());
-                assertEquals(FileUtils.readFileToString(tempFile, "utf-8"), tempContent);
-                each.delete();
- 
-            }
-            testEnv.container.deleteIfExists();
-            FileUtils.deleteDirectory(downloaded);
-            
-        }catch(Exception e){
-            LOGGER.log(Level.SEVERE, null, e);
-            Assert.assertTrue(e.getMessage(), false);
-        }
-    }
-    
-    
-    @Test
-    public void testDownloadfromContainerwithZIP() {
-        System.out.print("download with archive ZIP");
-        LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainerwithZIP: "+testEnv.containerName);
         try {
-            //try to download the same file     
+            //try to download the same file  
+            LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainer: " + testEnv.containerName);
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
-
-            AzureStorageBuilderContext context = new AzureStorageBuilderContext(mockLauncher, mockRun, TaskListener.NULL);
-            context.setStorageAccountInfo(testEnv.sampleStorageAccount);
-            context.setIncludeFilesPattern("*.txt");
 
             File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
-            context.setWorkspace(workspace);
-            context.setContainerName(testEnv.containerName);
-            int totalFiles = mockStorageClient.downloadFromContainer(context);
+
+            DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setIncludeFilesPattern("*.txt");
+            serviceData.setExcludeFilesPattern("archive.zip");
+            serviceData.setContainerName(testEnv.containerName);
+            DownloadFromContainerService service = new DownloadFromContainerService(serviceData);
+
+            int totalFiles = service.execute();
 
             assertEquals(testEnv.downloadFileList.size(), totalFiles);
             File[] listofFiles = downloaded.listFiles();
@@ -153,28 +104,69 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
             Assert.assertTrue(e.getMessage(), false);
         }
     }
-    
+
     @Test
-    public void testDownloadfromContainerFlattenDirectory() {
-        System.out.print("download with flatten directory enabled");
-        LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainerFlattenDirectory: "+testEnv.containerName);
+    public void testDownloadfromContainerwithZIP() {
+        System.out.print("download with archive ZIP");
+        LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainerwithZIP: " + testEnv.containerName);
         try {
             //try to download the same file     
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
-            WAStorageClient mockStorageClient = spy(WAStorageClient.class);
-
-            AzureStorageBuilderContext context = new AzureStorageBuilderContext(mockLauncher, mockRun, TaskListener.NULL);
-            context.setStorageAccountInfo(testEnv.sampleStorageAccount);
-            context.setIncludeFilesPattern("*.txt");
 
             File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
             downloaded.mkdir();
             FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
-            context.setWorkspace(workspace);
-            context.setContainerName(testEnv.containerName);
-            context.setFlattenDirectories(true);
-            int totalFiles = mockStorageClient.downloadFromContainer(context);
+
+            DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setIncludeFilesPattern("*.txt");
+            serviceData.setContainerName(testEnv.containerName);
+
+            DownloadFromContainerService service = new DownloadFromContainerService(serviceData);
+            int totalFiles = service.execute();
+
+            assertEquals(testEnv.downloadFileList.size(), totalFiles);
+            File[] listofFiles = downloaded.listFiles();
+            assertEquals(testEnv.downloadFileList.size(), listofFiles.length);
+
+            for (File each : listofFiles) {
+                assertEquals(true, each.isFile());
+                String tempContent = FileUtils.readFileToString(each, "utf-8");
+                File tempFile = testEnv.downloadFileList.get(tempContent);
+                assertEquals(each.getName(), tempFile.getName());
+                assertEquals(FileUtils.readFileToString(tempFile, "utf-8"), tempContent);
+                each.delete();
+
+            }
+            testEnv.container.deleteIfExists();
+            FileUtils.deleteDirectory(downloaded);
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, null, e);
+            Assert.assertTrue(e.getMessage(), false);
+        }
+    }
+
+    @Test
+    public void testDownloadfromContainerFlattenDirectory() {
+        System.out.print("download with flatten directory enabled");
+        LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainerFlattenDirectory: " + testEnv.containerName);
+        try {
+            //try to download the same file     
+            Run mockRun = mock(Run.class);
+            Launcher mockLauncher = mock(Launcher.class);
+
+            File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
+            downloaded.mkdir();
+            FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
+
+            DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+            serviceData.setIncludeFilesPattern("*.txt");
+            serviceData.setContainerName(testEnv.containerName);
+            serviceData.setFlattenDirectories(true);
+
+            DownloadFromContainerService service = new DownloadFromContainerService(serviceData);
+            int totalFiles = service.execute();
 
             assertEquals(testEnv.downloadFileList.size(), totalFiles);
             File[] listofFiles = downloaded.listFiles();
@@ -199,7 +191,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
             Assert.assertTrue(e.getMessage(), false);
         }
     }
-    
+
     @After
     public void tearDown() throws StorageException {
         System.gc();
@@ -216,5 +208,5 @@ public class WAStorageClientDownloadIT extends IntegrationTest{
         }
         testEnv.downloadFileList.clear();
     }
-    
+
 }

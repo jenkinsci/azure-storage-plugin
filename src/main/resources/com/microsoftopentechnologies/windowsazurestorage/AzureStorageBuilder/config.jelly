@@ -5,7 +5,7 @@
     </f:entry> 
 
     <f:section title="${%downloadType_title}">
-        <f:radioBlock name="downloadType" title="Download from container" value="container" checked="${instance.getDonwloadType() == null || instance.getDownloadType() == 'container'}">
+        <f:radioBlock name="downloadType" title="Download from container" value="container" checked="${instance.getDownloadType() == null || instance.getDownloadType() == 'container'}">
             <f:nested>
 
                 <f:entry title="${%containerName_title}" field="containerName" name="containerName" help="/plugin/windows-azure-storage/help-builderContainerName.html">

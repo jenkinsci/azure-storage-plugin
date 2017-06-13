@@ -5,18 +5,19 @@ package IntegrationTests;
  * @author arroyc
  */
 import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+import org.junit.ClassRule;
+import org.jvnet.hudson.test.JenkinsRule;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.UUID;
-import org.junit.*;
-import org.jvnet.hudson.test.JenkinsRule;
 
 /*
 To execute the integration tests you need to set the credentials env variables (the ones that don't have a default) and run mvn failsafe:integration-test
@@ -36,9 +37,11 @@ public class IntegrationTest {
         public HashMap<String, File> downloadFileList = new HashMap<>();
         public HashMap<String, File> uploadFileList = new HashMap<>();
         public String containerName;
+        public String shareName;
         public CloudBlobContainer container;
         public CloudStorageAccount account;
         public CloudBlobClient blobClient;
+        public CloudFileShare fileShare;
 
         TestEnvironment(String name) throws URISyntaxException {
             azureStorageAccountName = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_NAME");
@@ -49,6 +52,7 @@ public class IntegrationTest {
             AzureCredentials.StorageAccountCredential u = new AzureCredentials.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL);
             sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL);
             containerName = name;
+            shareName = name;
         }
         private static String loadFromEnv(final String name) {
             return TestEnvironment.loadFromEnv(name, "");

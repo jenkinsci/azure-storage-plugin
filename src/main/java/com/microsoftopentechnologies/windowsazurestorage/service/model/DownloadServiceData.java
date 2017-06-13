@@ -14,10 +14,9 @@
  limitations under the License.
  */
 
-package com.microsoftopentechnologies.windowsazurestorage;
+package com.microsoftopentechnologies.windowsazurestorage.service.model;
 
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -25,40 +24,37 @@ import hudson.Util;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.plugins.copyartifact.BuildSelector;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 
-public class AzureStorageBuilderContext {
-    Run<?, ?> run;
-    Launcher launcher;
-    TaskListener listener;
-
-    FilePath workspace;
+public class DownloadServiceData extends ServiceData {
     String includeFilesPattern;
     String excludeFilesPattern;
-    StorageAccountInfo storageAccountInfo;
     String containerName;
     String downloadDirLoc;
     boolean flattenDirectories;
     boolean deleteFromAzureAfterDownload;
+    String downloadType;
+    String projectName;
+    BuildSelector buildSelector;
+    boolean includeArchiveZips;
 
-    public AzureStorageBuilderContext(final Launcher launcher, final Run<?, ?> run, final TaskListener taskListener){
-        this.launcher = launcher;
-        this.run = run;
-        this.listener = taskListener;
-    }
-
-    public FilePath getWorkspacePath(){
-        return new FilePath(launcher.getChannel(), workspace.getRemote());
+    public DownloadServiceData(final Run<?, ?> run,
+                               final FilePath workspace,
+                               final Launcher launcher,
+                               final TaskListener taskListener,
+                               final StorageAccountInfo storageAccountInfo) {
+        super(run, workspace, launcher, taskListener, storageAccountInfo);
     }
 
     public FilePath getDownloadDir() {
-        FilePath downloadDir = getWorkspacePath();
+        FilePath downloadDir = getRemoteWorkspace();
         try {
             if (!StringUtils.isBlank(downloadDirLoc)) {
-                final EnvVars envVars = run.getEnvironment(listener);
-                downloadDir = new FilePath(getWorkspacePath(), Util.replaceMacro(downloadDirLoc, envVars));
+                final EnvVars envVars = run.getEnvironment(taskListener);
+                downloadDir = new FilePath(getRemoteWorkspace(), Util.replaceMacro(downloadDirLoc, envVars));
             }
 
             if (!downloadDir.exists()) {
@@ -69,37 +65,6 @@ public class AzureStorageBuilderContext {
         }
 
         return downloadDir;
-    }
-
-    public Run<?, ?> getRun() {
-        return run;
-    }
-
-    public void setRun(Run<?, ?> run) {
-        this.run = run;
-    }
-
-    public FilePath getWorkspace() {
-        return workspace;
-    }
-
-    public void setWorkspace(FilePath workspace) {
-        this.workspace = workspace;
-    }
-
-    public Launcher getLauncher() {
-        return launcher;
-    }
-
-    public void setLauncher(Launcher launcher) {
-        this.launcher = launcher;
-    }
-    public TaskListener getListener() {
-        return listener;
-    }
-
-    public void setListener(TaskListener listener) {
-        this.listener = listener;
     }
 
     public String getIncludeFilesPattern() {
@@ -116,14 +81,6 @@ public class AzureStorageBuilderContext {
 
     public void setExcludeFilesPattern(String excludeFilesPattern) {
         this.excludeFilesPattern = excludeFilesPattern;
-    }
-
-    public StorageAccountInfo getStorageAccountInfo() {
-        return storageAccountInfo;
-    }
-
-    public void setStorageAccountInfo(StorageAccountInfo storageAccountInfo) {
-        this.storageAccountInfo = storageAccountInfo;
     }
 
     public String getDownloadDirLoc() {
@@ -156,5 +113,37 @@ public class AzureStorageBuilderContext {
 
     public void setDeleteFromAzureAfterDownload(boolean deleteFromAzureAfterDownload) {
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
+    }
+
+    public String getDownloadType() {
+        return downloadType;
+    }
+
+    public void setDownloadType(String downloadType) {
+        this.downloadType = downloadType;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public BuildSelector getBuildSelector() {
+        return buildSelector;
+    }
+
+    public void setBuildSelector(BuildSelector buildSelector) {
+        this.buildSelector = buildSelector;
+    }
+
+    public boolean isIncludeArchiveZips() {
+        return includeArchiveZips;
+    }
+
+    public void setIncludeArchiveZips(boolean includeArchiveZips) {
+        this.includeArchiveZips = includeArchiveZips;
     }
 }
