@@ -40,11 +40,11 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
 
     @DataBoundConstructor
     public AzureBlobProperties(
-        String cacheControl,
-        String contentEncoding,
-        String contentLanguage,
-        String contentType,
-        boolean detectContentType
+            final String cacheControl,
+            final String contentEncoding,
+            final String contentLanguage,
+            final String contentType,
+            final boolean detectContentType
     ) {
         this.cacheControl = cacheControl;
         this.contentEncoding = contentEncoding;
@@ -73,7 +73,8 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
         return detectContentType;
     }
 
-    public void configure(CloudBlob blob, FilePath src, EnvVars env) throws InterruptedException, IOException {
+    public void configure(
+            final CloudBlob blob, final FilePath src, final EnvVars env) throws InterruptedException, IOException {
         BlobProperties props = blob.getProperties();
         props.setCacheControl(Util.replaceMacro(cacheControl, env));
         props.setContentEncoding(Util.replaceMacro(contentEncoding, env));
@@ -87,7 +88,7 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
         }
     }
 
-    private String detectContentType(FilePath file) throws InterruptedException, IOException {
+    private String detectContentType(final FilePath file) throws InterruptedException, IOException {
         Tika tika = new Tika();
         try (InputStream stream = file.read()) {
             return tika.detect(stream, file.getName());

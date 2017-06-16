@@ -23,11 +23,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public abstract class ServiceData {
-    final Run<?, ?> run;
-    final FilePath workspace;
-    final Launcher launcher;
-    final TaskListener taskListener;
-    final StorageAccountInfo storageAccountInfo;
+    private final Run<?, ?> run;
+    private final FilePath workspace;
+    private final Launcher launcher;
+    private final TaskListener taskListener;
+    private final StorageAccountInfo storageAccountInfo;
 
     protected ServiceData(final Run<?, ?> run,
                           final FilePath workspace,

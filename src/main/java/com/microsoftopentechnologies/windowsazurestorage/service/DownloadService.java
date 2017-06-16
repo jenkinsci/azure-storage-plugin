@@ -30,12 +30,13 @@ import java.net.URISyntaxException;
 
 public abstract class DownloadService extends StoragePluginService<DownloadServiceData> {
 
-    public DownloadService(DownloadServiceData data) {
+    public DownloadService(final DownloadServiceData data) {
         super(data);
     }
 
     protected int downloadBlobs(final Iterable<ListBlobItem> blobItems)
             throws URISyntaxException, StorageException, WAStorageException {
+        final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
         for (final ListBlobItem blobItem : blobItems) {
             // If the item is a blob, not a virtual directory
@@ -44,14 +45,22 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
                 final CloudBlob blob = (CloudBlob) blobItem;
 
                 // Check whether we should download it.
-                if (shouldDownload(serviceData.getIncludeFilesPattern(), serviceData.getExcludeFilesPattern(), blob.getName(), true)) {
+                if (shouldDownload(
+                        serviceData.getIncludeFilesPattern(),
+                        serviceData.getExcludeFilesPattern(),
+                        blob.getName(),
+                        true)) {
                     downloadBlob(blob);
                     filesDownloaded++;
                 }
 
             } else if (blobItem instanceof CloudBlobDirectory) {
                 final CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-                if (shouldDownload(serviceData.getIncludeFilesPattern(), serviceData.getExcludeFilesPattern(), blobDirectory.getPrefix(), false)) {
+                if (shouldDownload(
+                        serviceData.getIncludeFilesPattern(),
+                        serviceData.getExcludeFilesPattern(),
+                        blobDirectory.getPrefix(),
+                        false)) {
                     filesDownloaded += downloadBlobs(blobDirectory.listBlobs());
                 }
             }
@@ -61,6 +70,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     protected void downloadBlob(final CloudBlob blob)
             throws WAStorageException {
+        final DownloadServiceData serviceData = getServiceData();
         try {
             final FilePath downloadDir = serviceData.getDownloadDir();
             FilePath downloadFile = new FilePath(downloadDir, blob.getName());
@@ -77,7 +87,8 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
                 blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
             }
             final long endTime = System.currentTimeMillis();
-            println(String.format("blob %s is downloaded to %s in %s", blob.getName(), downloadDir, getTime(endTime - startTime)));
+            println(String.format("blob %s is downloaded to %s in %s",
+                    blob.getName(), downloadDir, getTime(endTime - startTime)));
 
             if (serviceData.isDeleteFromAzureAfterDownload()) {
                 blob.deleteIfExists();
@@ -88,25 +99,34 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         }
     }
 
-    protected boolean shouldDownload(String includePattern, String excludePattern, String blobName, boolean isFullPath) {
-        String[] includePatterns = includePattern.split(fpSeparator);
+    protected boolean shouldDownload(
+            final String includePattern,
+            final String excludePattern,
+            final String blobName,
+            final boolean isFullPath) {
+        String[] includePatterns = includePattern.split(FP_SEPARATOR);
         String[] excludePatterns = null;
 
         if (excludePattern != null) {
-            excludePatterns = excludePattern.split(fpSeparator);
+            excludePatterns = excludePattern.split(FP_SEPARATOR);
         }
 
         return blobPathMatches(blobName, includePatterns, excludePatterns, isFullPath);
     }
 
-    private boolean blobPathMatches(String path, String[] includePatterns, String[] excludePatterns, boolean isFullPath) {
+    private boolean blobPathMatches(
+            final String path,
+            final String[] includePatterns,
+            final String[] excludePatterns,
+            final boolean isFullPath) {
         if (!isFullPath) {
             // If we don't have a full path, we can't check for exclusions
             // yet.  Consider include: **/*, exclude **/foo.txt.  Both would match
             // any dir.
             return isPotentialMatch(path, includePatterns);
         } else {
-            return isExactMatch(path, includePatterns) && (excludePatterns == null || !isExactMatch(path, excludePatterns));
+            return isExactMatch(path, includePatterns)
+                    && (excludePatterns == null || !isExactMatch(path, excludePatterns));
         }
     }
 
@@ -118,7 +138,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
      * @param patterns
      * @return
      */
-    private boolean isPotentialMatch(String path, String[] patterns) {
+    private boolean isPotentialMatch(final String path, final String[] patterns) {
         AntPathMatcher matcher = new AntPathMatcher();
         for (String pattern : patterns) {
             if (matcher.matchStart(pattern, path)) {
@@ -136,7 +156,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
      * @param patterns
      * @return
      */
-    private boolean isExactMatch(String path, String[] patterns) {
+    private boolean isExactMatch(final String path, final String[] patterns) {
         AntPathMatcher matcher = new AntPathMatcher();
         for (String pattern : patterns) {
             if (matcher.match(pattern, path)) {

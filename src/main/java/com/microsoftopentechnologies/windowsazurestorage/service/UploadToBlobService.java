@@ -16,7 +16,11 @@
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.*;
+import com.microsoft.azure.storage.blob.CloudBlob;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlobDirectory;
+import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -42,20 +46,21 @@ import java.security.MessageDigest;
 public class UploadToBlobService extends UploadService {
 
 
-    public UploadToBlobService(UploadServiceData serviceData) {
+    public UploadToBlobService(final UploadServiceData serviceData) {
         super(serviceData);
     }
 
     @Override
     protected void uploadArchive(final String archiveIncludes)
             throws WAStorageException {
+        final UploadServiceData serviceData = getServiceData();
         try {
             final CloudBlobContainer container = getCloudBlobContainer();
 
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
             // Create a temp dir for the upload
-            final FilePath tempDir = workspacePath.createTempDir(zipFolderName, null);
-            final FilePath zipPath = tempDir.child(zipName);
+            final FilePath tempDir = workspacePath.createTempDir(ZIP_FOLDER_NAME, null);
+            final FilePath zipPath = tempDir.child(ZIP_NAME);
 
             // zip included files into archive.zip file.
             final DirScanner.Glob globScanner = new DirScanner.Glob(archiveIncludes, excludedFilesAndZip());
@@ -71,7 +76,12 @@ public class UploadToBlobService extends UploadService {
             String uploadedFileHash = uploadBlob(blob, zipPath);
             // Make sure to note the new blob as an archive blob,
             // so that it can be specially marked on the azure storage page.
-            AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, zipPath.length(), Constants.BLOB_STORAGE);
+            AzureBlob azureBlob = new AzureBlob(
+                    blob.getName(),
+                    blob.getUri().toString().replace("http://", "https://"),
+                    uploadedFileHash,
+                    zipPath.length(),
+                    Constants.BLOB_STORAGE);
             serviceData.getArchiveBlobs().add(azureBlob);
 
             tempDir.deleteRecursive();
@@ -83,6 +93,7 @@ public class UploadToBlobService extends UploadService {
     @Override
     protected void uploadIndividuals(final String embeddedVP, final FilePath[] paths)
             throws WAStorageException {
+        final UploadServiceData serviceData = getServiceData();
         try {
             final CloudBlobContainer container = getCloudBlobContainer();
 
@@ -91,7 +102,12 @@ public class UploadToBlobService extends UploadService {
                 final CloudBlockBlob blob = container.getBlockBlobReference(blobPath);
                 configureBlobPropertiesAndMetadata(blob, src);
                 String uploadedFileHash = uploadBlob(blob, src);
-                AzureBlob azureBlob = new AzureBlob(blob.getName(), blob.getUri().toString().replace("http://", "https://"), uploadedFileHash, src.length(), Constants.BLOB_STORAGE);
+                AzureBlob azureBlob = new AzureBlob(
+                        blob.getName(),
+                        blob.getUri().toString().replace("http://", "https://"),
+                        uploadedFileHash,
+                        src.length(),
+                        Constants.BLOB_STORAGE);
                 serviceData.getIndividualBlobs().add(azureBlob);
             }
         } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {
@@ -99,7 +115,10 @@ public class UploadToBlobService extends UploadService {
         }
     }
 
-    private void configureBlobPropertiesAndMetadata(final CloudBlockBlob blob, final FilePath src) throws IOException, InterruptedException {
+    private void configureBlobPropertiesAndMetadata(
+            final CloudBlockBlob blob,
+            final FilePath src) throws IOException, InterruptedException {
+        final UploadServiceData serviceData = getServiceData();
         final EnvVars env = serviceData.getRun().getEnvironment(serviceData.getTaskListener());
 
         // Set blob properties
@@ -121,12 +140,18 @@ public class UploadToBlobService extends UploadService {
      * @throws InterruptedException
      * @returns Md5 hash of the uploaded file in hexadecimal encoding
      */
-    private String uploadBlob(CloudBlockBlob blob, FilePath src)
+    private String uploadBlob(final CloudBlockBlob blob, final FilePath src)
             throws StorageException, IOException, InterruptedException {
         final MessageDigest md = DigestUtils.getMd5Digest();
         long startTime = System.currentTimeMillis();
-        try (InputStream inputStream = src.read(); DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
-            blob.upload(digestInputStream, src.length(), null, getBlobRequestOptions(), Utils.updateUserAgent());
+        try (InputStream inputStream = src.read();
+             DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
+            blob.upload(
+                    digestInputStream,
+                    src.length(),
+                    null,
+                    getBlobRequestOptions(),
+                    Utils.updateUserAgent());
         }
         long endTime = System.currentTimeMillis();
 
@@ -135,8 +160,13 @@ public class UploadToBlobService extends UploadService {
     }
 
     private CloudBlobContainer getCloudBlobContainer() throws URISyntaxException, StorageException, IOException {
+        final UploadServiceData serviceData = getServiceData();
         final CloudBlobContainer container = AzureUtils.getBlobContainerReference(
-                serviceData.getStorageAccountInfo(), serviceData.getContainerName(), true, true, serviceData.isPubAccessible());
+                serviceData.getStorageAccountInfo(),
+                serviceData.getContainerName(),
+                true,
+                true,
+                serviceData.isPubAccessible());
 
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare()) {

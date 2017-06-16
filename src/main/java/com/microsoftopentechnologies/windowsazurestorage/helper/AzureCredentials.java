@@ -1,12 +1,12 @@
 /*
  Copyright 2016 Microsoft, Inc.
- 
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
-import com.microsoftopentechnologies.windowsazurestorage.service.StoragePluginService;
 import hudson.Extension;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
@@ -48,14 +47,16 @@ public class AzureCredentials extends BaseStandardCredentials {
         private final String blobEndpointURL;
 
         public StorageAccountCredential(
-                String storageAccountName,
-                String storageKey,
-                String endpointURL) {
+                final String storageAccountName,
+                final String storageKey,
+                final String endpointURL) {
             this.storageAccountName = storageAccountName;
             this.storageAccountKey = Secret.fromString(storageKey);
-            this.blobEndpointURL = StringUtils.isBlank(endpointURL)
-                    ? Constants.DEF_BLOB_URL
-                    : endpointURL;
+            String url = endpointURL;
+            if (StringUtils.isBlank(endpointURL)) {
+                url = Constants.DEF_BLOB_URL;
+            }
+            this.blobEndpointURL = url;
         }
 
         public StorageAccountCredential() {
@@ -107,22 +108,28 @@ public class AzureCredentials extends BaseStandardCredentials {
 
     @DataBoundConstructor
     public AzureCredentials(
-            CredentialsScope scope,
-            String id,
-            String description,
-            String storageAccountName,
-            String storageKey,
-            String blobEndpointURL
+            final CredentialsScope scope,
+            final String id,
+            final String description,
+            final String storageAccountName,
+            final String storageKey,
+            final String blobEndpointURL
     ) {
         super(scope, id, description);
         storageData = new StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
-
     }
 
-    public static AzureCredentials.StorageAccountCredential getStorageAccountCredential(final String storageCredentialId) {
-        if (storageCredentialId == null)
+    public static AzureCredentials.StorageAccountCredential getStorageAccountCredential(
+            final String storageCredentialId) {
+        if (storageCredentialId == null) {
             return null;
-        AzureCredentials creds = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(AzureCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList()),
+        }
+        AzureCredentials creds = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(
+                        AzureCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(storageCredentialId));
         if (creds == null) {
             return new AzureCredentials.StorageAccountCredential();
@@ -130,15 +137,22 @@ public class AzureCredentials extends BaseStandardCredentials {
         return creds.storageData;
     }
 
-    public static AzureCredentials.StorageAccountCredential getStorageCreds(String credentialsId, String storageAccName) {
+    public static AzureCredentials.StorageAccountCredential getStorageCreds(
+            final String credentialsId,
+            final String storageAccName) {
         try {
             if (credentialsId != null) {
-                AzureCredentials.StorageAccountCredential credentials = AzureCredentials.getStorageAccountCredential(credentialsId);
+                AzureCredentials.StorageAccountCredential credentials =
+                        AzureCredentials.getStorageAccountCredential(credentialsId);
                 if (credentials != null) {
                     return credentials;
                 }
             } else {
-                List<AzureCredentials> allCreds = CredentialsProvider.lookupCredentials(AzureCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+                List<AzureCredentials> allCreds = CredentialsProvider.lookupCredentials(
+                        AzureCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList());
                 for (AzureCredentials cred : allCreds) {
                     if (storageAccName.equals(cred.getStorageAccountName())) {
                         return cred.getStorageCred();
@@ -181,15 +195,16 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
 
         public FormValidation doVerifyConfiguration(
-                @QueryParameter String storageAccountName,
-                @QueryParameter Secret storageKey,
-                @QueryParameter String blobEndpointURL) {
+                @QueryParameter final String storageAccountName,
+                @QueryParameter final Secret storageKey,
+                @QueryParameter final String blobEndpointURL) {
 
             try {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
-                //AzureCredentials.StorageAccountCredential storageCreds = new AzureCredentials.StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
+                //AzureCredentials.StorageAccountCredential storageCreds =
+                // new AzureCredentials.StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
             } catch (Exception e) {
                 return FormValidation.error(e.getMessage());
             }
@@ -199,7 +214,7 @@ public class AzureCredentials extends BaseStandardCredentials {
 
     }
 
-    public static StorageAccountInfo convertToStorageAccountInfo(StorageAccountCredential storageCreds) {
+    public static StorageAccountInfo convertToStorageAccountInfo(final StorageAccountCredential storageCreds) {
         StorageAccountInfo storageAccount = new StorageAccountInfo(storageCreds.getStorageAccountName(),
                 storageCreds.getStorageAccountKey(), storageCreds.getEndpointURL());
         return storageAccount;

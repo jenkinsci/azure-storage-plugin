@@ -28,18 +28,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UploadServiceData extends ServiceData {
-    String containerName;
-    String fileShareName;
-    AzureBlobProperties blobProperties;
-    boolean pubAccessible;
-    boolean cleanUpContainerOrShare;
-    String filePath;
-    String virtualPath;
-    String excludedFilesPath;
-    UploadType uploadType;
-    List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
-    List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
-    List<AzureBlobMetadataPair> azureBlobMetadata;
+    private String containerName;
+    private String fileShareName;
+    private AzureBlobProperties blobProperties;
+    private boolean pubAccessible;
+    private boolean cleanUpContainerOrShare;
+    private String filePath;
+    private String virtualPath;
+    private String excludedFilesPath;
+    private UploadType uploadType;
+    private List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
+    private List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
+    private List<AzureBlobMetadataPair> azureBlobMetadata;
 
     public UploadServiceData(final Run<?, ?> run,
                              final FilePath workspace,
@@ -54,7 +54,7 @@ public class UploadServiceData extends ServiceData {
         return containerName;
     }
 
-    public void setContainerName(String containerName) {
+    public void setContainerName(final String containerName) {
         this.containerName = containerName;
     }
 
@@ -62,7 +62,7 @@ public class UploadServiceData extends ServiceData {
         return blobProperties;
     }
 
-    public void setBlobProperties(AzureBlobProperties blobProperties) {
+    public void setBlobProperties(final AzureBlobProperties blobProperties) {
         this.blobProperties = blobProperties;
     }
 
@@ -75,7 +75,7 @@ public class UploadServiceData extends ServiceData {
         return pubAccessible;
     }
 
-    public void setPubAccessible(boolean pubAccessible) {
+    public void setPubAccessible(final boolean pubAccessible) {
         this.pubAccessible = pubAccessible;
     }
 
@@ -83,7 +83,7 @@ public class UploadServiceData extends ServiceData {
         return cleanUpContainerOrShare;
     }
 
-    public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
+    public void setCleanUpContainerOrShare(final boolean cleanUpContainerOrShare) {
         this.cleanUpContainerOrShare = cleanUpContainerOrShare;
     }
 
@@ -91,7 +91,7 @@ public class UploadServiceData extends ServiceData {
         return filePath;
     }
 
-    public void setFilePath(String filePath) {
+    public void setFilePath(final String filePath) {
         this.filePath = filePath;
     }
 
@@ -99,7 +99,7 @@ public class UploadServiceData extends ServiceData {
         return virtualPath;
     }
 
-    public void setVirtualPath(String virtualPath) {
+    public void setVirtualPath(final String virtualPath) {
         this.virtualPath = virtualPath;
     }
 
@@ -107,7 +107,7 @@ public class UploadServiceData extends ServiceData {
         return excludedFilesPath;
     }
 
-    public void setExcludedFilesPath(String excludedFilesPath) {
+    public void setExcludedFilesPath(final String excludedFilesPath) {
         this.excludedFilesPath = excludedFilesPath;
     }
 
@@ -115,7 +115,7 @@ public class UploadServiceData extends ServiceData {
         return uploadType;
     }
 
-    public void setUploadType(UploadType uploadType) {
+    public void setUploadType(final UploadType uploadType) {
         this.uploadType = uploadType;
     }
 
@@ -131,7 +131,7 @@ public class UploadServiceData extends ServiceData {
         return azureBlobMetadata;
     }
 
-    public void setAzureBlobMetadata(List<AzureBlobMetadataPair> azureBlobMetadata) {
+    public void setAzureBlobMetadata(final List<AzureBlobMetadataPair> azureBlobMetadata) {
         this.azureBlobMetadata = azureBlobMetadata;
     }
 
@@ -139,7 +139,7 @@ public class UploadServiceData extends ServiceData {
         return fileShareName;
     }
 
-    public void setFileShareName(String fileShareName) {
+    public void setFileShareName(final String fileShareName) {
         this.fileShareName = fileShareName;
     }
 }

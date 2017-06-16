@@ -9,9 +9,9 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
  *
  * @author arroyc
  */
-public class Constants {
-    public final static String BLOB_STORAGE = "blobstorage";
-    public final static String FILE_STORAGE = "filestorage";
+public final class Constants {
+    public static final String BLOB_STORAGE = "blobstorage";
+    public static final String FILE_STORAGE = "filestorage";
 
     /* Regular expression for valid container name */
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
@@ -28,10 +28,18 @@ public class Constants {
     public static final String FWD_SLASH = "/";
     public static final String HTTP_PRT = "http://";
     // http Protocol separator
+    //CHECKSTYLE:OFF
     public static final String PRT_SEP = "://";
     public static final String LEGACY_STORAGE_CONFIG_FILE = "com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml";
     public static final String HASH_TYPE = "MD5";
     public static final String CREDENTIALS_AJAX_URI = "/descriptor/com.cloudbees.plugins.credentials.CredentialsSelectHelper/resolver/com.cloudbees.plugins.credentials.CredentialsSelectHelper$SystemContextResolver/provider/com.cloudbees.plugins.credentials.SystemCredentialsProvider$ProviderImpl/context/jenkins/dialog";
     public static final String PLUGIN_NAME = "AzureJenkinsStorage";
+    //CHECKSTYLE:ON
 
+    public static final int HTTP_INTERNAL_SERVER_ERROR = 500;
+    public static final int HTTP_NOT_FOUND = 404;
+
+    private Constants() {
+        // hide constructor
+    }
 }
