@@ -55,6 +55,7 @@ public class UploadToFileService extends UploadService {
             for (FilePath src : paths) {
                 final String filePath = getItemPath(src, embeddedVP);
                 final CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(filePath);
+
                 final String hash = uploadCloudFile(cloudFile, src);
                 AzureBlob azureBlob = new AzureBlob(
                         cloudFile.getName(),
