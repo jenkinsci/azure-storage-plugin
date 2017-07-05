@@ -353,7 +353,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         while(totalContainers > 0){
             containerList.getResults().get(--totalContainers).deleteIfExists();
         }*/
-        testEnv.container.deleteIfExists();
+        if(testEnv.container!=null) {
+            testEnv.container.deleteIfExists();
+        }
         testEnv.uploadFileList.clear();
     }
 

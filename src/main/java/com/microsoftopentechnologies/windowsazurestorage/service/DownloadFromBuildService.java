@@ -22,7 +22,6 @@ import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.file.CloudFile;
 import com.microsoft.azure.storage.file.CloudFileClient;
 import com.microsoft.azure.storage.file.CloudFileShare;
-import com.microsoft.azure.storage.file.FileRequestOptions;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobAction;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
@@ -32,14 +31,12 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.EnvVars;
-import hudson.FilePath;
 import hudson.matrix.MatrixBuild;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.plugins.copyartifact.BuildFilter;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
@@ -107,11 +104,10 @@ public class DownloadFromBuildService extends DownloadService {
     private int downloadBlobs(final List<AzureBlob> azureBlobs) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
+        println(Messages.AzureStorageBuilder_downloading());
 
         for (final AzureBlob blob : azureBlobs) {
             try {
-                println(Messages.AzureStorageBuilder_downloading() + ", storage type: " + blob.getStorageType());
-
                 final URL blobURL = new URL(blob.getBlobURL());
                 final String filePath = blobURL.getFile();
 
@@ -143,7 +139,7 @@ public class DownloadFromBuildService extends DownloadService {
                                 filePath.indexOf(cloudFileShare.getName()) + cloudFileShare.getName().length() + 1);
                         final CloudFile cloudFile =
                                 cloudFileShare.getRootDirectoryReference().getFileReference(cloudFileName);
-                        downloadFile(cloudFile);
+                        downloadSingleFile(cloudFile);
                         filesDownloaded++;
                     }
                 }
@@ -154,33 +150,5 @@ public class DownloadFromBuildService extends DownloadService {
         return filesDownloaded;
     }
 
-    private void downloadFile(final CloudFile cloudFile) throws WAStorageException {
-        final DownloadServiceData serviceData = getServiceData();
-        try {
-            final FilePath destDir = serviceData.getDownloadDir();
-            FilePath destFile = new FilePath(destDir, cloudFile.getName());
 
-            // That filepath will contain all the directories and explicit virtual paths,
-            // so if the user wanted it flattened, grab just the file name and recreate the file path
-            if (serviceData.isFlattenDirectories()) {
-                destFile = new FilePath(destDir, destFile.getName());
-            }
-
-            final long startTime = System.currentTimeMillis();
-            try (OutputStream fos = destFile.write()) {
-                cloudFile.download(fos, null, new FileRequestOptions(), Utils.updateUserAgent());
-            }
-            final long endTime = System.currentTimeMillis();
-            println(String.format(
-                    "blob %s is downloaded to %s in %s",
-                    cloudFile.getName(), destDir, getTime(endTime - startTime)));
-
-            if (serviceData.isDeleteFromAzureAfterDownload()) {
-                cloudFile.deleteIfExists();
-                println("cloud file " + cloudFile.getName() + " is deleted from Azure.");
-            }
-        } catch (Exception e) {
-            throw new WAStorageException(e.getMessage(), e.getCause());
-        }
-    }
 }

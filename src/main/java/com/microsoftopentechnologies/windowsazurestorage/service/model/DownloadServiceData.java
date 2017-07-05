@@ -33,6 +33,7 @@ public class DownloadServiceData extends ServiceData {
     private String includeFilesPattern;
     private String excludeFilesPattern;
     private String containerName;
+    private String fileShare;
     private String downloadDirLoc;
     private boolean flattenDirectories;
     private boolean deleteFromAzureAfterDownload;
@@ -145,5 +146,13 @@ public class DownloadServiceData extends ServiceData {
 
     public void setIncludeArchiveZips(final boolean includeArchiveZips) {
         this.includeArchiveZips = includeArchiveZips;
+    }
+
+    public String getFileShare() {
+        return fileShare;
+    }
+
+    public void setFileShare(final String fileShare) {
+        this.fileShare = fileShare;
     }
 }
