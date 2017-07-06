@@ -104,7 +104,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             }
 
         } catch (IOException | InterruptedException e) {
-            throw new WAStorageException(e.getMessage(), e.getCause());
+            throw new WAStorageException(e.getMessage(), e);
         }
         return filesUploaded;
     }

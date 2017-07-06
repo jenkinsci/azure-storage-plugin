@@ -90,7 +90,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
                 println("cloud file " + cloudFile.getName() + " is deleted from Azure.");
             }
         } catch (Exception e) {
-            throw new WAStorageException(e.getMessage(), e.getCause());
+            throw new WAStorageException(e.getMessage(), e);
         }
     }
 
@@ -113,7 +113,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
                 println("blob " + blob.getName() + " is deleted from Azure.");
             }
         } catch (Exception e) {
-            throw new WAStorageException(e.getMessage(), e.getCause());
+            throw new WAStorageException(e.getMessage(), e);
         }
     }
 

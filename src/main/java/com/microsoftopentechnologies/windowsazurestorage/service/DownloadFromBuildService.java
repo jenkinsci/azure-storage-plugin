@@ -144,7 +144,7 @@ public class DownloadFromBuildService extends DownloadService {
                     }
                 }
             } catch (StorageException | URISyntaxException | IOException e) {
-                throw new WAStorageException(e.getMessage(), e.getCause());
+                throw new WAStorageException(e.getMessage(), e);
             }
         }
         return filesDownloaded;
