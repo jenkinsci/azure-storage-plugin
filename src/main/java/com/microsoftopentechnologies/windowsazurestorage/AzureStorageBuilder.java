@@ -25,6 +25,7 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromBuildService;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromContainerService;
+import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.StoragePluginService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.DescriptorExtensionList;
@@ -63,6 +64,7 @@ import java.util.Collections;
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     public static final String DOWNLOAD_TYPE_CONTAINER = "container";
     public static final String DOWNLOAD_TYPE_PROJECT = "project";
+    public static final String DOWNLOAD_TYPE_FILE_SHARE = "share";
 
     static final String CONTAINER = "container";
 
@@ -71,6 +73,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private boolean deleteFromAzureAfterDownload;
     private String storageCredentialId;
     private String containerName = "";
+    private String fileShare;
     private String includeFilesPattern = "";
     private String excludeFilesPattern = "";
     private String downloadDirLoc = "";
@@ -121,6 +124,11 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         if (downloadType.equals(DOWNLOAD_TYPE_CONTAINER)) {
             this.containerName = containerName;
         }
+    }
+
+    @DataBoundSetter
+    public void setFileShare(final String fileShare) {
+        this.fileShare = fileShare;
     }
 
     @DataBoundSetter
@@ -186,6 +194,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         return flattenDirectories;
     }
 
+    public String getFileShare() {
+        return this.fileShare;
+    }
+
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
@@ -247,6 +259,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             builderServiceData.setExcludeFilesPattern(expExcludePattern);
             builderServiceData.setDownloadDirLoc(Util.replaceMacro(downloadDirLoc, envVars));
             builderServiceData.setContainerName(Util.replaceMacro(containerName, envVars));
+            builderServiceData.setFileShare(Util.replaceMacro(fileShare, envVars));
             builderServiceData.setFlattenDirectories(flattenDirectories);
             builderServiceData.setDeleteFromAzureAfterDownload(deleteFromAzureAfterDownload);
             builderServiceData.setDownloadType(downloadType);
@@ -271,14 +284,14 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     private StoragePluginService getDownloadService(final DownloadServiceData data) {
-        if (isDownloadFromContainer()) {
-            return new DownloadFromContainerService(data);
+        switch (this.downloadType) {
+            case DOWNLOAD_TYPE_FILE_SHARE:
+                return new DownloadFromFileService(data);
+            case DOWNLOAD_TYPE_PROJECT:
+                return new DownloadFromBuildService(data);
+            default:
+                return new DownloadFromContainerService(data);
         }
-        return new DownloadFromBuildService(data);
-    }
-
-    private boolean isDownloadFromContainer() {
-        return StringUtils.isBlank(this.downloadType) || this.downloadType.equals(CONTAINER);
     }
 
     private void validateData(final Run<?, ?> run,

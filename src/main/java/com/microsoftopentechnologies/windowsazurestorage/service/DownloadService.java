@@ -19,6 +19,8 @@ import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlob;
 import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.microsoft.azure.storage.file.CloudFile;
+import com.microsoft.azure.storage.file.FileRequestOptions;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
@@ -68,34 +70,50 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         return filesDownloaded;
     }
 
-    protected void downloadBlob(final CloudBlob blob)
-            throws WAStorageException {
+    protected void downloadSingleFile(final CloudFile cloudFile) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         try {
-            final FilePath downloadDir = serviceData.getDownloadDir();
-            FilePath downloadFile = new FilePath(downloadDir, blob.getName());
-
-            // That filepath will contain all the directories and explicit virtual
-            // paths, so if the user wanted it flattened, grab just the file name and
-            // recreate the file path
-            if (serviceData.isFlattenDirectories()) {
-                downloadFile = new FilePath(downloadDir, downloadFile.getName());
-            }
+            println("Downloading file:" + cloudFile.getUri().toString());
+            final FilePath destFile = destinationFilePath(cloudFile.getName());
 
             final long startTime = System.currentTimeMillis();
-            try (OutputStream fos = downloadFile.write()) {
+            try (OutputStream fos = destFile.write()) {
+                cloudFile.download(fos, null, new FileRequestOptions(), Utils.updateUserAgent());
+            }
+            final long endTime = System.currentTimeMillis();
+            println(String.format(
+                    "blob %s is downloaded to %s in %s",
+                    cloudFile.getName(), destFile.getParent(), getTime(endTime - startTime)));
+
+            if (serviceData.isDeleteFromAzureAfterDownload()) {
+                cloudFile.deleteIfExists();
+                println("cloud file " + cloudFile.getName() + " is deleted from Azure.");
+            }
+        } catch (Exception e) {
+            throw new WAStorageException(e.getMessage(), e);
+        }
+    }
+
+    protected void downloadBlob(final CloudBlob blob)
+            throws WAStorageException {
+        try {
+            println("Downloading file:" + blob.getUri().toString());
+
+            final FilePath destFile = destinationFilePath(blob.getName());
+            final long startTime = System.currentTimeMillis();
+            try (OutputStream fos = destFile.write()) {
                 blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
             }
             final long endTime = System.currentTimeMillis();
             println(String.format("blob %s is downloaded to %s in %s",
-                    blob.getName(), downloadDir, getTime(endTime - startTime)));
+                    blob.getName(), destFile.getParent(), getTime(endTime - startTime)));
 
-            if (serviceData.isDeleteFromAzureAfterDownload()) {
+            if (getServiceData().isDeleteFromAzureAfterDownload()) {
                 blob.deleteIfExists();
                 println("blob " + blob.getName() + " is deleted from Azure.");
             }
         } catch (Exception e) {
-            throw new WAStorageException(e.getMessage(), e.getCause());
+            throw new WAStorageException(e.getMessage(), e);
         }
     }
 
@@ -112,6 +130,21 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         }
 
         return blobPathMatches(blobName, includePatterns, excludePatterns, isFullPath);
+    }
+
+    private FilePath destinationFilePath(final String name) {
+        final DownloadServiceData serviceData = getServiceData();
+        final FilePath downloadDir = serviceData.getDownloadDir();
+        FilePath downloadFile = new FilePath(downloadDir, name);
+
+        // That filepath will contain all the directories and explicit virtual
+        // paths, so if the user wanted it flattened, grab just the file name and
+        // recreate the file path
+        if (serviceData.isFlattenDirectories()) {
+            downloadFile = new FilePath(downloadDir, downloadFile.getName());
+        }
+
+        return downloadFile;
     }
 
     private boolean blobPathMatches(
