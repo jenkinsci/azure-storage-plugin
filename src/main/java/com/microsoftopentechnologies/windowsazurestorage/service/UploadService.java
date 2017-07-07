@@ -73,7 +73,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 if (fileName != null && fileName.contains("::")) {
                     int embVPSepIndex = fileName.indexOf("::");
 
-                    // Separate fileName and Virtual directory name
+                    // Separate fileName and Virtual directory name.
                     if (fileName.length() > embVPSepIndex + 1) {
                         embeddedVP = fileName.substring(embVPSepIndex + 2, fileName.length());
 
