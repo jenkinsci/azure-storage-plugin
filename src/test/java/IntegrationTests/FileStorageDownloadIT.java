@@ -126,6 +126,16 @@ public class FileStorageDownloadIT extends IntegrationTest {
         if (testEnv.fileShare != null) {
             testEnv.fileShare.deleteIfExists();
         }
+
+        for (File file : testEnv.downloadFileList.values()) {
+            if (file.getParentFile().exists()) {
+                try {
+                    FileUtils.deleteDirectory(file.getParentFile());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         testEnv.downloadFileList.clear();
     }
 }
