@@ -34,6 +34,7 @@ import java.util.StringTokenizer;
 public abstract class UploadService extends StoragePluginService<UploadServiceData> {
     protected static final String ZIP_FOLDER_NAME = "artifactsArchive";
     protected static final String ZIP_NAME = "archive.zip";
+    protected static final String UPLOAD = "Upload";
 
     protected UploadService(final UploadServiceData serviceData) {
         super(serviceData);

@@ -21,7 +21,10 @@ import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
+import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
@@ -39,6 +42,8 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Service to upload files to Windows Azure Blob Storage.
@@ -151,7 +156,14 @@ public class UploadToBlobService extends UploadService {
                     src.length(),
                     null,
                     getBlobRequestOptions(),
-                    Utils.updateUserAgent());
+                    Utils.updateUserAgent(src.length()));
+
+            // send AI event.
+            Map<String, String> properties = new HashMap<>();
+            properties.put("StorageAccount",
+                    AppInsightsUtils.hash(blob.getServiceClient().getCredentials().getAccountName()));
+            properties.put("ContentLength", String.valueOf(blob.getProperties().getLength()));
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD, properties);
         }
         long endTime = System.currentTimeMillis();
 

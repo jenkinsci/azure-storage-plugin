@@ -23,7 +23,10 @@ import com.microsoft.azure.storage.file.CloudFileDirectory;
 import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoft.azure.storage.file.FileRequestOptions;
 import com.microsoft.azure.storage.file.ListFileItem;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
+import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
@@ -40,6 +43,8 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 
 public class UploadToFileService extends UploadService {
     public UploadToFileService(final UploadServiceData serviceData) {
@@ -124,9 +129,16 @@ public class UploadToFileService extends UploadService {
                         localPath.length(),
                         null,
                         new FileRequestOptions(),
-                        Utils.updateUserAgent());
+                        Utils.updateUserAgent(localPath.length()));
             }
             long endTime = System.currentTimeMillis();
+
+            // send AI event.
+            Map<String, String> properties = new HashMap<>();
+            properties.put("StorageAccount",
+                    AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName()));
+            properties.put("ContentLength", String.valueOf(cloudFile.getProperties().getLength()));
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD, properties);
 
             println("Uploaded blob with uri " + cloudFile.getUri() + " in " + getTime(endTime - startTime));
             return DatatypeConverter.printHexBinary(md.digest());

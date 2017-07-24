@@ -225,6 +225,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(
                 AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
         try {
+
             // Validate input data and resolve storage account
             validateData(run, listener, storageAccountInfo);
 
