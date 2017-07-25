@@ -8,6 +8,7 @@ import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.file.CloudFileShare;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsGlobalConfig;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
@@ -53,6 +54,9 @@ public class IntegrationTest {
             sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL);
             containerName = name;
             shareName = name;
+
+            // disable AI in testing
+            AppInsightsGlobalConfig.get().setAppInsightsEnabled(false);
         }
         private static String loadFromEnv(final String name) {
             return TestEnvironment.loadFromEnv(name, "");
