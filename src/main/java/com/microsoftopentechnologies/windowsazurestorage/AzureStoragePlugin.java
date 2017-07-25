@@ -13,12 +13,7 @@ import java.util.Map;
 
 public class AzureStoragePlugin extends Plugin {
     public static void sendEvent(final String item, final String action, final Map<String, String> properties) {
-        sendEvent(item, action, properties, false);
-    }
-
-    public static void sendEvent(final String item, final String action,
-                                 final Map<String, String> properties, final boolean force) {
         AppInsightsClientFactory.getInstance(AzureStoragePlugin.class)
-                .sendEvent(item, action, properties, force);
+                .sendEvent(item, action, properties, false);
     }
 }
