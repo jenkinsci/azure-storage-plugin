@@ -13,6 +13,14 @@ public final class Constants {
     public static final String BLOB_STORAGE = "blobstorage";
     public static final String FILE_STORAGE = "filestorage";
 
+    public static boolean isValidStorageType(final String storageType) {
+        if (storageType != null) {
+            return storageType.equals(BLOB_STORAGE) || storageType.equals(FILE_STORAGE);
+        } else {
+            return false;
+        }
+    }
+
     /* Regular expression for valid container name */
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
 
