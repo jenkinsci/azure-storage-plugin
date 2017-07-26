@@ -33,6 +33,7 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -71,17 +72,20 @@ public final class AzureUtils {
     }
 
     public static CloudStorageAccount getCloudStorageAccount(
-            final StorageAccountInfo storageAccount) throws URISyntaxException {
+            final StorageAccountInfo storageAccount) throws URISyntaxException, MalformedURLException {
         CloudStorageAccount cloudStorageAccount;
         final String accName = storageAccount.getStorageAccName();
-        final String blobURL = storageAccount.getBlobEndPointURL();
+        final String blobURLStr = storageAccount.getBlobEndPointURL();
         final StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(accName,
                 storageAccount.getStorageAccountKey());
 
-        if (StringUtils.isBlank(blobURL) || blobURL.equalsIgnoreCase(Constants.DEF_BLOB_URL)) {
+        if (StringUtils.isBlank(blobURLStr) || blobURLStr.equalsIgnoreCase(Constants.DEF_BLOB_URL)) {
             cloudStorageAccount = new CloudStorageAccount(credentials);
         } else {
-            cloudStorageAccount = new CloudStorageAccount(credentials, false, getEndpointSuffix(blobURL));
+            final URL blobURL = new URL(blobURLStr);
+            boolean useHttps = blobURL.getProtocol().equalsIgnoreCase("https");
+
+            cloudStorageAccount = new CloudStorageAccount(credentials, useHttps, getEndpointSuffix(blobURLStr));
         }
 
         return cloudStorageAccount;

@@ -37,6 +37,7 @@ import org.apache.commons.lang.StringUtils;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -148,7 +149,7 @@ public class UploadToFileService extends UploadService {
         }
     }
 
-    private CloudFileShare getCloudFileShare() throws URISyntaxException, StorageException {
+    private CloudFileShare getCloudFileShare() throws URISyntaxException, StorageException, MalformedURLException {
         final UploadServiceData serviceData = getServiceData();
         final CloudStorageAccount cloudStorageAccount =
                 AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
