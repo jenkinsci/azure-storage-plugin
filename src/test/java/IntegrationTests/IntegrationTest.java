@@ -44,9 +44,9 @@ public class IntegrationTest {
         public CloudFileShare fileShare;
 
         TestEnvironment(String name) throws URISyntaxException {
-            azureStorageAccountName = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_NAME");
-            azureStorageAccountKey1 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY1");
-            azureStorageAccountKey2 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY2");
+            azureStorageAccountName = TestEnvironment.loadFromEnv("Name");
+            azureStorageAccountKey1 = TestEnvironment.loadFromEnv("Key1");
+            azureStorageAccountKey2 = TestEnvironment.loadFromEnv("Key2");
             
             blobURL = Utils.DEF_BLOB_URL;
             AzureCredentials.StorageAccountCredential u = new AzureCredentials.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL);
