@@ -61,7 +61,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
         container = blobClient.getContainerReference(containername);
         container.createIfNotExists();
 
-        File dir = new File("WAStorageClientDownloadIT");
+        File dir = new File("UpLoadFiles");
         if(!dir.exists()) {
             dir.mkdir();
         }

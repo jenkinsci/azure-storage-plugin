@@ -47,14 +47,14 @@ public class IntegrationTest {
         }
 
         TestEnvironment() throws Exception {
-            azureStorageAccountName = loadFromEnv("Name");              // "5wdzqrwhxmtsodiag0";
-            azureStorageAccountKey1 = loadFromEnv("Key1");              // "VZHBE8V0zyvWHQJKrNHqYXABA0Zy+3bZ5kvkYadU+xF+m9o6KEmSJaJt7np/Hy3k2CagUucjpqIK8LV1hA/YUQ=="
-            azureStorageAccountKey2 = loadFromEnv("Key2");              // "d+hR14Oe3mCuQ/APAGhJsqqMWDhIumyaOqx8jz9bdUVWtDuk4Wrf4g1q/PK7HH2ivJ3ydCyhDoq3cVXkceJSfA=="
-            blobURL = loadFromEnv("BlobURL");               // "https://5wdzqrwhxmtsodiag0.blob.core.windows.net/"
+            azureStorageAccountName = loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_NAME");
+            azureStorageAccountKey1 = loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY1");
+            azureStorageAccountKey2 = loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY2");
+            blobURL = loadFromEnv("BlobURL");
 
             AzureCredentials.StorageAccountCredential storageCreds = new AzureCredentials.StorageAccountCredential(
                     azureStorageAccountName, azureStorageAccountKey1, blobURL);
-            storageCredentialId = storageCreds.getId();             // "3297e8751cadd7c174af1378e9fdf3fe"
+            storageCredentialId = storageCreds.getId();
             AzureCredentials azureCredentials = new AzureCredentials(CredentialsScope.GLOBAL, storageCredentialId,
                     null, azureStorageAccountName, azureStorageAccountKey1, blobURL);
 
