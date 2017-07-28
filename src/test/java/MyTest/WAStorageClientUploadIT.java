@@ -76,21 +76,24 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     public void AllFilesTest() throws Exception {
         FreeStyleProject project = j.createFreeStyleProject();
 
-        for (int i = 0; i < 20; i ++) {
-            String content = testEnvironment.GenerateRandomString(32);
-            String file = UUID.randomUUID().toString() + ".txt";
-            fileHashMap.put(content, file);
-            BatchFile batchFile = new BatchFile("echo " + content + " > " + file);
-            project.getBuildersList().add(batchFile);
-        }
+//        for (int i = 0; i < 20; i ++) {
+//            String content = testEnvironment.GenerateRandomString(32);
+//            String file = UUID.randomUUID().toString() + ".txt";
+//            fileHashMap.put(content, file);
+//            BatchFile batchFile = new BatchFile("echo " + content + " > " + file);
+//            project.getBuildersList().add(batchFile);
+//        }
+//
+//        for (int i = 0; i < 30; i ++) {
+//            String content = testEnvironment.GenerateRandomString(32);
+//            String file = UUID.randomUUID().toString() + ".png";
+//            fileHashMap.put(content, file);
+//            BatchFile batchFile = new BatchFile("echo " + content + " > " + file);
+//            project.getBuildersList().add(batchFile);
+//        }
 
-        for (int i = 0; i < 30; i ++) {
-            String content = testEnvironment.GenerateRandomString(32);
-            String file = UUID.randomUUID().toString() + ".png";
-            fileHashMap.put(content, file);
-            BatchFile batchFile = new BatchFile("echo " + content + " > " + file);
-            project.getBuildersList().add(batchFile);
-        }
+        BatchFile batchFile = new BatchFile(command);
+        project.getBuildersList().add(batchFile);
 
         filesPath = "*";
         WAStoragePublisher publisher = new WAStoragePublisher(
