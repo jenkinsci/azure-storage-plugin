@@ -165,7 +165,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     /**
      * Determines whether the path is a potential match to any of the provided
-     * patterns
+     * patterns.
      *
      * @param path
      * @param patterns
@@ -183,7 +183,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     /**
      * Determines whether the path is an exact match to any of the provided
-     * patterns
+     * patterns.
      *
      * @param path
      * @param patterns

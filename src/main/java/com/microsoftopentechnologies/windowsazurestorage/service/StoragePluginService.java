@@ -58,7 +58,7 @@ public abstract class StoragePluginService<T extends ServiceData> {
 
     /**
      * Returns Blob requests options - primarily sets concurrentRequestCount to
-     * number of available cores
+     * number of available cores.
      *
      * @return
      */

@@ -176,7 +176,7 @@ public class UploadToBlobService extends UploadService {
     }
 
     /**
-     * Deletes contents of container
+     * Deletes contents of container.
      *
      * @param blobItems list of blobs to delete
      * @throws StorageException

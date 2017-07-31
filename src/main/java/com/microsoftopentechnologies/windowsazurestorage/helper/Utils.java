@@ -87,7 +87,7 @@ public final class Utils {
 
     /**
      * This method checks if text contains tokens in the form of $TOKEN or
-     * ${TOKEN}
+     * ${TOKEN}.
      *
      * @param text
      * @return true if tokens exist in input string
@@ -128,7 +128,7 @@ public final class Utils {
     }
 
     /**
-     * Returns default blob url
+     * Returns default blob url.
      *
      * @return
      */
@@ -142,7 +142,7 @@ public final class Utils {
     }
 
     /**
-     * Returns md5 hash in string format for a given string
+     * Returns md5 hash in string format for a given string.
      *
      * @param plainText
      * @return

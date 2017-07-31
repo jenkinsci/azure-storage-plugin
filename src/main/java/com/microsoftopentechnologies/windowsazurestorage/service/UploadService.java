@@ -120,7 +120,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     }
 
     /**
-     * Convert the path on local file sytem to relative path on azure storage
+     * Convert the path on local file sytem to relative path on azure storage.
      *
      * @param path       the local path
      * @param embeddedVP the embedded virtual path

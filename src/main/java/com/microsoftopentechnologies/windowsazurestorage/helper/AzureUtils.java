@@ -122,7 +122,7 @@ public final class AzureUtils {
     }
 
     /**
-     * Generates SAS URL for blob in Azure storage account
+     * Generates SAS URL for blob in Azure storage account.
      *
      * @param storageAccount
      * @param blobName
