@@ -157,6 +157,11 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
+                    <maskClasses>
+                        com.microsoft.azure.management.
+                        com.google.common.
+                    </maskClasses>
                     <compatibleSinceVersion />
                 </configuration>
             </plugin>

@@ -162,7 +162,7 @@ public class UploadToBlobService extends UploadService {
             Map<String, String> properties = new HashMap<>();
             properties.put("StorageAccount",
                     AppInsightsUtils.hash(blob.getServiceClient().getCredentials().getAccountName()));
-            properties.put("ContentLength", String.valueOf(blob.getProperties().getLength()));
+            properties.put("ContentLength", String.valueOf(src.length()));
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD, properties);
         }
         long endTime = System.currentTimeMillis();
