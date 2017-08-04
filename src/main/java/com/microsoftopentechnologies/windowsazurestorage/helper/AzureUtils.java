@@ -91,11 +91,11 @@ public final class AzureUtils {
         return cloudStorageAccount;
     }
 
-    public static CloudBlobContainer getBlobContainerReference(final StorageAccountInfo storageAccount,
-                                                               final String containerName,
-                                                               final boolean createIfNotExist,
-                                                               final boolean allowRetry,
-                                                               final Boolean cntPubAccess)
+    public static CloudBlobContainer getBlobContainerReference(StorageAccountInfo storageAccount,
+                                                               String containerName,
+                                                               boolean createIfNotExist,
+                                                               boolean allowRetry,
+                                                               Boolean cntPubAccess)
             throws URISyntaxException, StorageException, IOException {
 
         final CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
@@ -131,9 +131,9 @@ public final class AzureUtils {
      * @throws Exception
      */
     public static String generateSASURL(
-            final StorageAccountInfo storageAccount,
-            final String containerName,
-            final String blobName) throws Exception {
+            StorageAccountInfo storageAccount,
+            String containerName,
+            String blobName) throws Exception {
         String storageAccountName = storageAccount.getStorageAccName();
         StorageCredentialsAccountAndKey credentials =
                 new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
@@ -174,9 +174,9 @@ public final class AzureUtils {
     }
 
     private static void setContainerPermission(
-            final CloudBlobContainer container,
-            final boolean cntExists,
-            final Boolean cntPubAccess) throws StorageException {
+            CloudBlobContainer container,
+            boolean cntExists,
+            Boolean cntPubAccess) throws StorageException {
         if (!cntExists && cntPubAccess != null) {
             // Set access permissions on container.
             final BlobContainerPermissions cntPerm = new BlobContainerPermissions();
@@ -195,7 +195,7 @@ public final class AzureUtils {
      * @param blobURL endpoint
      * @return the endpoint suffix
      */
-    private static String getEndpointSuffix(final String blobURL) throws URISyntaxException {
+    private static String getEndpointSuffix(String blobURL) throws URISyntaxException {
         final int endSuffixStartIndex = blobURL.toLowerCase().indexOf(Utils.BLOB_ENDPOINT_ENDSUFFIX_KEYWORD);
         if (endSuffixStartIndex < 0) {
             throw new URISyntaxException(blobURL, "The blob endpoint is not correct!");
@@ -212,7 +212,7 @@ public final class AzureUtils {
      * @param blobURL
      * @return
      */
-    private static String getCustomURI(final String storageAccountName, final String type, final String blobURL) {
+    private static String getCustomURI(String storageAccountName, String type, String blobURL) {
         if (QUEUE.equalsIgnoreCase(type) || TABLE.equalsIgnoreCase(type)) {
             return blobURL.replace(storageAccountName + "." + BLOB,
                     storageAccountName + "." + type);

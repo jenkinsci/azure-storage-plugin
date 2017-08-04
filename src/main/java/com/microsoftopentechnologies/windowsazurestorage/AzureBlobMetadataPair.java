@@ -27,7 +27,7 @@ public class AzureBlobMetadataPair implements Describable<AzureBlobMetadataPair>
     private final String value;
 
     @DataBoundConstructor
-    public AzureBlobMetadataPair(final String key, final String value) {
+    public AzureBlobMetadataPair(String key, String value) {
         this.key = key;
         this.value = value;
     }

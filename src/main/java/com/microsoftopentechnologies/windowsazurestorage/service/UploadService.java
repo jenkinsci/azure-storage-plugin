@@ -35,7 +35,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     protected static final String ZIP_FOLDER_NAME = "artifactsArchive";
     protected static final String ZIP_NAME = "archive.zip";
 
-    protected UploadService(final UploadServiceData serviceData) {
+    protected UploadService(UploadServiceData serviceData) {
         super(serviceData);
     }
 
@@ -126,7 +126,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
      * @param embeddedVP the embedded virtual path
      * @return
      */
-    protected String getItemPath(final FilePath path, final String embeddedVP)
+    protected String getItemPath(FilePath path, String embeddedVP)
             throws IOException, InterruptedException {
         final UploadServiceData serviceData = getServiceData();
         final URI workspaceURI = serviceData.getRemoteWorkspace().toURI();
@@ -147,7 +147,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         return prefix + srcURIPath;
     }
 
-    protected HashMap<String, String> updateMetadata(final HashMap<String, String> metadata)
+    protected HashMap<String, String> updateMetadata(HashMap<String, String> metadata)
             throws IOException, InterruptedException {
         final UploadServiceData serviceData = getServiceData();
         final EnvVars env = serviceData.getRun().getEnvironment(serviceData.getTaskListener());

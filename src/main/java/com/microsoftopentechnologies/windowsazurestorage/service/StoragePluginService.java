@@ -33,7 +33,7 @@ public abstract class StoragePluginService<T extends ServiceData> {
 
     private T serviceData;
 
-    protected StoragePluginService(final T serviceData) {
+    protected StoragePluginService(T serviceData) {
         this.serviceData = serviceData;
     }
 
@@ -43,15 +43,15 @@ public abstract class StoragePluginService<T extends ServiceData> {
         serviceData.getRun().setResult(Result.UNSTABLE);
     }
 
-    protected void println(final String message) {
+    protected void println(String message) {
         serviceData.getTaskListener().getLogger().println(message);
     }
 
-    protected PrintWriter error(final String message) {
+    protected PrintWriter error(String message) {
         return serviceData.getTaskListener().error(message);
     }
 
-    protected String getTime(final long timeInMills) {
+    protected String getTime(long timeInMills) {
         return DurationFormatUtils.formatDuration(timeInMills, "HH:mm:ss.S")
                 + " (HH:mm:ss.S)";
     }
@@ -73,7 +73,7 @@ public abstract class StoragePluginService<T extends ServiceData> {
         return serviceData;
     }
 
-    public void setServiceData(final T serviceData) {
+    public void setServiceData(T serviceData) {
         this.serviceData = serviceData;
     }
 }

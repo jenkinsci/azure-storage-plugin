@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 public class DownloadFromContainerService extends DownloadService {
-    public DownloadFromContainerService(final DownloadServiceData data) {
+    public DownloadFromContainerService(DownloadServiceData data) {
         super(data);
     }
 

@@ -30,13 +30,13 @@ public class AzureBlobAction implements RunAction {
     private final String storageCredentialId;
 
     public AzureBlobAction(
-            final Run build,
-            final String storageAccountName,
-            final String containerName,
-            final List<AzureBlob> individualBlobs,
-            final AzureBlob zipArchiveBlob,
-            final boolean allowAnonymousAccess,
-            final String storageCredentialId) {
+            Run build,
+            String storageAccountName,
+            String containerName,
+            List<AzureBlob> individualBlobs,
+            AzureBlob zipArchiveBlob,
+            boolean allowAnonymousAccess,
+            String storageCredentialId) {
         this.storageAccountName = storageAccountName;
         this.containerName = containerName;
         this.individualBlobs = individualBlobs;
@@ -71,7 +71,7 @@ public class AzureBlobAction implements RunAction {
     }
 
     @Override
-    public void onAttached(final Run arg0) {
+    public void onAttached(Run arg0) {
     }
 
     @Override
@@ -100,8 +100,8 @@ public class AzureBlobAction implements RunAction {
     }
 
     public void doProcessDownloadRequest(
-            final StaplerRequest request,
-            final StaplerResponse response) throws IOException, ServletException {
+            StaplerRequest request,
+            StaplerResponse response) throws IOException, ServletException {
         AzureCredentials.StorageAccountCredential accountCredentials =
                 AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
 
@@ -155,7 +155,7 @@ public class AzureBlobAction implements RunAction {
         response.sendError(Constants.HTTP_NOT_FOUND, "Azure artifact is not available");
     }
 
-    public boolean isAnonymousAccess(final Authentication auth) {
+    public boolean isAnonymousAccess(Authentication auth) {
         return auth != null && auth.getName() != null && "anonymous".equals(auth.getName());
     }
 
