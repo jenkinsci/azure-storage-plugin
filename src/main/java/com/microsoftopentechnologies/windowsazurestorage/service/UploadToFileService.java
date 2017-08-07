@@ -137,7 +137,7 @@ public class UploadToFileService extends UploadService {
             Map<String, String> properties = new HashMap<>();
             properties.put("StorageAccount",
                     AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName()));
-            properties.put("ContentLength", String.valueOf(cloudFile.getProperties().getLength()));
+            properties.put("ContentLength", String.valueOf(localPath.length()));
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD, properties);
 
             println("Uploaded blob with uri " + cloudFile.getUri() + " in " + getTime(endTime - startTime));

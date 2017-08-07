@@ -85,6 +85,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
             final FilePath destFile = destinationFilePath(cloudFile.getName());
 
             final long startTime = System.currentTimeMillis();
+            cloudFile.downloadAttributes();
             try (OutputStream fos = destFile.write()) {
                 cloudFile.download(fos, null, new FileRequestOptions(),
                         Utils.updateUserAgent(cloudFile.getProperties().getLength()));
@@ -117,6 +118,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
             final FilePath destFile = destinationFilePath(blob.getName());
             final long startTime = System.currentTimeMillis();
+            blob.downloadAttributes();
             try (OutputStream fos = destFile.write()) {
                 blob.download(fos, null, getBlobRequestOptions(),
                         Utils.updateUserAgent(blob.getProperties().getLength()));
