@@ -29,6 +29,12 @@ public final class Constants {
      */
     public static final String VAL_SHARE_NAME = "^[a-z0-9]((-(?=[a-z\\d]))|[a-z0-9]){2,62}$";
 
+    /**
+     * @see <a href="https://docs.microsoft.com/en-us/rest/api/storageservices/working-with-the-root-container">
+     *     Working with the Root Container</a>
+     */
+    public static final String ROOT_CONTAINER = "$root";
+
     /* Regular expression to match tokens in the format of $TOKEN or ${TOKEN} */
     public static final String TOKEN_FORMAT = "\\$([A-Za-z0-9_]+|\\{[A-Za-z0-9_]+\\})";
 
