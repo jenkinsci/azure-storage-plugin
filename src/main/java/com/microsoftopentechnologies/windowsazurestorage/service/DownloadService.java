@@ -40,11 +40,11 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     protected static final String DOWNLOAD = "Download";
 
-    public DownloadService(final DownloadServiceData data) {
+    public DownloadService(DownloadServiceData data) {
         super(data);
     }
 
-    protected int downloadBlobs(final Iterable<ListBlobItem> blobItems)
+    protected int downloadBlobs(Iterable<ListBlobItem> blobItems)
             throws URISyntaxException, StorageException, WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
@@ -78,7 +78,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         return filesDownloaded;
     }
 
-    protected void downloadSingleFile(final CloudFile cloudFile) throws WAStorageException {
+    protected void downloadSingleFile(CloudFile cloudFile) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         try {
             println("Downloading file:" + cloudFile.getUri().toString());
@@ -111,7 +111,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         }
     }
 
-    protected void downloadBlob(final CloudBlob blob)
+    protected void downloadBlob(CloudBlob blob)
             throws WAStorageException {
         try {
             println("Downloading file:" + blob.getUri().toString());
@@ -144,10 +144,10 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
     }
 
     protected boolean shouldDownload(
-            final String includePattern,
-            final String excludePattern,
-            final String blobName,
-            final boolean isFullPath) {
+            String includePattern,
+            String excludePattern,
+            String blobName,
+            boolean isFullPath) {
         String[] includePatterns = includePattern.split(FP_SEPARATOR);
         String[] excludePatterns = null;
 
@@ -158,7 +158,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         return blobPathMatches(blobName, includePatterns, excludePatterns, isFullPath);
     }
 
-    private FilePath destinationFilePath(final String name) {
+    private FilePath destinationFilePath(String name) {
         final DownloadServiceData serviceData = getServiceData();
         final FilePath downloadDir = serviceData.getDownloadDir();
         FilePath downloadFile = new FilePath(downloadDir, name);
@@ -174,10 +174,10 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
     }
 
     private boolean blobPathMatches(
-            final String path,
-            final String[] includePatterns,
-            final String[] excludePatterns,
-            final boolean isFullPath) {
+            String path,
+            String[] includePatterns,
+            String[] excludePatterns,
+            boolean isFullPath) {
         if (!isFullPath) {
             // If we don't have a full path, we can't check for exclusions
             // yet.  Consider include: **/*, exclude **/foo.txt.  Both would match
@@ -191,13 +191,13 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     /**
      * Determines whether the path is a potential match to any of the provided
-     * patterns
+     * patterns.
      *
      * @param path
      * @param patterns
      * @return
      */
-    private boolean isPotentialMatch(final String path, final String[] patterns) {
+    private boolean isPotentialMatch(String path, String[] patterns) {
         AntPathMatcher matcher = new AntPathMatcher();
         for (String pattern : patterns) {
             if (matcher.matchStart(pattern, path)) {
@@ -209,13 +209,13 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     /**
      * Determines whether the path is an exact match to any of the provided
-     * patterns
+     * patterns.
      *
      * @param path
      * @param patterns
      * @return
      */
-    private boolean isExactMatch(final String path, final String[] patterns) {
+    private boolean isExactMatch(String path, String[] patterns) {
         AntPathMatcher matcher = new AntPathMatcher();
         for (String pattern : patterns) {
             if (matcher.match(pattern, path)) {

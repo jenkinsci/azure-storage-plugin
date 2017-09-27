@@ -86,8 +86,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     @DataBoundConstructor
     public AzureStorageBuilder(
-            final String storageCredentialId,
-            final String downloadType) {
+            String storageCredentialId,
+            String downloadType) {
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
         this.storageAccName = storageCreds.getStorageAccountName();
@@ -95,51 +95,51 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setIncludeFilesPattern(final String includeFilesPattern) {
+    public void setIncludeFilesPattern(String includeFilesPattern) {
         this.includeFilesPattern = includeFilesPattern;
     }
 
     @DataBoundSetter
-    public void setExcludeFilesPattern(final String excludeFilesPattern) {
+    public void setExcludeFilesPattern(String excludeFilesPattern) {
         this.excludeFilesPattern = excludeFilesPattern;
     }
 
     @DataBoundSetter
-    public void setDownloadDirLoc(final String downloadDirLoc) {
+    public void setDownloadDirLoc(String downloadDirLoc) {
         this.downloadDirLoc = downloadDirLoc;
     }
 
     @DataBoundSetter
-    public void setFlattenDirectories(final boolean flattenDirectories) {
+    public void setFlattenDirectories(boolean flattenDirectories) {
         this.flattenDirectories = flattenDirectories;
     }
 
     @DataBoundSetter
-    public void setIncludeArchiveZips(final boolean includeArchiveZips) {
+    public void setIncludeArchiveZips(boolean includeArchiveZips) {
         this.includeArchiveZips = includeArchiveZips;
     }
 
     @DataBoundSetter
-    public void setContainerName(final String containerName) {
+    public void setContainerName(String containerName) {
         if (downloadType.equals(DOWNLOAD_TYPE_CONTAINER)) {
             this.containerName = containerName;
         }
     }
 
     @DataBoundSetter
-    public void setFileShare(final String fileShare) {
+    public void setFileShare(String fileShare) {
         this.fileShare = fileShare;
     }
 
     @DataBoundSetter
-    public void setBuildSelector(final BuildSelector buildSelector) {
+    public void setBuildSelector(BuildSelector buildSelector) {
         if (downloadType.equals(DOWNLOAD_TYPE_PROJECT)) {
             this.buildSelector = buildSelector;
         }
     }
 
     @DataBoundSetter
-    public void setProjectName(final String projectName) {
+    public void setProjectName(String projectName) {
         if (downloadType.equals(DOWNLOAD_TYPE_PROJECT)) {
             this.projectName = projectName;
         }
@@ -150,7 +150,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setDeleteFromAzureAfterDownload(final boolean deleteFromAzureAfterDownload) {
+    public void setDeleteFromAzureAfterDownload(boolean deleteFromAzureAfterDownload) {
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
     }
 
@@ -217,10 +217,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
      */
     @Override
     public synchronized void perform(
-            final Run<?, ?> run,
-            final FilePath workspace,
-            final Launcher launcher,
-            final TaskListener listener) {
+            Run<?, ?> run,
+            FilePath workspace,
+            Launcher launcher,
+            TaskListener listener) {
         // Get storage account
         StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(
                 AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
@@ -284,7 +284,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
     }
 
-    private StoragePluginService getDownloadService(final DownloadServiceData data) {
+    private StoragePluginService getDownloadService(DownloadServiceData data) {
         switch (this.downloadType) {
             case DOWNLOAD_TYPE_FILE_SHARE:
                 return new DownloadFromFileService(data);
@@ -295,9 +295,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
     }
 
-    private void validateData(final Run<?, ?> run,
-                              final TaskListener listener,
-                              final StorageAccountInfo storageAccountInfo) {
+    private void validateData(Run<?, ?> run,
+                              TaskListener listener,
+                              StorageAccountInfo storageAccountInfo) {
 
         // No need to download artifacts if build failed
         if (run.getResult() == Result.FAILURE) {
@@ -335,7 +335,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         @Override
         public boolean isApplicable(
-                @SuppressWarnings("rawtypes") final Class<? extends AbstractProject> jobType) {
+                @SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
             return true;
         }
 
@@ -356,14 +356,14 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             return m;
         }
 
-        public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath final Item owner) {
+        public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
 
             return new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
                             AzureCredentials.class, owner, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()));
         }
 
-        public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter final String value) {
+        public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter String value) {
             AutoCompletionCandidates projectList = new AutoCompletionCandidates();
             for (AbstractProject<?, ?> project : Utils.getJenkinsInstance().getItems(AbstractProject.class)) {
                 if (project.getName().toLowerCase().startsWith(value.toLowerCase())) {
@@ -373,7 +373,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             return projectList;
         }
 
-        public boolean configure(final StaplerRequest req, final JSONObject formData)
+        public boolean configure(StaplerRequest req, JSONObject formData)
                 throws FormException {
             save();
             return super.configure(req, formData);
@@ -398,7 +398,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
          * @param storageAccountName
          * @return StorageAccount
          */
-        public StorageAccountInfo getStorageAccount(final String storageAccountName) {
+        public StorageAccountInfo getStorageAccount(String storageAccountName) {
             if ((storageAccountName == null)
                     || (storageAccountName.trim().length() == 0)) {
                 return null;

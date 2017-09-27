@@ -41,7 +41,7 @@ public final class CredentialMigration {
     private static final Logger LOGGER = Logger.getLogger(CredentialMigration.class.getName());
 
     protected static List<StorageAccountInfo> getOldStorageConfig(
-            final File inputFile) throws SAXException, IOException, ParserConfigurationException {
+            File inputFile) throws SAXException, IOException, ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -76,7 +76,7 @@ public final class CredentialMigration {
 
     }
 
-    private static File backupFile(final String sourceFile) throws IOException {
+    private static File backupFile(String sourceFile) throws IOException {
         String backupFile = sourceFile + ".backup";
         LOGGER.log(Level.INFO, sourceFile + ".backup has been created for backup.");
         File backUp = new File(backupFile);
@@ -88,7 +88,7 @@ public final class CredentialMigration {
      * Take the legacy local storage credential configuration and create an
      * equivalent global credential in Jenkins Credential Store.
      */
-    private static void removeFile(final String sourceFile) throws IOException {
+    private static void removeFile(String sourceFile) throws IOException {
         File file = new File(sourceFile);
 
         if (file.delete()) {

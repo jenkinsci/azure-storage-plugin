@@ -97,17 +97,17 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private transient AzureCredentials.StorageAccountCredential storageCreds;
 
     @Deprecated
-    public WAStoragePublisher(final String storageAccName,
-                              final String storageCredentialId, final String filesPath, final String excludeFilesPath,
-                              final String containerName, final boolean pubAccessible, final String virtualPath,
-                              final String storageType, final String fileShareName,
-                              final AzureBlobProperties blobProperties, final List<AzureBlobMetadataPair> metadata,
-                              final boolean cleanUpContainerOrShare, final boolean allowAnonymousAccess,
-                              final boolean uploadArtifactsOnlyIfSuccessful,
-                              final boolean doNotFailIfArchivingReturnsNothing,
-                              final boolean doNotUploadIndividualFiles,
-                              final boolean uploadZips,
-                              final boolean doNotWaitForPreviousBuild) {
+    public WAStoragePublisher(String storageAccName,
+                              String storageCredentialId, String filesPath, String excludeFilesPath,
+                              String containerName, boolean pubAccessible, String virtualPath,
+                              String storageType, String fileShareName,
+                              AzureBlobProperties blobProperties, List<AzureBlobMetadataPair> metadata,
+                              boolean cleanUpContainerOrShare, boolean allowAnonymousAccess,
+                              boolean uploadArtifactsOnlyIfSuccessful,
+                              boolean doNotFailIfArchivingReturnsNothing,
+                              boolean doNotUploadIndividualFiles,
+                              boolean uploadZips,
+                              boolean doNotWaitForPreviousBuild) {
         super();
         this.filesPath = filesPath.trim();
         this.excludeFilesPath = excludeFilesPath.trim();
@@ -131,8 +131,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundConstructor
-    public WAStoragePublisher(final String storageCredentialId, final String filesPath,
-                              final String storageType, final String containerName, final String fileShareName) {
+    public WAStoragePublisher(String storageCredentialId, String filesPath,
+                              String storageType, String containerName, String fileShareName) {
         super();
         this.filesPath = filesPath.trim();
         this.storageType = storageType;
@@ -144,62 +144,62 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setBlobProperties(final AzureBlobProperties blobProperties) {
+    public void setBlobProperties(AzureBlobProperties blobProperties) {
         this.blobProperties = blobProperties;
     }
 
     @DataBoundSetter
-    public void setPubAccessible(final boolean pubAccessible) {
+    public void setPubAccessible(boolean pubAccessible) {
         this.pubAccessible = pubAccessible;
     }
 
     @DataBoundSetter
-    public void setCleanUpContainerOrShare(final boolean cleanUpContainerOrShare) {
+    public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
         this.cleanUpContainerOrShare = cleanUpContainerOrShare;
     }
 
     @DataBoundSetter
-    public void setAllowAnonymousAccess(final boolean allowAnonymousAccess) {
+    public void setAllowAnonymousAccess(boolean allowAnonymousAccess) {
         this.allowAnonymousAccess = allowAnonymousAccess;
     }
 
     @DataBoundSetter
-    public void setUploadArtifactsOnlyIfSuccessful(final boolean uploadArtifactsOnlyIfSuccessful) {
+    public void setUploadArtifactsOnlyIfSuccessful(boolean uploadArtifactsOnlyIfSuccessful) {
         this.uploadArtifactsOnlyIfSuccessful = uploadArtifactsOnlyIfSuccessful;
     }
 
     @DataBoundSetter
-    public void setDoNotFailIfArchivingReturnsNothing(final boolean doNotFailIfArchivingReturnsNothing) {
+    public void setDoNotFailIfArchivingReturnsNothing(boolean doNotFailIfArchivingReturnsNothing) {
         this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
     }
 
     @DataBoundSetter
-    public void setUploadZips(final boolean uploadZips) {
+    public void setUploadZips(boolean uploadZips) {
         this.uploadZips = uploadZips;
     }
 
     @DataBoundSetter
-    public void setDoNotUploadIndividualFiles(final boolean doNotUploadIndividualFiles) {
+    public void setDoNotUploadIndividualFiles(boolean doNotUploadIndividualFiles) {
         this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
     }
 
     @DataBoundSetter
-    public void setExcludeFilesPath(final String excludeFilesPath) {
+    public void setExcludeFilesPath(String excludeFilesPath) {
         this.excludeFilesPath = excludeFilesPath;
     }
 
     @DataBoundSetter
-    public void setVirtualPath(final String virtualPath) {
+    public void setVirtualPath(String virtualPath) {
         this.virtualPath = virtualPath;
     }
 
     @DataBoundSetter
-    public void setDoNotWaitForPreviousBuild(final boolean doNotWaitForPreviousBuild) {
+    public void setDoNotWaitForPreviousBuild(boolean doNotWaitForPreviousBuild) {
         this.doNotWaitForPreviousBuild = doNotWaitForPreviousBuild;
     }
 
     @DataBoundSetter
-    public void setMetadata(final List<AzureBlobMetadataPair> metadata) {
+    public void setMetadata(List<AzureBlobMetadataPair> metadata) {
         this.metadata = metadata;
     }
 
@@ -311,7 +311,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return storageCredentialId;
     }
 
-    private UploadType computeArtifactUploadType(final boolean zips, final boolean doNotUploadIndividual) {
+    private UploadType computeArtifactUploadType(boolean zips, boolean doNotUploadIndividual) {
         if (zips && !doNotUploadIndividual) {
             return UploadType.BOTH;
         } else if (!zips && !doNotUploadIndividual) {
@@ -346,7 +346,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     //Defines project actions
-    public Collection<? extends Action> getProjectActions(final AbstractProject<?, ?> project) {
+    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
         AzureBlobProjectAction projectAction = new AzureBlobProjectAction(project);
         List<Action> projectActions = new ArrayList<Action>();
         projectActions.add(projectAction);
@@ -374,20 +374,20 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return storageAcc;
     }
 
-    public String replaceMacro(final String s, final Map<String, String> props, final Locale locale) {
+    public String replaceMacro(String s, Map<String, String> props, Locale locale) {
         return Util.replaceMacro(s, props).trim().toLowerCase(locale);
     }
 
-    public String replaceMacro(final String s, final Map<String, String> props) {
+    public String replaceMacro(String s, Map<String, String> props) {
         return Util.replaceMacro(s, props).trim();
     }
 
     @Override
     public synchronized void perform(
-            @Nonnull final Run<?, ?> run,
-            @Nonnull final FilePath ws,
-            @Nonnull final Launcher launcher,
-            @Nonnull final TaskListener listener) throws InterruptedException, IOException {
+            @Nonnull Run<?, ?> run,
+            @Nonnull FilePath ws,
+            @Nonnull Launcher launcher,
+            @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
         final EnvVars envVars = run.getEnvironment(listener);
 
@@ -451,11 +451,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     private boolean validateData(
-            final Run<?, ?> run,
-            final TaskListener listener,
-            final StorageAccountInfo storageAccount,
-            final String expContainerName,
-            final String expShareName) throws IOException, InterruptedException {
+            Run<?, ?> run,
+            TaskListener listener,
+            StorageAccountInfo storageAccount,
+            String expContainerName,
+            String expShareName) throws IOException, InterruptedException {
 
         // No need to upload artifacts if build failed and the job is
         // set to not upload on success.
@@ -534,7 +534,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
     }
 
-    private UploadService getUploadService(final UploadServiceData data) {
+    private UploadService getUploadService(UploadServiceData data) {
         if (Constants.FILE_STORAGE.equalsIgnoreCase(this.getStorageType())) {
             return new UploadToFileService(data);
         }
@@ -566,7 +566,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         @Override
-        public boolean configure(final StaplerRequest req, final JSONObject formData)
+        public boolean configure(StaplerRequest req, JSONObject formData)
                 throws FormException {
 
             STORAGE_ACCOUNTS.replaceBy(req.bindParametersToList(
@@ -587,9 +587,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          */
         public FormValidation doCheckAccount(
                 //CHECKSTYLE:OFF
-                @QueryParameter final String was_storageAccName,
-                @QueryParameter final String was_storageAccountKey,
-                @QueryParameter final String was_blobEndPointURL) throws IOException,
+                @QueryParameter String was_storageAccName,
+                @QueryParameter String was_storageAccountKey,
+                @QueryParameter String was_blobEndPointURL) throws IOException,
                 //CHECKSTYLE:ON
                 ServletException {
 
@@ -624,7 +624,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          * @throws IOException
          * @throws ServletException
          */
-        public FormValidation doCheckContainerName(final StaplerRequest request)
+        public FormValidation doCheckContainerName(StaplerRequest request)
                 throws IOException, ServletException {
             final String containerName = request.getParameter("val");
             if (!StringUtils.isBlank(containerName)) {
@@ -641,7 +641,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
-        public FormValidation doCheckFileShareName(final StaplerRequest request) {
+        public FormValidation doCheckFileShareName(StaplerRequest request) {
             final String fileShareName = request.getParameter("val");
             if (!StringUtils.isBlank(fileShareName)) {
                 // Token resolution happens dynamically at runtime , so for
@@ -657,7 +657,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
-        public FormValidation doCheckPath(@QueryParameter final String val) {
+        public FormValidation doCheckPath(@QueryParameter String val) {
             if (StringUtils.isBlank(val)) {
                 return FormValidation.error(Messages
                         .WAStoragePublisher_artifacts_req());
@@ -665,7 +665,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckBlobName(@QueryParameter final String val) {
+        public FormValidation doCheckBlobName(@QueryParameter String val) {
             if (StringUtils.isBlank(val)) {
                 return FormValidation.error(Messages
                         .AzureStorageBuilder_blobName_req());
@@ -680,7 +680,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         @SuppressWarnings("rawtypes")
         @Override
-        public boolean isApplicable(final Class<? extends AbstractProject> jobType) {
+        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
         }
 
@@ -694,7 +694,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                     .toArray(new StorageAccountInfo[STORAGE_ACCOUNTS.size()]);
         }
 
-        public StorageAccountInfo getStorageAccount(final String name) {
+        public StorageAccountInfo getStorageAccount(String name) {
 
             if (name == null || (name.trim().length() == 0)) {
                 return null;
@@ -732,7 +732,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return m;
         }
 
-        public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath final Item owner) {
+        public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
             ListBoxModel m = new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
                             AzureCredentials.class,

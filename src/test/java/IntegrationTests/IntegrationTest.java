@@ -78,4 +78,9 @@ public class IntegrationTest {
 
     protected TestEnvironment testEnv = null;
 
+    protected void disableAI()
+    {
+        // disable AI in testing
+        AppInsightsGlobalConfig.get().setAppInsightsEnabled(false);
+    }
 }

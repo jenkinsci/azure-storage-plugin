@@ -29,11 +29,11 @@ public abstract class ServiceData {
     private final TaskListener taskListener;
     private final StorageAccountInfo storageAccountInfo;
 
-    protected ServiceData(final Run<?, ?> run,
-                          final FilePath workspace,
-                          final Launcher launcher,
-                          final TaskListener taskListener,
-                          final StorageAccountInfo storageAccountInfo) {
+    protected ServiceData(Run<?, ?> run,
+                          FilePath workspace,
+                          Launcher launcher,
+                          TaskListener taskListener,
+                          StorageAccountInfo storageAccountInfo) {
         this.run = run;
         this.workspace = workspace;
         this.launcher = launcher;

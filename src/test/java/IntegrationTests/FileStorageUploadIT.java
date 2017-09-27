@@ -52,6 +52,8 @@ public class FileStorageUploadIT extends IntegrationTest {
     @Before
     public void setUp() throws IOException {
         try {
+            disableAI();
+
             fileShareName = "testshare-" + TestEnvironment.GenerateRandomString(10);
             testEnv = new TestEnvironment(fileShareName);
             File directory = new File(fileShareName);

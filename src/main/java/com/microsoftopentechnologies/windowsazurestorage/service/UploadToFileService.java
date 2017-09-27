@@ -48,12 +48,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UploadToFileService extends UploadService {
-    public UploadToFileService(final UploadServiceData serviceData) {
+    public UploadToFileService(UploadServiceData serviceData) {
         super(serviceData);
     }
 
     @Override
-    protected void uploadIndividuals(final String embeddedVP, final FilePath[] paths) throws WAStorageException {
+    protected void uploadIndividuals(String embeddedVP, FilePath[] paths) throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudFileShare fileShare = getCloudFileShare();
@@ -77,7 +77,7 @@ public class UploadToFileService extends UploadService {
     }
 
     @Override
-    protected void uploadArchive(final String archiveIncludes) throws WAStorageException {
+    protected void uploadArchive(String archiveIncludes) throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudFileShare fileShare = getCloudFileShare();
@@ -115,7 +115,7 @@ public class UploadToFileService extends UploadService {
         }
     }
 
-    private String uploadCloudFile(final CloudFile cloudFile, final FilePath localPath)
+    private String uploadCloudFile(CloudFile cloudFile, FilePath localPath)
             throws WAStorageException {
         try {
             ensureDirExist(cloudFile.getParent());
@@ -149,7 +149,7 @@ public class UploadToFileService extends UploadService {
 
     }
 
-    private void ensureDirExist(final CloudFileDirectory directory)
+    private void ensureDirExist(CloudFileDirectory directory)
             throws WAStorageException {
         try {
             if (!directory.exists()) {
@@ -178,7 +178,7 @@ public class UploadToFileService extends UploadService {
         return fileShare;
     }
 
-    private void deleteFiles(final Iterable<ListFileItem> fileItems) throws StorageException {
+    private void deleteFiles(Iterable<ListFileItem> fileItems) throws StorageException {
         for (final ListFileItem fileItem : fileItems) {
             if (fileItem instanceof CloudFileDirectory) {
                 final CloudFileDirectory directory = (CloudFileDirectory) fileItem;

@@ -42,11 +42,11 @@ public class DownloadServiceData extends ServiceData {
     private BuildSelector buildSelector;
     private boolean includeArchiveZips;
 
-    public DownloadServiceData(final Run<?, ?> run,
-                               final FilePath workspace,
-                               final Launcher launcher,
-                               final TaskListener taskListener,
-                               final StorageAccountInfo storageAccountInfo) {
+    public DownloadServiceData(Run<?, ?> run,
+                               FilePath workspace,
+                               Launcher launcher,
+                               TaskListener taskListener,
+                               StorageAccountInfo storageAccountInfo) {
         super(run, workspace, launcher, taskListener, storageAccountInfo);
     }
 
@@ -72,7 +72,7 @@ public class DownloadServiceData extends ServiceData {
         return includeFilesPattern;
     }
 
-    public void setIncludeFilesPattern(final String includeFilesPattern) {
+    public void setIncludeFilesPattern(String includeFilesPattern) {
         this.includeFilesPattern = includeFilesPattern;
     }
 
@@ -80,7 +80,7 @@ public class DownloadServiceData extends ServiceData {
         return excludeFilesPattern;
     }
 
-    public void setExcludeFilesPattern(final String excludeFilesPattern) {
+    public void setExcludeFilesPattern(String excludeFilesPattern) {
         this.excludeFilesPattern = excludeFilesPattern;
     }
 
@@ -88,7 +88,7 @@ public class DownloadServiceData extends ServiceData {
         return downloadDirLoc;
     }
 
-    public void setDownloadDirLoc(final String downloadDirLoc) {
+    public void setDownloadDirLoc(String downloadDirLoc) {
         this.downloadDirLoc = downloadDirLoc;
     }
 
@@ -96,7 +96,7 @@ public class DownloadServiceData extends ServiceData {
         return flattenDirectories;
     }
 
-    public void setFlattenDirectories(final boolean flattenDirectories) {
+    public void setFlattenDirectories(boolean flattenDirectories) {
         this.flattenDirectories = flattenDirectories;
     }
 
@@ -104,7 +104,7 @@ public class DownloadServiceData extends ServiceData {
         return containerName;
     }
 
-    public void setContainerName(final String containerName) {
+    public void setContainerName(String containerName) {
         this.containerName = containerName;
     }
 
@@ -112,7 +112,7 @@ public class DownloadServiceData extends ServiceData {
         return deleteFromAzureAfterDownload;
     }
 
-    public void setDeleteFromAzureAfterDownload(final boolean deleteFromAzureAfterDownload) {
+    public void setDeleteFromAzureAfterDownload(boolean deleteFromAzureAfterDownload) {
         this.deleteFromAzureAfterDownload = deleteFromAzureAfterDownload;
     }
 
@@ -120,7 +120,7 @@ public class DownloadServiceData extends ServiceData {
         return downloadType;
     }
 
-    public void setDownloadType(final String downloadType) {
+    public void setDownloadType(String downloadType) {
         this.downloadType = downloadType;
     }
 
@@ -128,7 +128,7 @@ public class DownloadServiceData extends ServiceData {
         return projectName;
     }
 
-    public void setProjectName(final String projectName) {
+    public void setProjectName(String projectName) {
         this.projectName = projectName;
     }
 
@@ -136,7 +136,7 @@ public class DownloadServiceData extends ServiceData {
         return buildSelector;
     }
 
-    public void setBuildSelector(final BuildSelector buildSelector) {
+    public void setBuildSelector(BuildSelector buildSelector) {
         this.buildSelector = buildSelector;
     }
 
@@ -144,7 +144,7 @@ public class DownloadServiceData extends ServiceData {
         return includeArchiveZips;
     }
 
-    public void setIncludeArchiveZips(final boolean includeArchiveZips) {
+    public void setIncludeArchiveZips(boolean includeArchiveZips) {
         this.includeArchiveZips = includeArchiveZips;
     }
 
@@ -152,7 +152,7 @@ public class DownloadServiceData extends ServiceData {
         return fileShare;
     }
 
-    public void setFileShare(final String fileShare) {
+    public void setFileShare(String fileShare) {
         this.fileShare = fileShare;
     }
 }

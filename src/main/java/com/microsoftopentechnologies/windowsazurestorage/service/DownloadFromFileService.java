@@ -18,10 +18,10 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.file.CloudFile;
+import com.microsoft.azure.storage.file.CloudFileClient;
 import com.microsoft.azure.storage.file.CloudFileDirectory;
 import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoft.azure.storage.file.ListFileItem;
-import com.microsoft.azure.storage.file.CloudFileClient;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -31,7 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
 public class DownloadFromFileService extends DownloadService {
-    public DownloadFromFileService(final DownloadServiceData data) {
+    public DownloadFromFileService(DownloadServiceData data) {
         super(data);
     }
 
@@ -54,7 +54,7 @@ public class DownloadFromFileService extends DownloadService {
         return filesDownloaded;
     }
 
-    private int downloadFileItems(final Iterable<ListFileItem> fileItems) throws WAStorageException {
+    private int downloadFileItems(Iterable<ListFileItem> fileItems) throws WAStorageException {
         final DownloadServiceData data = getServiceData();
         int filesDownloaded = 0;
         for (final ListFileItem fileItem : fileItems) {

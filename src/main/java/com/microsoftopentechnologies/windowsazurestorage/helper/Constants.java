@@ -6,14 +6,13 @@
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 /**
- *
  * @author arroyc
  */
 public final class Constants {
     public static final String BLOB_STORAGE = "blobstorage";
     public static final String FILE_STORAGE = "filestorage";
 
-    public static boolean isValidStorageType(final String storageType) {
+    public static boolean isValidStorageType(String storageType) {
         if (storageType != null) {
             return storageType.equals(BLOB_STORAGE) || storageType.equals(FILE_STORAGE);
         } else {
@@ -25,7 +24,7 @@ public final class Constants {
     public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
 
     /**
-     * Regular expression for valid file share name
+     * Regular expression for valid file share name.
      */
     public static final String VAL_SHARE_NAME = "^[a-z0-9]((-(?=[a-z\\d]))|[a-z0-9]){2,62}$";
 

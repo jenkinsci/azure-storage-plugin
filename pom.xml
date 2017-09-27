@@ -22,6 +22,7 @@
         <findbugs.failOnError>true</findbugs.failOnError>
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
+        <azure-commons.version>0.1.1</azure-commons.version>
     </properties>
 
     <licenses>
@@ -106,7 +107,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>azure-commons</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${azure-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -198,7 +199,7 @@
                         <id>validate</id>
                         <phase>validate</phase>
                         <goals>
-                            <goal>checkstyle</goal>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -206,7 +207,6 @@
                     <configLocation>checkstyle.xml</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
-                    <failsOnError>true</failsOnError>
                     <!--
                     Exclude the generated sources.
 

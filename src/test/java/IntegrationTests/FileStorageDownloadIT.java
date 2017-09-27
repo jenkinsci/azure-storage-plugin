@@ -52,6 +52,8 @@ public class FileStorageDownloadIT extends IntegrationTest {
     @Before
     public void setUp() throws IOException {
         try {
+            disableAI();
+
             final String fileShareName = "testshare" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(fileShareName);
 

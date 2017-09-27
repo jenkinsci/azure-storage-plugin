@@ -1,17 +1,17 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import java.util.List;
-
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Run;
+
+import java.util.List;
 
 public class AzureBlobProjectAction implements Action {
     private static final int MAX_RESULTS_DISPLAY = 100;
 
     private final AbstractProject<?, ?> project;
 
-    public AzureBlobProjectAction(final AbstractProject<?, ?> project) {
+    public AzureBlobProjectAction(AbstractProject<?, ?> project) {
         this.project = project;
     }
 
