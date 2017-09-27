@@ -27,6 +27,7 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
 public class DownloadFromFileService extends DownloadService {
@@ -42,7 +43,7 @@ public class DownloadFromFileService extends DownloadService {
             final CloudFileShare cloudFileShare = getCloudFileShare();
             final CloudFileDirectory cloudFileDirectory = cloudFileShare.getRootDirectoryReference();
             filesDownloaded = downloadFileItems(cloudFileDirectory.listFilesAndDirectories());
-        } catch (StorageException | URISyntaxException | WAStorageException e) {
+        } catch (StorageException | URISyntaxException | MalformedURLException | WAStorageException e) {
             final String message = Messages.AzureStorageBuilder_download_err(
                     getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
             e.printStackTrace(error(message));
@@ -74,7 +75,7 @@ public class DownloadFromFileService extends DownloadService {
 
 
     private CloudFileShare getCloudFileShare()
-            throws URISyntaxException, StorageException, WAStorageException {
+            throws URISyntaxException, MalformedURLException, StorageException, WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         final CloudStorageAccount cloudStorageAccount =
                 AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());

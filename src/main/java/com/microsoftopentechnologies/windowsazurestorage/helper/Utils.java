@@ -29,19 +29,8 @@ import java.util.Locale;
 
 public final class Utils {
 
-    /* Regular expression for valid container name */
-    public static final String VAL_CNT_NAME = "^(([a-z\\d]((-(?=[a-z\\d]))|([a-z\\d])){2,62}))$";
-
-    /* Regular expression to match tokens in the format of $TOKEN or ${TOKEN} */
-    public static final String TOKEN_FORMAT = "\\$([A-Za-z0-9_]+|\\{[A-Za-z0-9_]+\\})";
-
     public static final String DEF_BLOB_URL = "http://blob.core.windows.net/";
     public static final String BLOB_ENDPOINT_ENDSUFFIX_KEYWORD = "core";
-    public static final String FWD_SLASH = "/";
-    public static final String HTTP_PRT = "http://";
-    // http Protocol separator
-    public static final String PRT_SEP = "://";
-
     public static final int BLOB_NAME_LENGTH_LIMIT = 1024;
 
     /**
@@ -51,13 +40,18 @@ public final class Utils {
      * character. 2.Every dash (-) character must be immediately preceded and
      * followed by a letter or number; consecutive dashes are not permitted in
      * container names. 3.All letters in a container name must be lowercase.
-     * 4.Container names must be from 3 through 63 characters long.
+     * 4.Container names must be from 3 through 63 characters long. 5.Root
+     * container is specially treated.
      *
      * @param containerName Name of the Windows Azure storage container
      * @return true if container name is valid else returns false
      */
     public static boolean validateContainerName(final String containerName) {
         if (containerName != null) {
+            if (containerName.equals(Constants.ROOT_CONTAINER)) {
+                return true;
+            }
+
             String lcContainerName = containerName.trim().toLowerCase(
                     Locale.ENGLISH);
             if (lcContainerName.matches(Constants.VAL_CNT_NAME)) {

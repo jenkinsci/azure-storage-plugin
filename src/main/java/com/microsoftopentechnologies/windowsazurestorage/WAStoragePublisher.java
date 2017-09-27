@@ -230,7 +230,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     public String getStorageType() {
-        return storageType;
+        if (Constants.isValidStorageType(storageType)) {
+            return storageType;
+        } else {
+            // Assume blob storage for old job configuration
+            return Constants.BLOB_STORAGE;
+        }
     }
 
     /**
@@ -391,8 +396,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
 
         // Resolve container name or share name
-        final String expContainerName = replaceMacro(containerName, envVars, Locale.ENGLISH);
-        final String expShareName = replaceMacro(fileShareName, envVars, Locale.ENGLISH);
+        final String expContainerName = replaceMacro(Util.fixNull(containerName), envVars, Locale.ENGLISH);
+        final String expShareName = replaceMacro(Util.fixNull(fileShareName), envVars, Locale.ENGLISH);
 
         if (!validateData(run, listener, storageAccountInfo, expContainerName, expShareName)) {
             throw new IOException("Plugin can not continue, until previous errors are addressed");
@@ -401,15 +406,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         final UploadServiceData serviceData = new UploadServiceData(run, ws, launcher, listener, storageAccountInfo);
         serviceData.setContainerName(expContainerName);
         serviceData.setFileShareName(expShareName);
-        serviceData.setFilePath(replaceMacro(filesPath, envVars));
-        serviceData.setExcludedFilesPath(replaceMacro(excludeFilesPath, envVars));
+        serviceData.setFilePath(replaceMacro(Util.fixNull(filesPath), envVars));
+        serviceData.setExcludedFilesPath(replaceMacro(Util.fixNull(excludeFilesPath), envVars));
         serviceData.setBlobProperties(blobProperties);
         serviceData.setPubAccessible(pubAccessible);
         serviceData.setCleanUpContainerOrShare(cleanUpContainerOrShare);
         serviceData.setUploadType(getArtifactUploadType());
         serviceData.setAzureBlobMetadata(metadata);
         // Resolve virtual path
-        String expVP = replaceMacro(virtualPath, envVars);
+        String expVP = replaceMacro(Util.fixNull(virtualPath), envVars);
 
         if (!(StringUtils.isBlank(expVP) || expVP.endsWith(Constants.FWD_SLASH))) {
             expVP += Constants.FWD_SLASH;
