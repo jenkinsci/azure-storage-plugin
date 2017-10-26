@@ -23,11 +23,11 @@ public class WAStorageException extends Exception {
         super();
     }
 
-    public WAStorageException(final String message, final Throwable cause) {
+    public WAStorageException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public WAStorageException(final String message) {
+    public WAStorageException(String message) {
         super(message);
     }
 }

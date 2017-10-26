@@ -46,7 +46,7 @@ public final class Utils {
      * @param containerName Name of the Windows Azure storage container
      * @return true if container name is valid else returns false
      */
-    public static boolean validateContainerName(final String containerName) {
+    public static boolean validateContainerName(String containerName) {
         if (containerName != null) {
             if (containerName.equals(Constants.ROOT_CONTAINER)) {
                 return true;
@@ -71,22 +71,22 @@ public final class Utils {
      * @param fileShareName
      * @return
      */
-    public static boolean validateFileShareName(final String fileShareName) {
+    public static boolean validateFileShareName(String fileShareName) {
         return StringUtils.isNotBlank(fileShareName) && fileShareName.matches(Constants.VAL_SHARE_NAME);
     }
 
-    public static boolean validateBlobName(final String blobName) {
+    public static boolean validateBlobName(String blobName) {
         return blobName != null && (blobName.length() > 0 && blobName.length() <= BLOB_NAME_LENGTH_LIMIT);
     }
 
     /**
      * This method checks if text contains tokens in the form of $TOKEN or
-     * ${TOKEN}
+     * ${TOKEN}.
      *
      * @param text
      * @return true if tokens exist in input string
      */
-    public static boolean containTokens(final String text) {
+    public static boolean containTokens(String text) {
         if (StringUtils.isBlank(text)) {
             return false;
         }
@@ -101,7 +101,7 @@ public final class Utils {
      * @return DEF_BLOB_URL if blobURL is empty or blobURL is default one else
      * returns formatted blob url.
      */
-    public static String getBlobEP(final String blobURL) {
+    public static String getBlobEP(String blobURL) {
 
         if (StringUtils.isBlank(blobURL)) {
             return Constants.DEF_BLOB_URL;
@@ -122,7 +122,7 @@ public final class Utils {
     }
 
     /**
-     * Returns default blob url
+     * Returns default blob url.
      *
      * @return
      */
@@ -136,12 +136,12 @@ public final class Utils {
     }
 
     /**
-     * Returns md5 hash in string format for a given string
+     * Returns md5 hash in string format for a given string.
      *
      * @param plainText
      * @return
      */
-    public static String getMD5(final String plainText) {
+    public static String getMD5(String plainText) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance(Constants.HASH_TYPE);
             byte[] array = md.digest(plainText.getBytes(Charset.forName("UTF-8")));

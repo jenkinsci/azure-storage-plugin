@@ -46,12 +46,12 @@ import java.security.MessageDigest;
 public class UploadToBlobService extends UploadService {
 
 
-    public UploadToBlobService(final UploadServiceData serviceData) {
+    public UploadToBlobService(UploadServiceData serviceData) {
         super(serviceData);
     }
 
     @Override
-    protected void uploadArchive(final String archiveIncludes)
+    protected void uploadArchive(String archiveIncludes)
             throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
@@ -91,7 +91,7 @@ public class UploadToBlobService extends UploadService {
     }
 
     @Override
-    protected void uploadIndividuals(final String embeddedVP, final FilePath[] paths)
+    protected void uploadIndividuals(String embeddedVP, FilePath[] paths)
             throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
@@ -140,7 +140,7 @@ public class UploadToBlobService extends UploadService {
      * @throws InterruptedException
      * @returns Md5 hash of the uploaded file in hexadecimal encoding
      */
-    private String uploadBlob(final CloudBlockBlob blob, final FilePath src)
+    private String uploadBlob(CloudBlockBlob blob, FilePath src)
             throws StorageException, IOException, InterruptedException {
         final MessageDigest md = DigestUtils.getMd5Digest();
         long startTime = System.currentTimeMillis();
@@ -176,13 +176,13 @@ public class UploadToBlobService extends UploadService {
     }
 
     /**
-     * Deletes contents of container
+     * Deletes contents of container.
      *
      * @param blobItems list of blobs to delete
      * @throws StorageException
      * @throws URISyntaxException
      */
-    private void deleteBlobs(final Iterable<ListBlobItem> blobItems)
+    private void deleteBlobs(Iterable<ListBlobItem> blobItems)
             throws StorageException, URISyntaxException, IOException {
 
         for (ListBlobItem blobItem : blobItems) {

@@ -46,7 +46,7 @@ public class DownloadFromBuildService extends DownloadService {
     private CloudBlobContainer cloudBlobContainer;
     private CloudFileShare cloudFileShare;
 
-    public DownloadFromBuildService(final DownloadServiceData data) {
+    public DownloadFromBuildService(DownloadServiceData data) {
         super(data);
     }
 
@@ -82,7 +82,7 @@ public class DownloadFromBuildService extends DownloadService {
         return filesDownloaded;
     }
 
-    private int downloadArtifacts(final Run<?, ?> source) {
+    private int downloadArtifacts(Run<?, ?> source) {
         final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
         try {
@@ -101,7 +101,7 @@ public class DownloadFromBuildService extends DownloadService {
         return filesDownloaded;
     }
 
-    private int downloadBlobs(final List<AzureBlob> azureBlobs) throws WAStorageException {
+    private int downloadBlobs(List<AzureBlob> azureBlobs) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
         println(Messages.AzureStorageBuilder_downloading());

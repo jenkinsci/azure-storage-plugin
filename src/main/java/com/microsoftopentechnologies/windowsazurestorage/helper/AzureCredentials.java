@@ -47,9 +47,9 @@ public class AzureCredentials extends BaseStandardCredentials {
         private final String blobEndpointURL;
 
         public StorageAccountCredential(
-                final String storageAccountName,
-                final String storageKey,
-                final String endpointURL) {
+                String storageAccountName,
+                String storageKey,
+                String endpointURL) {
             this.storageAccountName = storageAccountName;
             this.storageAccountKey = Secret.fromString(storageKey);
             String url = endpointURL;
@@ -108,19 +108,19 @@ public class AzureCredentials extends BaseStandardCredentials {
 
     @DataBoundConstructor
     public AzureCredentials(
-            final CredentialsScope scope,
-            final String id,
-            final String description,
-            final String storageAccountName,
-            final String storageKey,
-            final String blobEndpointURL
+            CredentialsScope scope,
+            String id,
+            String description,
+            String storageAccountName,
+            String storageKey,
+            String blobEndpointURL
     ) {
         super(scope, id, description);
         storageData = new StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
     }
 
     public static AzureCredentials.StorageAccountCredential getStorageAccountCredential(
-            final String storageCredentialId) {
+            String storageCredentialId) {
         if (storageCredentialId == null) {
             return null;
         }
@@ -138,8 +138,8 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public static AzureCredentials.StorageAccountCredential getStorageCreds(
-            final String credentialsId,
-            final String storageAccName) {
+            String credentialsId,
+            String storageAccName) {
         try {
             if (credentialsId != null) {
                 AzureCredentials.StorageAccountCredential credentials =
@@ -195,9 +195,9 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
 
         public FormValidation doVerifyConfiguration(
-                @QueryParameter final String storageAccountName,
-                @QueryParameter final Secret storageKey,
-                @QueryParameter final String blobEndpointURL) {
+                @QueryParameter String storageAccountName,
+                @QueryParameter Secret storageKey,
+                @QueryParameter String blobEndpointURL) {
 
             try {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
@@ -214,7 +214,7 @@ public class AzureCredentials extends BaseStandardCredentials {
 
     }
 
-    public static StorageAccountInfo convertToStorageAccountInfo(final StorageAccountCredential storageCreds) {
+    public static StorageAccountInfo convertToStorageAccountInfo(StorageAccountCredential storageCreds) {
         StorageAccountInfo storageAccount = new StorageAccountInfo(storageCreds.getStorageAccountName(),
                 storageCreds.getStorageAccountKey(), storageCreds.getEndpointURL());
         return storageAccount;

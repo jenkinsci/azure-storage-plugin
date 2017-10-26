@@ -17,11 +17,11 @@ public class AzureBlob implements Serializable {
     private final String storageType;
 
     public AzureBlob(
-            final String blobName,
-            final String blobURL,
-            final String md5,
-            final long byteSize,
-            final String storageType) {
+            String blobName,
+            String blobURL,
+            String md5,
+            long byteSize,
+            String storageType) {
         this.blobName = blobName;
         this.blobURL = blobURL;
         this.md5 = md5;

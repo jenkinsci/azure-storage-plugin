@@ -41,11 +41,11 @@ public class UploadServiceData extends ServiceData {
     private List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
     private List<AzureBlobMetadataPair> azureBlobMetadata;
 
-    public UploadServiceData(final Run<?, ?> run,
-                             final FilePath workspace,
-                             final Launcher launcher,
-                             final TaskListener taskListener,
-                             final StorageAccountInfo storageAccountInfo) {
+    public UploadServiceData(Run<?, ?> run,
+                             FilePath workspace,
+                             Launcher launcher,
+                             TaskListener taskListener,
+                             StorageAccountInfo storageAccountInfo) {
         super(run, workspace, launcher, taskListener, storageAccountInfo);
     }
 
@@ -54,7 +54,7 @@ public class UploadServiceData extends ServiceData {
         return containerName;
     }
 
-    public void setContainerName(final String containerName) {
+    public void setContainerName(String containerName) {
         this.containerName = containerName;
     }
 
@@ -62,7 +62,7 @@ public class UploadServiceData extends ServiceData {
         return blobProperties;
     }
 
-    public void setBlobProperties(final AzureBlobProperties blobProperties) {
+    public void setBlobProperties(AzureBlobProperties blobProperties) {
         this.blobProperties = blobProperties;
     }
 
@@ -75,7 +75,7 @@ public class UploadServiceData extends ServiceData {
         return pubAccessible;
     }
 
-    public void setPubAccessible(final boolean pubAccessible) {
+    public void setPubAccessible(boolean pubAccessible) {
         this.pubAccessible = pubAccessible;
     }
 
@@ -83,7 +83,7 @@ public class UploadServiceData extends ServiceData {
         return cleanUpContainerOrShare;
     }
 
-    public void setCleanUpContainerOrShare(final boolean cleanUpContainerOrShare) {
+    public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
         this.cleanUpContainerOrShare = cleanUpContainerOrShare;
     }
 
@@ -91,7 +91,7 @@ public class UploadServiceData extends ServiceData {
         return filePath;
     }
 
-    public void setFilePath(final String filePath) {
+    public void setFilePath(String filePath) {
         this.filePath = filePath;
     }
 
@@ -99,7 +99,7 @@ public class UploadServiceData extends ServiceData {
         return virtualPath;
     }
 
-    public void setVirtualPath(final String virtualPath) {
+    public void setVirtualPath(String virtualPath) {
         this.virtualPath = virtualPath;
     }
 
@@ -107,7 +107,7 @@ public class UploadServiceData extends ServiceData {
         return excludedFilesPath;
     }
 
-    public void setExcludedFilesPath(final String excludedFilesPath) {
+    public void setExcludedFilesPath(String excludedFilesPath) {
         this.excludedFilesPath = excludedFilesPath;
     }
 
@@ -115,7 +115,7 @@ public class UploadServiceData extends ServiceData {
         return uploadType;
     }
 
-    public void setUploadType(final UploadType uploadType) {
+    public void setUploadType(UploadType uploadType) {
         this.uploadType = uploadType;
     }
 
@@ -131,7 +131,7 @@ public class UploadServiceData extends ServiceData {
         return azureBlobMetadata;
     }
 
-    public void setAzureBlobMetadata(final List<AzureBlobMetadataPair> azureBlobMetadata) {
+    public void setAzureBlobMetadata(List<AzureBlobMetadataPair> azureBlobMetadata) {
         this.azureBlobMetadata = azureBlobMetadata;
     }
 
@@ -139,7 +139,7 @@ public class UploadServiceData extends ServiceData {
         return fileShareName;
     }
 
-    public void setFileShareName(final String fileShareName) {
+    public void setFileShareName(String fileShareName) {
         this.fileShareName = fileShareName;
     }
 }
