@@ -125,10 +125,6 @@ public class FileStorageDownloadIT extends IntegrationTest {
 
     @After
     public void tearDown() throws StorageException {
-        if (testEnv.fileShare != null) {
-            testEnv.fileShare.deleteIfExists();
-        }
-
         for (File file : testEnv.downloadFileList.values()) {
             if (file.getParentFile().exists()) {
                 try {
@@ -137,6 +133,10 @@ public class FileStorageDownloadIT extends IntegrationTest {
                     e.printStackTrace();
                 }
             }
+        }
+
+        if (testEnv.fileShare != null) {
+            testEnv.fileShare.deleteIfExists();
         }
         testEnv.downloadFileList.clear();
     }
