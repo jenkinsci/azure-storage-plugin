@@ -44,8 +44,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.Map;
 
 public class UploadToFileService extends UploadService {
     public UploadToFileService(UploadServiceData serviceData) {
@@ -72,6 +70,10 @@ public class UploadToFileService extends UploadService {
                 serviceData.getIndividualBlobs().add(azureBlob);
             }
         } catch (URISyntaxException | StorageException | IOException | InterruptedException e) {
+            String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
+                    "StorageAccount", storageAcc,
+                    "Message", e.getMessage());
             throw new WAStorageException("fail to upload individual files to azure file storage", e);
         }
     }
@@ -111,12 +113,17 @@ public class UploadToFileService extends UploadService {
 
             tempDir.deleteRecursive();
         } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {
+            String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
+                    "StorageAccount", storageAcc,
+                    "Message", e.getMessage());
             throw new WAStorageException("Fail to upload individual files to blob", e);
         }
     }
 
     private String uploadCloudFile(CloudFile cloudFile, FilePath localPath)
             throws WAStorageException {
+        String hashedStorageAcc = AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName());
         try {
             ensureDirExist(cloudFile.getParent());
             cloudFile.setMetadata(updateMetadata(cloudFile.getMetadata()));
@@ -135,15 +142,16 @@ public class UploadToFileService extends UploadService {
             long endTime = System.currentTimeMillis();
 
             // send AI event.
-            Map<String, String> properties = new HashMap<>();
-            properties.put("StorageAccount",
-                    AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName()));
-            properties.put("ContentLength", String.valueOf(localPath.length()));
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD, properties);
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD,
+                    "StorageAccount", hashedStorageAcc,
+                    "ContentLength", String.valueOf(localPath.length()));
 
             println("Uploaded blob with uri " + cloudFile.getUri() + " in " + getTime(endTime - startTime));
             return DatatypeConverter.printHexBinary(md.digest());
         } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
+                    "StorageAccount", hashedStorageAcc,
+                    "Message", e.getMessage());
             throw new WAStorageException("fail to upload file to azure file storage", e);
         }
 

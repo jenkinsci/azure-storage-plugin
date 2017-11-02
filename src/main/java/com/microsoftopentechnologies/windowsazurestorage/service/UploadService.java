@@ -35,6 +35,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     protected static final String ZIP_FOLDER_NAME = "artifactsArchive";
     protected static final String ZIP_NAME = "archive.zip";
     protected static final String UPLOAD = "Upload";
+    protected static final String UPLOAD_FAILED = "UploadFailed";
 
     protected UploadService(UploadServiceData serviceData) {
         super(serviceData);
