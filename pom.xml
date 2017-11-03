@@ -22,6 +22,7 @@
         <findbugs.failOnError>true</findbugs.failOnError>
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
+        <azure-commons.version>0.1.4</azure-commons.version>
     </properties>
 
     <licenses>
@@ -105,6 +106,11 @@
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>azure-commons</artifactId>
+            <version>${azure-commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
             <version>1.6</version>
             <optional>true</optional>
@@ -152,6 +158,11 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
+                    <maskClasses>
+                        com.microsoft.azure.management.
+                        com.google.common.
+                    </maskClasses>
                     <compatibleSinceVersion />
                 </configuration>
             </plugin>

@@ -21,16 +21,23 @@ import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoft.azure.storage.file.CloudFile;
 import com.microsoft.azure.storage.file.FileRequestOptions;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
+import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.FilePath;
 import org.springframework.util.AntPathMatcher;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 
 public abstract class DownloadService extends StoragePluginService<DownloadServiceData> {
+
+    protected static final String DOWNLOAD = "Download";
+    protected static final String DOWNLOAD_FAILED = "DownloadFailed";
 
     public DownloadService(DownloadServiceData data) {
         super(data);
@@ -72,47 +79,70 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     protected void downloadSingleFile(CloudFile cloudFile) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
+        String hashedStorageAcc = AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName());
         try {
             println("Downloading file:" + cloudFile.getUri().toString());
             final FilePath destFile = destinationFilePath(cloudFile.getName());
 
             final long startTime = System.currentTimeMillis();
+            cloudFile.downloadAttributes();
             try (OutputStream fos = destFile.write()) {
-                cloudFile.download(fos, null, new FileRequestOptions(), Utils.updateUserAgent());
+                cloudFile.download(fos, null, new FileRequestOptions(),
+                        Utils.updateUserAgent(cloudFile.getProperties().getLength()));
             }
             final long endTime = System.currentTimeMillis();
             println(String.format(
                     "blob %s is downloaded to %s in %s",
                     cloudFile.getName(), destFile.getParent(), getTime(endTime - startTime)));
 
+            // send AI event.
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, DOWNLOAD,
+                    "StorageAccount", hashedStorageAcc,
+                    "ContentLength", String.valueOf(cloudFile.getProperties().getLength()));
+
             if (serviceData.isDeleteFromAzureAfterDownload()) {
                 cloudFile.deleteIfExists();
                 println("cloud file " + cloudFile.getName() + " is deleted from Azure.");
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException | StorageException e) {
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, DOWNLOAD_FAILED,
+                    "StorageAccount", hashedStorageAcc,
+                    "ContentLength", String.valueOf(cloudFile.getProperties().getLength()),
+                    "Message", e.getMessage());
             throw new WAStorageException(e.getMessage(), e);
         }
     }
 
-    protected void downloadBlob(CloudBlob blob)
-            throws WAStorageException {
+    protected void downloadBlob(CloudBlob blob) throws WAStorageException {
+        String hashedStorageAcc = AppInsightsUtils.hash(blob.getServiceClient().getCredentials().getAccountName());
         try {
             println("Downloading file:" + blob.getUri().toString());
 
             final FilePath destFile = destinationFilePath(blob.getName());
             final long startTime = System.currentTimeMillis();
+            blob.downloadAttributes();
             try (OutputStream fos = destFile.write()) {
-                blob.download(fos, null, getBlobRequestOptions(), Utils.updateUserAgent());
+                blob.download(fos, null, getBlobRequestOptions(),
+                        Utils.updateUserAgent(blob.getProperties().getLength()));
             }
             final long endTime = System.currentTimeMillis();
             println(String.format("blob %s is downloaded to %s in %s",
                     blob.getName(), destFile.getParent(), getTime(endTime - startTime)));
 
+            // send AI event.
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, DOWNLOAD,
+                    "StorageAccount", hashedStorageAcc,
+                    "ContentLength", String.valueOf(blob.getProperties().getLength()));
+
             if (getServiceData().isDeleteFromAzureAfterDownload()) {
                 blob.deleteIfExists();
                 println("blob " + blob.getName() + " is deleted from Azure.");
             }
-        } catch (Exception e) {
+        } catch (IOException | StorageException | InterruptedException e) {
+            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, DOWNLOAD_FAILED,
+                    "StorageAccount", hashedStorageAcc,
+                    "ContentLength", String.valueOf(blob.getProperties().getLength()),
+                    "Message", e.getMessage());
             throw new WAStorageException(e.getMessage(), e);
         }
     }

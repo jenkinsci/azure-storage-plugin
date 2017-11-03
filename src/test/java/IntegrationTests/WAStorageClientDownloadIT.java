@@ -37,6 +37,8 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
     @Before
     public void setUp() throws IOException {
         try {
+            disableAI();
+
             String containerName = "testdownload" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(containerName);
             testEnv.account = new CloudStorageAccount(new StorageCredentialsAccountAndKey(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1));

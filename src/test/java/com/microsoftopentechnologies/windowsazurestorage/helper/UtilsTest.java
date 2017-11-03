@@ -8,19 +8,21 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.core.BaseRequest;
 import jenkins.model.Jenkins;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import static org.junit.Assert.assertEquals;
+
 /**
- *
  * @author arroyc
  */
 public class UtilsTest {
-    
-    @ClassRule public static JenkinsRule j = new JenkinsRule();
+
+    @ClassRule
+    public static JenkinsRule j = new JenkinsRule();
+
     /**
      * Test of validateContainerName method, of class Utils.
      */
@@ -37,7 +39,7 @@ public class UtilsTest {
         System.out.println("validateBlobName");
         boolean expResult = false;
         assertEquals(expResult, Utils.validateBlobName(null));
-        
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 1025; i++) {
             try {
@@ -137,12 +139,27 @@ public class UtilsTest {
     @Test
     public void testUpdateUserAgent() throws Exception {
         System.out.println("updateUserAgent");
-        String version = Utils.getPluginVersion() == null ? "local" : Utils.getPluginVersion() ;
-        
+        String version = Utils.getPluginVersion() == null ? "local" : Utils.getPluginVersion();
+
         String expResult = Constants.PLUGIN_NAME + "/" + version + "/" + Utils.getPluginInstance() + "/" + BaseRequest.getUserAgent();
         OperationContext result = Utils.updateUserAgent();
         String actualResult = result.getUserHeaders().get("User-Agent");
-        
+
+        assertEquals(expResult, actualResult);
+    }
+
+    /**
+     * Test of updateUserAgent method, of class Utils.
+     */
+    @Test
+    public void testUpdateUserAgentWithContentLength() throws Exception {
+        System.out.println("updateUserAgentWithContentLength");
+        String version = Utils.getPluginVersion() == null ? "local" : Utils.getPluginVersion();
+        final long contentLength = 65535L;
+        String expResult = Constants.PLUGIN_NAME + "/" + version + "/" + Utils.getPluginInstance() + "/ContentLength/" + contentLength + "/" + BaseRequest.getUserAgent();
+        OperationContext result = Utils.updateUserAgent(contentLength);
+        String actualResult = result.getUserHeaders().get("User-Agent");
+
         assertEquals(expResult, actualResult);
     }
 
@@ -167,5 +184,5 @@ public class UtilsTest {
         String result = Utils.getPluginVersion();
         assertEquals(expResult, result);
     }
-    
+
 }

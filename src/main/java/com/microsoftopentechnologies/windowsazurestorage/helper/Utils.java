@@ -188,11 +188,12 @@ public final class Utils {
     }
 
     public static OperationContext updateUserAgent() throws IOException {
+        return updateUserAgent(null);
+    }
 
-        String userInfo = BaseRequest.getUserAgent();
+    public static OperationContext updateUserAgent(final Long contentLength) throws IOException {
         String version = null;
         String instanceId = null;
-
         try {
             version = Utils.getPluginVersion();
             if (version == null) {
@@ -202,17 +203,22 @@ public final class Utils {
         } catch (Exception e) {
         }
 
-        String pluginInfo = Constants.PLUGIN_NAME + "/" + version + "/" + instanceId;
-
-        if (userInfo == null) {
-            userInfo = pluginInfo;
+        String pluginUserAgent;
+        if (contentLength == null) {
+            pluginUserAgent = String.format("%s/%s/%s", Constants.PLUGIN_NAME, version, instanceId);
         } else {
-            userInfo = pluginInfo + "/" + userInfo;
+            pluginUserAgent = String.format("%s/%s/%s/ContentLength/%s",
+                    Constants.PLUGIN_NAME, version, instanceId, contentLength.toString());
+        }
+
+        final String baseUserAgent = BaseRequest.getUserAgent();
+        if (baseUserAgent != null) {
+            pluginUserAgent = pluginUserAgent + "/" + baseUserAgent;
         }
 
         OperationContext opContext = new OperationContext();
         HashMap<String, String> temp = new HashMap<String, String>();
-        temp.put("User-Agent", userInfo);
+        temp.put("User-Agent", pluginUserAgent);
 
         opContext.setUserHeaders(temp);
         return opContext;

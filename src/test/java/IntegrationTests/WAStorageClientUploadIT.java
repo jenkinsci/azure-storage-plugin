@@ -49,6 +49,8 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Before
     public void setUp() throws IOException {
         try {
+            disableAI();
+
             containerName = "testupload" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(containerName);
             File directory = new File(containerName);
