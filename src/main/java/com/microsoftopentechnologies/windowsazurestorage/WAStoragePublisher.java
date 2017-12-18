@@ -75,8 +75,8 @@ import java.util.Map;
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final transient String storageAccName;
     private final String storageType;
-    private final String containerName;
-    private final String fileShareName;
+    private String containerName;
+    private String fileShareName;
     private AzureBlobProperties blobProperties;
     private List<AzureBlobMetadataPair> metadata;
     /**
@@ -130,7 +130,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.storageAccName = this.storageCreds.getStorageAccountName();
     }
 
-    @DataBoundConstructor
+    @Deprecated
     public WAStoragePublisher(String storageCredentialId, String filesPath,
                               String storageType, String containerName, String fileShareName) {
         super();
@@ -141,6 +141,26 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.storageCredentialId = storageCredentialId;
         this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
         this.storageAccName = this.storageCreds.getStorageAccountName();
+    }
+
+    @DataBoundConstructor
+    public WAStoragePublisher(String storageCredentialId, String filesPath, String storageType) {
+        super();
+        this.filesPath = filesPath.trim();
+        this.storageType = storageType;
+        this.storageCredentialId = storageCredentialId;
+        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
+        this.storageAccName = this.storageCreds.getStorageAccountName();
+    }
+
+    @DataBoundSetter
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
+    }
+
+    @DataBoundSetter
+    public void setFileShareName(String fileShareName) {
+        this.fileShareName = fileShareName;
     }
 
     @DataBoundSetter
