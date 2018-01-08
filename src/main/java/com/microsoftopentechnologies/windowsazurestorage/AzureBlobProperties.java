@@ -97,7 +97,6 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
             } else {
                 return tika.detect(stream, file.getName());
             }
-
         }
     }
 
