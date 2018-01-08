@@ -90,7 +90,13 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
     private String detectContentType(FilePath file) throws InterruptedException, IOException {
         Tika tika = new Tika();
         try (InputStream stream = file.read()) {
-            return tika.detect(stream, file.getName());
+            if (file.getName().toLowerCase().endsWith(".js")) {
+                // Tika has a shortcoming not able to properly identify JavaScript files, determine type by extension
+                // rather than Tika for those.
+                return "application/javascript";
+            } else {
+                return tika.detect(stream, file.getName());
+            }
         }
     }
 
