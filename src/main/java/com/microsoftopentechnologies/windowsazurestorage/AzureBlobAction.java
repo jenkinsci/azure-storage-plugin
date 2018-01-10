@@ -24,6 +24,8 @@ public class AzureBlobAction implements RunAction {
     private final Run build;
     private final String storageAccountName;
     private final String containerName;
+    private final String fileShareName;
+    private final String storageType;
     private final boolean allowAnonymousAccess;
     private final AzureBlob zipArchiveBlob;
     private final List<AzureBlob> individualBlobs;
@@ -33,12 +35,16 @@ public class AzureBlobAction implements RunAction {
             Run build,
             String storageAccountName,
             String containerName,
+            String shareName,
+            String storageType,
             List<AzureBlob> individualBlobs,
             AzureBlob zipArchiveBlob,
             boolean allowAnonymousAccess,
             String storageCredentialId) {
         this.storageAccountName = storageAccountName;
         this.containerName = containerName;
+        this.fileShareName = shareName;
+        this.storageType = storageType;
         this.individualBlobs = individualBlobs;
         this.allowAnonymousAccess = allowAnonymousAccess;
         this.zipArchiveBlob = zipArchiveBlob;
@@ -115,7 +121,7 @@ public class AzureBlobAction implements RunAction {
 
         if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
             String url = request.getOriginalRequestURI();
-            response.sendRedirect("/login?from=" + url);
+            response.sendRedirect(request.getContextPath() + "/login?from=" + url);
             return;
         }
 
@@ -131,7 +137,7 @@ public class AzureBlobAction implements RunAction {
         if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-                        + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
+                        + generateSASURL(accountInfo, blobName));
             } catch (Exception e) {
                 response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                         "Error occurred while downloading artifact " + e.getMessage());
@@ -143,7 +149,7 @@ public class AzureBlobAction implements RunAction {
             if (blob.getBlobName().equals(blobName)) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
-                            + AzureUtils.generateSASURL(accountInfo, containerName, blobName));
+                            + generateSASURL(accountInfo, blobName));
                 } catch (Exception e) {
                     response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                             "Error occurred while downloading artifact " + e.getMessage());
@@ -153,6 +159,16 @@ public class AzureBlobAction implements RunAction {
         }
 
         response.sendError(Constants.HTTP_NOT_FOUND, "Azure artifact is not available");
+    }
+
+    private String generateSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
+        if (storageType.equalsIgnoreCase(Constants.BLOB_STORAGE)) {
+            return  AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName);
+        } else if (storageType.equalsIgnoreCase(Constants.FILE_STORAGE)) {
+            return  AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName);
+        }
+
+        throw new Exception("Unknown storage type. Please re-configure your job and build again.");
     }
 
     public boolean isAnonymousAccess(Authentication auth) {

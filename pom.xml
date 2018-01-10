@@ -22,7 +22,7 @@
         <findbugs.failOnError>true</findbugs.failOnError>
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <azure-commons.version>0.1.4</azure-commons.version>
+        <azure-commons.version>0.2.4</azure-commons.version>
     </properties>
 
     <licenses>
