@@ -23,7 +23,7 @@
                     </j:forEach>
                 </div>
                 <div align="center"> 
-                    <j:set var="credsAjaxURI" value="${rootURL}/${instance.getAjaxURI()}"/>
+                    <j:set var="credsAjaxURI" value="${rootURL}${instance.getAjaxURI()}"/>
                     <input type="button" class="yui-button" value="Add Storage Accounts" onclick="window.credentials.add('${credsAjaxURI}')" /> 
                     <p>
                         <a href="credentials/store/system/domain/_/" target="_blank">Manage Storage Accounts in Credential Store</a>
