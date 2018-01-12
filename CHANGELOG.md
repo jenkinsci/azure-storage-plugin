@@ -1,6 +1,14 @@
 Changelog
 =========
 
+
+Version 0.3.8 January 12, 2018
+------------------------------
+- Make container/share name optional in pipeline `azureUpload` (#82)
+- Fix download of Azure file artifacts (#84)
+- Fix bland window issue while configuring storage credentials globally (#85)
+- Explicitly specify MIME type for js files (#89)
+
 Version 0.3.7 November 7, 2017
 -----------------------------
 - Support HTTPS when upload or download files.
