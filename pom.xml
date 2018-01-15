@@ -17,7 +17,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jenkins.version>1.645</jenkins.version>
+        <jenkins.version>1.651.3</jenkins.version>
         <java.level>7</java.level>
         <findbugs.failOnError>true</findbugs.failOnError>
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
@@ -174,6 +174,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20.1</version>
                 <configuration>
                     <excludes>
                         <exclude>InjectedTest.java</exclude>
