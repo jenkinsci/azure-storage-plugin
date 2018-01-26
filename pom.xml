@@ -8,7 +8,7 @@
 
 
     <artifactId>windows-azure-storage</artifactId>
-    <version>0.3.8-SNAPSHOT</version>
+    <version>0.3.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Windows Azure Storage plugin</name>
     <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
@@ -17,12 +17,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jenkins.version>1.645</jenkins.version>
+        <jenkins.version>1.651.3</jenkins.version>
         <java.level>7</java.level>
         <findbugs.failOnError>true</findbugs.failOnError>
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <azure-commons.version>0.1.4</azure-commons.version>
+        <azure-commons.version>0.2.4</azure-commons.version>
     </properties>
 
     <licenses>
@@ -174,6 +174,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20.1</version>
                 <configuration>
                     <excludes>
                         <exclude>InjectedTest.java</exclude>

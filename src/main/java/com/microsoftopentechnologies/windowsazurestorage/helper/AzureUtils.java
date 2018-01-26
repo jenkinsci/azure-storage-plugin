@@ -27,6 +27,11 @@ import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
 import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
+import com.microsoft.azure.storage.file.CloudFile;
+import com.microsoft.azure.storage.file.CloudFileClient;
+import com.microsoft.azure.storage.file.CloudFileShare;
+import com.microsoft.azure.storage.file.SharedAccessFilePermissions;
+import com.microsoft.azure.storage.file.SharedAccessFilePolicy;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -34,7 +39,6 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
@@ -130,47 +134,76 @@ public final class AzureUtils {
      * @return SAS URL
      * @throws Exception
      */
-    public static String generateSASURL(
+    public static String generateBlobSASURL(
             StorageAccountInfo storageAccount,
             String containerName,
             String blobName) throws Exception {
-        String storageAccountName = storageAccount.getStorageAccName();
-        StorageCredentialsAccountAndKey credentials =
-                new StorageCredentialsAccountAndKey(storageAccountName, storageAccount.getStorageAccountKey());
-        URL blobURL = new URL(storageAccount.getBlobEndPointURL());
-        String saBlobURI = new StringBuilder()
-                .append(blobURL.getProtocol()).append("://").append(storageAccountName).append(".")
-                .append(blobURL.getHost()).append("/")
-                .toString();
-        CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(credentials, new URI(saBlobURI),
-                new URI(getCustomURI(storageAccountName, QUEUE, saBlobURI)),
-                new URI(getCustomURI(storageAccountName, TABLE, saBlobURI)));
+
+       CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+
         // Create the blob client.
         CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
         CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
         // At this point need to throw an error back since container itself did not exist.
         if (!container.exists()) {
-            throw new Exception("WAStorageClient: generateSASURL: Container " + containerName
-                    + " does not exist in storage account " + storageAccountName);
+            throw new Exception("WAStorageClient: generateBlobSASURL: Container " + containerName
+                    + " does not exist in storage account " + storageAccount.getStorageAccName());
         }
 
         CloudBlob blob = container.getBlockBlobReference(blobName);
-        String sas = blob.generateSharedAccessSignature(generatePolicy(), null);
+        String sas = blob.generateSharedAccessSignature(generateBlobPolicy(), null);
 
         return sas;
     }
 
-    public static SharedAccessBlobPolicy generatePolicy() {
+    public static SharedAccessBlobPolicy generateBlobPolicy() {
         SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
-        GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        calendar.setTime(new Date());
-
-        calendar.add(Calendar.HOUR, 1);
-        policy.setSharedAccessExpiryTime(calendar.getTime());
+        policy.setSharedAccessExpiryTime(generateExpiryDate());
         policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
 
         return policy;
+    }
+
+    /**
+     * Generates SAS URL for file item in Azure storage File Share.
+     *
+     * @param storageAccount
+     * @param fileName
+     * @param shareName  container name
+     * @return SAS URL
+     * @throws Exception
+     */
+    public static String generateFileSASURL(
+            StorageAccountInfo storageAccount,
+            String shareName,
+            String fileName) throws Exception {
+        CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+
+        CloudFileClient fileClient = cloudStorageAccount.createCloudFileClient();
+        CloudFileShare fileShare = fileClient.getShareReference((shareName));
+        if (!fileShare.exists()) {
+            throw new Exception("WAStorageClient: generateFileSASURL: Share " + shareName
+                    + " does not exist in storage account " + storageAccount.getStorageAccName());
+        }
+
+        CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(fileName);
+        return cloudFile.generateSharedAccessSignature(generateFilePolicy(), null);
+    }
+
+    public static SharedAccessFilePolicy generateFilePolicy() {
+        SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
+        policy.setSharedAccessExpiryTime(generateExpiryDate());
+        policy.setPermissions(EnumSet.of(SharedAccessFilePermissions.READ));
+
+        return policy;
+    }
+
+    private static Date generateExpiryDate() {
+        GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        calendar.setTime(new Date());
+        calendar.add(Calendar.HOUR, 1);
+        return  calendar.getTime();
     }
 
     private static void setContainerPermission(
@@ -204,22 +237,6 @@ public final class AzureUtils {
         return blobURL.substring(endSuffixStartIndex);
     }
 
-    /**
-     * Returns custom URL for queue and table.
-     *
-     * @param storageAccountName
-     * @param type
-     * @param blobURL
-     * @return
-     */
-    private static String getCustomURI(String storageAccountName, String type, String blobURL) {
-        if (QUEUE.equalsIgnoreCase(type) || TABLE.equalsIgnoreCase(type)) {
-            return blobURL.replace(storageAccountName + "." + BLOB,
-                    storageAccountName + "." + type);
-        } else {
-            return null;
-        }
-    }
 
     private AzureUtils() {
         // hide constructor

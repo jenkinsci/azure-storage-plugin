@@ -460,7 +460,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                     zipArchiveBlob = serviceData.getArchiveBlobs().get(0);
                 }
 
-                run.addAction(new AzureBlobAction(run, storageAccountInfo.getStorageAccName(), expContainerName,
+                run.addAction(new AzureBlobAction(run, storageAccountInfo.getStorageAccName(),
+                        expContainerName, expShareName, storageType,
                         serviceData.getIndividualBlobs(), zipArchiveBlob, allowAnonymousAccess, storageCredentialId));
             }
         } catch (Exception e) {
