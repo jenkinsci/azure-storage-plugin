@@ -270,10 +270,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             final StoragePluginService downloadService = getDownloadService(builderServiceData);
             int filesDownloaded = downloadService.execute();
 
-            if (filesDownloaded == 0) { // Mark build unstable if no files are
-                // downloaded
+            if (filesDownloaded == 0) {
                 listener.getLogger().println(Messages.AzureStorageBuilder_nofiles_downloaded());
-                run.setResult(Result.UNSTABLE);
             } else {
                 listener.getLogger().println(Messages.AzureStorageBuilder_files_downloaded_count(filesDownloaded));
             }
