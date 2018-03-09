@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation. All rights reserved.
+    Licensed under the MIT License. See LICENSE file in the project root for license information.
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" xmlns:c="/lib/credentials">
+    <f:entry title="${%StorageAccountNameVariable}" field="storageAccountNameVariable" help="/plugin/windows-azure-storage/help-storageAccountName.html">
+        <f:textbox default="${descriptor.getDefaultStorageAccountNameVariable()}"/>
+    </f:entry>
+    <f:entry title="${%StorageAccountKeyVariable}" field="storageAccountKeyVariable" help="/plugin/windows-azure-storage/help-storageAccountKey.html">
+        <f:textbox default="${descriptor.getDefaultStorageAccountKeyVariable()}"/>
+    </f:entry>
+    <f:entry title="${%BlobEndpointUrlVariable}" field="blobEndpointUrlVariable" help="/plugin/windows-azure-storage/help-blobEndPointURL.html">
+        <f:textbox default="${descriptor.getDefaultBlobEndpointUrlVariable()}"/>
+    </f:entry>
+</j:jelly>
