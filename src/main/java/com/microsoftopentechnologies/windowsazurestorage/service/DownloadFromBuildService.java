@@ -84,7 +84,7 @@ public class DownloadFromBuildService extends DownloadService {
 
     private int downloadArtifacts(Run<?, ?> source) {
         final DownloadServiceData serviceData = getServiceData();
-        int filesDownloaded = 0;
+        int filesNeedDownload = 0;
         try {
 
             final AzureBlobAction action = source.getAction(AzureBlobAction.class);
@@ -92,16 +92,18 @@ public class DownloadFromBuildService extends DownloadService {
             if (action.getZipArchiveBlob() != null && serviceData.isIncludeArchiveZips()) {
                 azureBlobs.addAll(Arrays.asList(action.getZipArchiveBlob()));
             }
-
-            filesDownloaded = downloadBlobs(azureBlobs);
+            startDownloadThreads();
+            filesNeedDownload = scanBlobs(azureBlobs);
+            setFilesNeedDownload(filesNeedDownload);
+            setIsScanFinished(true);
+            waitForDownloadEnd();
         } catch (WAStorageException e) {
             setRunUnstable();
         }
-
-        return filesDownloaded;
+        return filesNeedDownload;
     }
 
-    private int downloadBlobs(List<AzureBlob> azureBlobs) throws WAStorageException {
+    private int scanBlobs(List<AzureBlob> azureBlobs) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         int filesDownloaded = 0;
         println(Messages.AzureStorageBuilder_downloading());
@@ -126,7 +128,7 @@ public class DownloadFromBuildService extends DownloadService {
                                     null);
                         }
                         final CloudBlockBlob cbb = cloudBlobContainer.getBlockBlobReference(blob.getBlobName());
-                        downloadBlob(cbb);
+                        getDownloadItemDeque().push(cbb);
                         filesDownloaded++;
                     } else if (Constants.FILE_STORAGE.equalsIgnoreCase(blob.getStorageType())) {
                         if (cloudFileShare == null) {
@@ -139,7 +141,7 @@ public class DownloadFromBuildService extends DownloadService {
                                 filePath.indexOf(cloudFileShare.getName()) + cloudFileShare.getName().length() + 1);
                         final CloudFile cloudFile =
                                 cloudFileShare.getRootDirectoryReference().getFileReference(cloudFileName);
-                        downloadSingleFile(cloudFile);
+                        getDownloadItemDeque().push(cloudFile);
                         filesDownloaded++;
                     }
                 }

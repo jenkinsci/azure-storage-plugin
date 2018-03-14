@@ -37,12 +37,16 @@ public class DownloadFromFileService extends DownloadService {
 
     @Override
     public int execute() {
-        int filesDownloaded = 0;
+        int filesNeedDownload = 0;
         try {
             println(Messages.AzureStorageBuilder_downloading());
             final CloudFileShare cloudFileShare = getCloudFileShare();
             final CloudFileDirectory cloudFileDirectory = cloudFileShare.getRootDirectoryReference();
-            filesDownloaded = downloadFileItems(cloudFileDirectory.listFilesAndDirectories());
+            startDownloadThreads();
+            filesNeedDownload = scanFileItems(cloudFileDirectory.listFilesAndDirectories());
+            setFilesNeedDownload(filesNeedDownload);
+            setIsScanFinished(true);
+            waitForDownloadEnd();
         } catch (StorageException | URISyntaxException | MalformedURLException | WAStorageException e) {
             final String message = Messages.AzureStorageBuilder_download_err(
                     getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
@@ -51,28 +55,27 @@ public class DownloadFromFileService extends DownloadService {
             setRunUnstable();
         }
 
-        return filesDownloaded;
+        return filesNeedDownload;
     }
 
-    private int downloadFileItems(Iterable<ListFileItem> fileItems) throws WAStorageException {
+    private int scanFileItems(Iterable<ListFileItem> fileItems) throws WAStorageException {
         final DownloadServiceData data = getServiceData();
-        int filesDownloaded = 0;
+        int filesNeedDownload = 0;
         for (final ListFileItem fileItem : fileItems) {
             if (fileItem instanceof CloudFile) {
                 final CloudFile cloudFile = (CloudFile) fileItem;
-                final boolean shouldDonwload = shouldDownload(data.getIncludeFilesPattern(),
+                final boolean shouldDownload = shouldDownload(data.getIncludeFilesPattern(),
                         data.getExcludeFilesPattern(), cloudFile.getName(), true);
-                if (shouldDonwload) {
-                    downloadSingleFile(cloudFile);
-                    filesDownloaded++;
+                if (shouldDownload) {
+                    getDownloadItemDeque().push(cloudFile);
+                    filesNeedDownload++;
                 }
             } else if (fileItem instanceof CloudFileDirectory) {
-                filesDownloaded += downloadFileItems(((CloudFileDirectory) fileItem).listFilesAndDirectories());
+                filesNeedDownload += scanFileItems(((CloudFileDirectory) fileItem).listFilesAndDirectories());
             }
         }
-        return filesDownloaded;
+        return filesNeedDownload;
     }
-
 
     private CloudFileShare getCloudFileShare()
             throws URISyntaxException, MalformedURLException, StorageException, WAStorageException {
@@ -84,7 +87,6 @@ public class DownloadFromFileService extends DownloadService {
         if (!fileShare.exists()) {
             throw new WAStorageException("Specified file share doesn't exist.");
         }
-
         return fileShare;
     }
 }

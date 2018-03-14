@@ -17,13 +17,12 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobDirectory;
-import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoft.azure.storage.file.CloudFile;
 import com.microsoft.azure.storage.file.FileRequestOptions;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
 import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
+import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
@@ -32,49 +31,72 @@ import org.springframework.util.AntPathMatcher;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DownloadService extends StoragePluginService<DownloadServiceData> {
-
     protected static final String DOWNLOAD = "Download";
     protected static final String DOWNLOAD_FAILED = "DownloadFailed";
+    private static final int DOWNLOAD_THREAD_COUNT = 16;
+
+    private BlockingDeque<Object> downloadItemDeque = new LinkedBlockingDeque<>();
+    private int filesNeedDownload = 0;
+    private AtomicBoolean isScanFinished = new AtomicBoolean(false);
+    private AtomicInteger filesDownloaded = new AtomicInteger(0);
+    private Thread[] downloadThreads = new Thread[DOWNLOAD_THREAD_COUNT];
 
     public DownloadService(DownloadServiceData data) {
         super(data);
     }
 
-    protected int downloadBlobs(Iterable<ListBlobItem> blobItems)
-            throws URISyntaxException, StorageException, WAStorageException {
-        final DownloadServiceData serviceData = getServiceData();
-        int filesDownloaded = 0;
-        for (final ListBlobItem blobItem : blobItems) {
-            // If the item is a blob, not a virtual directory
-            if (blobItem instanceof CloudBlob) {
-                // Download the item and save it to a file with the same
-                final CloudBlob blob = (CloudBlob) blobItem;
-
-                // Check whether we should download it.
-                if (shouldDownload(
-                        serviceData.getIncludeFilesPattern(),
-                        serviceData.getExcludeFilesPattern(),
-                        blob.getName(),
-                        true)) {
-                    downloadBlob(blob);
-                    filesDownloaded++;
-                }
-
-            } else if (blobItem instanceof CloudBlobDirectory) {
-                final CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-                if (shouldDownload(
-                        serviceData.getIncludeFilesPattern(),
-                        serviceData.getExcludeFilesPattern(),
-                        blobDirectory.getPrefix(),
-                        false)) {
-                    filesDownloaded += downloadBlobs(blobDirectory.listBlobs());
+    class DownloadThread implements Runnable {
+        @Override
+        public void run() {
+            while (!isScanFinished.get() || filesDownloaded.intValue() != filesNeedDownload) {
+                try {
+                    Object downloadItem = downloadItemDeque.poll(1, TimeUnit.SECONDS);
+                    if (downloadItem != null) {
+                        if (downloadItem instanceof CloudBlob) {
+                            downloadBlob((CloudBlob) downloadItem);
+                            filesDownloaded.addAndGet(1);
+                        } else if (downloadItem instanceof CloudFile) {
+                            downloadSingleFile((CloudFile) downloadItem);
+                            filesDownloaded.addAndGet(1);
+                        }
+                    }
+                } catch (InterruptedException | WAStorageException e) {
+                    final String message = Messages.AzureStorageBuilder_download_err(
+                            getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
+                    e.printStackTrace(error(message));
+                    println(message);
+                    setRunUnstable();
                 }
             }
         }
-        return filesDownloaded;
+    }
+
+    public void startDownloadThreads() {
+        for (int i = 0; i < DOWNLOAD_THREAD_COUNT; i++) {
+            downloadThreads[i] = new Thread(new DownloadThread());
+            downloadThreads[i].start();
+        }
+    }
+
+    public void waitForDownloadEnd() {
+        for (Thread thread : downloadThreads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                final String message = Messages.AzureStorageBuilder_download_err(
+                        getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
+                e.printStackTrace(error(message));
+                println(message);
+                setRunUnstable();
+            }
+        }
     }
 
     protected void downloadSingleFile(CloudFile cloudFile) throws WAStorageException {
@@ -227,5 +249,21 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
             }
         }
         return false;
+    }
+
+    public BlockingDeque<Object> getDownloadItemDeque() {
+        return downloadItemDeque;
+    }
+
+    public void setIsScanFinished(boolean isScanFinished) {
+        this.isScanFinished.set(isScanFinished);
+    }
+
+    public int getFilesNeedDownload() {
+        return filesNeedDownload;
+    }
+
+    public void setFilesNeedDownload(int filesNeedDownload) {
+        this.filesNeedDownload = filesNeedDownload;
     }
 }
