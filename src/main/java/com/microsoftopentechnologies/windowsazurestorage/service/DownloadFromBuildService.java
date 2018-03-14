@@ -88,6 +88,9 @@ public class DownloadFromBuildService extends DownloadService {
         try {
 
             final AzureBlobAction action = source.getAction(AzureBlobAction.class);
+            if (action == null) {
+                return filesNeedDownload;
+            }
             List<AzureBlob> azureBlobs = action.getIndividualBlobs();
             if (action.getZipArchiveBlob() != null && serviceData.isIncludeArchiveZips()) {
                 azureBlobs.addAll(Arrays.asList(action.getZipArchiveBlob()));
