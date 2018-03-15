@@ -84,7 +84,7 @@ public class DownloadFromContainerService extends DownloadService {
                         serviceData.getExcludeFilesPattern(),
                         blobDirectory.getPrefix(),
                         false)) {
-                    filesNeedDownload+= scanBlobs(blobDirectory.listBlobs());
+                    filesNeedDownload += scanBlobs(blobDirectory.listBlobs());
                 }
             }
         }
