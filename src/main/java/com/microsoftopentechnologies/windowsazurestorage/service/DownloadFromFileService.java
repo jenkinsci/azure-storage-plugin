@@ -37,15 +37,13 @@ public class DownloadFromFileService extends DownloadService {
 
     @Override
     public int execute() {
-        int filesNeedDownload = 0;
+        int filesNeedDownload;
         try {
             println(Messages.AzureStorageBuilder_downloading());
             final CloudFileShare cloudFileShare = getCloudFileShare();
             final CloudFileDirectory cloudFileDirectory = cloudFileShare.getRootDirectoryReference();
-            startDownloadThreads();
             filesNeedDownload = scanFileItems(cloudFileDirectory.listFilesAndDirectories());
-            setFilesNeedDownload(filesNeedDownload);
-            setIsScanFinished(true);
+            println(Messages.AzureStorageBuilder_files_need_download_count(filesNeedDownload));
             waitForDownloadEnd();
         } catch (StorageException | URISyntaxException | MalformedURLException | WAStorageException e) {
             final String message = Messages.AzureStorageBuilder_download_err(
@@ -55,7 +53,7 @@ public class DownloadFromFileService extends DownloadService {
             setRunUnstable();
         }
 
-        return filesNeedDownload;
+        return getFilesDownloaded();
     }
 
     private int scanFileItems(Iterable<ListFileItem> fileItems) throws WAStorageException {
@@ -67,7 +65,7 @@ public class DownloadFromFileService extends DownloadService {
                 final boolean shouldDownload = shouldDownload(data.getIncludeFilesPattern(),
                         data.getExcludeFilesPattern(), cloudFile.getName(), true);
                 if (shouldDownload) {
-                    getDownloadItemDeque().push(cloudFile);
+                    getExecutorService().submit(new DownloadThread(cloudFile));
                     filesNeedDownload++;
                 }
             } else if (fileItem instanceof CloudFileDirectory) {

@@ -31,71 +31,63 @@ import org.springframework.util.AntPathMatcher;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DownloadService extends StoragePluginService<DownloadServiceData> {
     protected static final String DOWNLOAD = "Download";
     protected static final String DOWNLOAD_FAILED = "DownloadFailed";
     private static final int DOWNLOAD_THREAD_COUNT = 16;
+    private static final int KEEP_ALIVE_TIME = 1;
+    private static final int TIME_OUT = 1;
+    private static final TimeUnit TIME_OUT_UNIT = TimeUnit.DAYS;
 
-    private BlockingDeque<Object> downloadItemDeque = new LinkedBlockingDeque<>();
-    private int filesNeedDownload = 0;
-    private AtomicBoolean isScanFinished = new AtomicBoolean(false);
     private AtomicInteger filesDownloaded = new AtomicInteger(0);
-    private Thread[] downloadThreads = new Thread[DOWNLOAD_THREAD_COUNT];
+    private ExecutorService executorService = new ThreadPoolExecutor(DOWNLOAD_THREAD_COUNT, DOWNLOAD_THREAD_COUNT,
+            KEEP_ALIVE_TIME, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
 
     public DownloadService(DownloadServiceData data) {
         super(data);
     }
 
     class DownloadThread implements Runnable {
+        private Object downloadItem;
+
+        DownloadThread(Object downloadItem) {
+            this.downloadItem = downloadItem;
+        }
+
         @Override
         public void run() {
-            while (!isScanFinished.get() || filesDownloaded.intValue() != filesNeedDownload) {
-                try {
-                    Object downloadItem = downloadItemDeque.poll(1, TimeUnit.SECONDS);
-                    if (downloadItem != null) {
-                        if (downloadItem instanceof CloudBlob) {
-                            downloadBlob((CloudBlob) downloadItem);
-                            filesDownloaded.addAndGet(1);
-                        } else if (downloadItem instanceof CloudFile) {
-                            downloadSingleFile((CloudFile) downloadItem);
-                            filesDownloaded.addAndGet(1);
-                        }
-                    }
-                } catch (InterruptedException | WAStorageException e) {
-                    final String message = Messages.AzureStorageBuilder_download_err(
-                            getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
-                    e.printStackTrace(error(message));
-                    println(message);
-                    setRunUnstable();
-                }
-            }
-        }
-    }
-
-    public void startDownloadThreads() {
-        for (int i = 0; i < DOWNLOAD_THREAD_COUNT; i++) {
-            downloadThreads[i] = new Thread(new DownloadThread());
-            downloadThreads[i].start();
-        }
-    }
-
-    public void waitForDownloadEnd() {
-        for (Thread thread : downloadThreads) {
             try {
-                thread.join();
-            } catch (InterruptedException e) {
+                if (downloadItem instanceof CloudBlob) {
+                    downloadBlob((CloudBlob) downloadItem);
+                } else {
+                    downloadSingleFile((CloudFile) downloadItem);
+                }
+                filesDownloaded.addAndGet(1);
+            } catch (WAStorageException e) {
                 final String message = Messages.AzureStorageBuilder_download_err(
                         getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
                 e.printStackTrace(error(message));
                 println(message);
                 setRunUnstable();
             }
+        }
+    }
+
+    protected void waitForDownloadEnd() throws WAStorageException {
+        executorService.shutdown();
+        try {
+            boolean executionFinished = executorService.awaitTermination(TIME_OUT, TIME_OUT_UNIT);
+            if (!executionFinished) {
+                throw new WAStorageException(Messages.AzureStorageBuilder_download_timeout(TIME_OUT, TIME_OUT_UNIT));
+            }
+        } catch (InterruptedException e) {
+            throw new WAStorageException(e.getMessage(), e);
         }
     }
 
@@ -251,19 +243,11 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         return false;
     }
 
-    public BlockingDeque<Object> getDownloadItemDeque() {
-        return downloadItemDeque;
+    public int getFilesDownloaded() {
+        return filesDownloaded.get();
     }
 
-    public void setIsScanFinished(boolean isScanFinished) {
-        this.isScanFinished.set(isScanFinished);
-    }
-
-    public int getFilesNeedDownload() {
-        return filesNeedDownload;
-    }
-
-    public void setFilesNeedDownload(int filesNeedDownload) {
-        this.filesNeedDownload = filesNeedDownload;
+    public ExecutorService getExecutorService() {
+        return executorService;
     }
 }

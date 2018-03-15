@@ -36,7 +36,7 @@ public class DownloadFromContainerService extends DownloadService {
     @Override
     public int execute() {
         final DownloadServiceData serviceData = getServiceData();
-        int filesNeedDownload = 0;
+        int filesNeedDownload;
         try {
             println(Messages.AzureStorageBuilder_downloading());
             final CloudBlobContainer container = AzureUtils.getBlobContainerReference(
@@ -45,17 +45,15 @@ public class DownloadFromContainerService extends DownloadService {
                     false,
                     true,
                     null);
-            startDownloadThreads();
             filesNeedDownload = scanBlobs(container.listBlobs());
-            setFilesNeedDownload(filesNeedDownload);
-            setIsScanFinished(true);
+            println(Messages.AzureStorageBuilder_files_need_download_count(filesNeedDownload));
             waitForDownloadEnd();
         } catch (StorageException | URISyntaxException | IOException | WAStorageException e) {
             e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(
                     serviceData.getStorageAccountInfo().getStorageAccName())));
             setRunUnstable();
         }
-        return filesNeedDownload;
+        return getFilesDownloaded();
     }
 
     protected int scanBlobs(Iterable<ListBlobItem> blobItems)
@@ -74,7 +72,7 @@ public class DownloadFromContainerService extends DownloadService {
                         serviceData.getExcludeFilesPattern(),
                         blob.getName(),
                         true)) {
-                    getDownloadItemDeque().push(blob);
+                    getExecutorService().submit(new DownloadThread(blob));
                     filesNeedDownload++;
                 }
             } else if (blobItem instanceof CloudBlobDirectory) {
