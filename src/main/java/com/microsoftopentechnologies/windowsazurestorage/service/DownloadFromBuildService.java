@@ -84,26 +84,29 @@ public class DownloadFromBuildService extends DownloadService {
 
     private int downloadArtifacts(Run<?, ?> source) {
         final DownloadServiceData serviceData = getServiceData();
-        int filesDownloaded = 0;
+        int filesNeedDownload;
         try {
 
             final AzureBlobAction action = source.getAction(AzureBlobAction.class);
+            if (action == null) {
+                return getFilesDownloaded();
+            }
             List<AzureBlob> azureBlobs = action.getIndividualBlobs();
             if (action.getZipArchiveBlob() != null && serviceData.isIncludeArchiveZips()) {
                 azureBlobs.addAll(Arrays.asList(action.getZipArchiveBlob()));
             }
-
-            filesDownloaded = downloadBlobs(azureBlobs);
+            filesNeedDownload = scanBlobs(azureBlobs);
+            println(Messages.AzureStorageBuilder_files_need_download_count(filesNeedDownload));
+            waitForDownloadEnd();
         } catch (WAStorageException e) {
             setRunUnstable();
         }
-
-        return filesDownloaded;
+        return getFilesDownloaded();
     }
 
-    private int downloadBlobs(List<AzureBlob> azureBlobs) throws WAStorageException {
+    private int scanBlobs(List<AzureBlob> azureBlobs) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
-        int filesDownloaded = 0;
+        int filesNeedDownload = 0;
         println(Messages.AzureStorageBuilder_downloading());
 
         for (final AzureBlob blob : azureBlobs) {
@@ -126,8 +129,8 @@ public class DownloadFromBuildService extends DownloadService {
                                     null);
                         }
                         final CloudBlockBlob cbb = cloudBlobContainer.getBlockBlobReference(blob.getBlobName());
-                        downloadBlob(cbb);
-                        filesDownloaded++;
+                        getExecutorService().submit(new DownloadThread(cbb));
+                        filesNeedDownload++;
                     } else if (Constants.FILE_STORAGE.equalsIgnoreCase(blob.getStorageType())) {
                         if (cloudFileShare == null) {
                             final CloudStorageAccount cloudStorageAccount =
@@ -139,16 +142,14 @@ public class DownloadFromBuildService extends DownloadService {
                                 filePath.indexOf(cloudFileShare.getName()) + cloudFileShare.getName().length() + 1);
                         final CloudFile cloudFile =
                                 cloudFileShare.getRootDirectoryReference().getFileReference(cloudFileName);
-                        downloadSingleFile(cloudFile);
-                        filesDownloaded++;
+                        getExecutorService().submit(new DownloadThread(cloudFile));
+                        filesNeedDownload++;
                     }
                 }
             } catch (StorageException | URISyntaxException | IOException e) {
                 throw new WAStorageException(e.getMessage(), e);
             }
         }
-        return filesDownloaded;
+        return filesNeedDownload;
     }
-
-
 }

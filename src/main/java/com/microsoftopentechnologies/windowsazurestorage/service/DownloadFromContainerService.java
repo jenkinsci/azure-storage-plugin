@@ -16,7 +16,10 @@
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.blob.CloudBlob;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlobDirectory;
+import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -33,7 +36,7 @@ public class DownloadFromContainerService extends DownloadService {
     @Override
     public int execute() {
         final DownloadServiceData serviceData = getServiceData();
-        int filesDownloaded = 0;
+        int filesNeedDownload;
         try {
             println(Messages.AzureStorageBuilder_downloading());
             final CloudBlobContainer container = AzureUtils.getBlobContainerReference(
@@ -42,13 +45,47 @@ public class DownloadFromContainerService extends DownloadService {
                     false,
                     true,
                     null);
-            filesDownloaded = downloadBlobs(container.listBlobs());
+            filesNeedDownload = scanBlobs(container.listBlobs());
+            println(Messages.AzureStorageBuilder_files_need_download_count(filesNeedDownload));
+            waitForDownloadEnd();
         } catch (StorageException | URISyntaxException | IOException | WAStorageException e) {
             e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(
                     serviceData.getStorageAccountInfo().getStorageAccName())));
             setRunUnstable();
         }
+        return getFilesDownloaded();
+    }
 
-        return filesDownloaded;
+    protected int scanBlobs(Iterable<ListBlobItem> blobItems)
+            throws URISyntaxException, StorageException, WAStorageException {
+        final DownloadServiceData serviceData = getServiceData();
+        int filesNeedDownload = 0;
+        for (final ListBlobItem blobItem : blobItems) {
+            // If the item is a blob, not a virtual directory
+            if (blobItem instanceof CloudBlob) {
+                // Download the item and save it to a file with the same
+                final CloudBlob blob = (CloudBlob) blobItem;
+
+                // Check whether we should download it.
+                if (shouldDownload(
+                        serviceData.getIncludeFilesPattern(),
+                        serviceData.getExcludeFilesPattern(),
+                        blob.getName(),
+                        true)) {
+                    getExecutorService().submit(new DownloadThread(blob));
+                    filesNeedDownload++;
+                }
+            } else if (blobItem instanceof CloudBlobDirectory) {
+                final CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
+                if (shouldDownload(
+                        serviceData.getIncludeFilesPattern(),
+                        serviceData.getExcludeFilesPattern(),
+                        blobDirectory.getPrefix(),
+                        false)) {
+                    filesNeedDownload += scanBlobs(blobDirectory.listBlobs());
+                }
+            }
+        }
+        return filesNeedDownload;
     }
 }

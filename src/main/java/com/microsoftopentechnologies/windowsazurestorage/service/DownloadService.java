@@ -17,13 +17,12 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobDirectory;
-import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoft.azure.storage.file.CloudFile;
 import com.microsoft.azure.storage.file.FileRequestOptions;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
 import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
+import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
@@ -32,49 +31,64 @@ import org.springframework.util.AntPathMatcher;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DownloadService extends StoragePluginService<DownloadServiceData> {
-
     protected static final String DOWNLOAD = "Download";
     protected static final String DOWNLOAD_FAILED = "DownloadFailed";
+    private static final int DOWNLOAD_THREAD_COUNT = 16;
+    private static final int KEEP_ALIVE_TIME = 1;
+    private static final int TIME_OUT = 1;
+    private static final TimeUnit TIME_OUT_UNIT = TimeUnit.DAYS;
+
+    private AtomicInteger filesDownloaded = new AtomicInteger(0);
+    private ExecutorService executorService = new ThreadPoolExecutor(DOWNLOAD_THREAD_COUNT, DOWNLOAD_THREAD_COUNT,
+            KEEP_ALIVE_TIME, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
 
     public DownloadService(DownloadServiceData data) {
         super(data);
     }
 
-    protected int downloadBlobs(Iterable<ListBlobItem> blobItems)
-            throws URISyntaxException, StorageException, WAStorageException {
-        final DownloadServiceData serviceData = getServiceData();
-        int filesDownloaded = 0;
-        for (final ListBlobItem blobItem : blobItems) {
-            // If the item is a blob, not a virtual directory
-            if (blobItem instanceof CloudBlob) {
-                // Download the item and save it to a file with the same
-                final CloudBlob blob = (CloudBlob) blobItem;
+    class DownloadThread implements Runnable {
+        private Object downloadItem;
 
-                // Check whether we should download it.
-                if (shouldDownload(
-                        serviceData.getIncludeFilesPattern(),
-                        serviceData.getExcludeFilesPattern(),
-                        blob.getName(),
-                        true)) {
-                    downloadBlob(blob);
-                    filesDownloaded++;
-                }
+        DownloadThread(Object downloadItem) {
+            this.downloadItem = downloadItem;
+        }
 
-            } else if (blobItem instanceof CloudBlobDirectory) {
-                final CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-                if (shouldDownload(
-                        serviceData.getIncludeFilesPattern(),
-                        serviceData.getExcludeFilesPattern(),
-                        blobDirectory.getPrefix(),
-                        false)) {
-                    filesDownloaded += downloadBlobs(blobDirectory.listBlobs());
+        @Override
+        public void run() {
+            try {
+                if (downloadItem instanceof CloudBlob) {
+                    downloadBlob((CloudBlob) downloadItem);
+                } else {
+                    downloadSingleFile((CloudFile) downloadItem);
                 }
+                filesDownloaded.addAndGet(1);
+            } catch (WAStorageException e) {
+                final String message = Messages.AzureStorageBuilder_download_err(
+                        getServiceData().getStorageAccountInfo().getStorageAccName()) + ":" + e.getMessage();
+                e.printStackTrace(error(message));
+                println(message);
+                setRunUnstable();
             }
         }
-        return filesDownloaded;
+    }
+
+    protected void waitForDownloadEnd() throws WAStorageException {
+        executorService.shutdown();
+        try {
+            boolean executionFinished = executorService.awaitTermination(TIME_OUT, TIME_OUT_UNIT);
+            if (!executionFinished) {
+                throw new WAStorageException(Messages.AzureStorageBuilder_download_timeout(TIME_OUT, TIME_OUT_UNIT));
+            }
+        } catch (InterruptedException e) {
+            throw new WAStorageException(e.getMessage(), e);
+        }
     }
 
     protected void downloadSingleFile(CloudFile cloudFile) throws WAStorageException {
@@ -227,5 +241,13 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
             }
         }
         return false;
+    }
+
+    public int getFilesDownloaded() {
+        return filesDownloaded.get();
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
     }
 }
