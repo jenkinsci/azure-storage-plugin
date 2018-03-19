@@ -5,7 +5,7 @@
 	
 	<l:main-panel>
 	  <h1>
-		<img src="/plugin/windows-azure-storage/images/48x48/Azure.png" alt="Azure Cloud" height="48" width="48"/>
+		<img src="${resURL}/plugin/windows-azure-storage/images/48x48/Azure.png" alt="Azure Cloud" height="48" width="48"/>
 		Azure Artifacts
 	  </h1>
 	  <table>
