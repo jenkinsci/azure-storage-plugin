@@ -1,7 +1,5 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import hudson.Extension;
 import hudson.model.Run;
 import io.jenkins.blueocean.rest.Reachable;
@@ -9,7 +7,9 @@ import io.jenkins.blueocean.rest.factory.BlueArtifactFactory;
 import io.jenkins.blueocean.rest.hal.Link;
 import io.jenkins.blueocean.rest.model.BlueArtifact;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public final class AzureStorageBlueArtifact extends BlueArtifact {
     private final AzureBlobAction action;
@@ -28,17 +28,18 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
 
     @Override
     public String getPath() {
-        return artifact.getBlobURL();
+        return artifact.getBlobName();
     }
 
     @Override
     public String getUrl() {
-        return artifact.getBlobURL();
+        return String.format("/job/%s/%d/Azure/processDownloadRequest/%s", action.getContainerName(),
+                action.getBuild().number, artifact.getBlobName());
     }
 
     @Override
     public long getSize() {
-        return -1;
+        return artifact.getSizeInBytes();
     }
 
     @Override
@@ -54,12 +55,15 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
             if (action == null) {
                 return null;
             }
-            return Collections2.transform(action.getIndividualBlobs(), new Function<AzureBlob, BlueArtifact>() {
-                @Override
-                public BlueArtifact apply(AzureBlob azureBlob) {
-                    return new AzureStorageBlueArtifact(action, azureBlob, reachable.getLink());
-                }
-            });
+            List<BlueArtifact> result = new ArrayList<>();
+            AzureBlob zipArtifact = action.getZipArchiveBlob();
+            if (zipArtifact != null) {
+                result.add(new AzureStorageBlueArtifact(action, zipArtifact, reachable.getLink()));
+            }
+            for (AzureBlob artifact : action.getIndividualBlobs()) {
+                result.add(new AzureStorageBlueArtifact(action, artifact, reachable.getLink()));
+            }
+            return result;
         }
     }
 }
