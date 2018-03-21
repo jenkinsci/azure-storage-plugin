@@ -221,6 +221,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             FilePath workspace,
             Launcher launcher,
             TaskListener listener) {
+        AzureUtils.updateDefaultProxy();
         // Get storage account
         StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(
                 AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
