@@ -23,25 +23,20 @@ import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
-import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.util.DirScanner;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Service to upload files to Windows Azure Blob Storage.
@@ -76,19 +71,11 @@ public class UploadToBlobService extends UploadService {
             }
 
             final CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
-            String uploadedFileHash = uploadBlob(blob, zipPath);
-            // Make sure to note the new blob as an archive blob,
-            // so that it can be specially marked on the azure storage page.
-            AzureBlob azureBlob = new AzureBlob(
-                    blob.getName(),
-                    blob.getUri().toString().replace("http://", "https://"),
-                    uploadedFileHash,
-                    zipPath.length(),
-                    Constants.BLOB_STORAGE);
-            serviceData.getArchiveBlobs().add(azureBlob);
-
+            Future<?> archiveUploadFuture = getExecutorService().submit(new UploadThread(blob,
+                    zipPath, serviceData.getArchiveBlobs()));
+            archiveUploadFuture.get();
             tempDir.deleteRecursive();
-        } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {
+        } catch (IOException | InterruptedException | URISyntaxException | StorageException | ExecutionException e) {
             String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", storageAcc,
@@ -108,14 +95,7 @@ public class UploadToBlobService extends UploadService {
                 final String blobPath = getItemPath(src, embeddedVP);
                 final CloudBlockBlob blob = container.getBlockBlobReference(blobPath);
                 configureBlobPropertiesAndMetadata(blob, src);
-                String uploadedFileHash = uploadBlob(blob, src);
-                AzureBlob azureBlob = new AzureBlob(
-                        blob.getName(),
-                        blob.getUri().toString().replace("http://", "https://"),
-                        uploadedFileHash,
-                        src.length(),
-                        Constants.BLOB_STORAGE);
-                serviceData.getIndividualBlobs().add(azureBlob);
+                getExecutorService().submit(new UploadThread(blob, src, serviceData.getIndividualBlobs()));
             }
         } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {
             String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
@@ -140,47 +120,6 @@ public class UploadToBlobService extends UploadService {
         // Set blob metadata
         if (serviceData.getAzureBlobMetadata() != null) {
             blob.setMetadata(updateMetadata(blob.getMetadata()));
-        }
-    }
-
-    /**
-     * @param blob
-     * @param src
-     * @throws StorageException
-     * @throws IOException
-     * @throws InterruptedException
-     * @returns Md5 hash of the uploaded file in hexadecimal encoding
-     */
-    private String uploadBlob(CloudBlockBlob blob, FilePath src)
-            throws WAStorageException {
-        String hashedStorageAcc = AppInsightsUtils.hash(blob.getServiceClient().getCredentials().getAccountName());
-        try {
-            final MessageDigest md = DigestUtils.getMd5Digest();
-            long startTime = System.currentTimeMillis();
-            try (InputStream inputStream = src.read();
-                 DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
-                blob.upload(
-                        digestInputStream,
-                        src.length(),
-                        null,
-                        getBlobRequestOptions(),
-                        Utils.updateUserAgent(src.length()));
-
-                // send AI event.
-                AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD,
-                        "StorageAccount", hashedStorageAcc,
-                        "ContentLength", String.valueOf(src.length()));
-            }
-            long endTime = System.currentTimeMillis();
-
-            println("Uploaded to file storage with uri " + blob.getUri() + " in " + getTime(endTime - startTime));
-            return DatatypeConverter.printHexBinary(md.digest());
-        } catch (IOException | InterruptedException | StorageException e) {
-            // send AI event.
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD,
-                    "StorageAccount", hashedStorageAcc,
-                    "Message", e.getMessage());
-            throw new WAStorageException(e.getMessage(), e);
         }
     }
 

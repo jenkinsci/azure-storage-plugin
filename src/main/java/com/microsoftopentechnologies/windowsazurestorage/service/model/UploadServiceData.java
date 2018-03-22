@@ -25,6 +25,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class UploadServiceData extends ServiceData {
@@ -37,8 +38,8 @@ public class UploadServiceData extends ServiceData {
     private String virtualPath;
     private String excludedFilesPath;
     private UploadType uploadType;
-    private List<AzureBlob> individualBlobs = new ArrayList<AzureBlob>();
-    private List<AzureBlob> archiveBlobs = new ArrayList<AzureBlob>();
+    private List<AzureBlob> individualBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
+    private List<AzureBlob> archiveBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
     private List<AzureBlobMetadataPair> azureBlobMetadata;
 
     public UploadServiceData(Run<?, ?> run,
