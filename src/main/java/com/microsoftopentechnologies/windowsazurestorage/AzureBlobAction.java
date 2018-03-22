@@ -96,6 +96,10 @@ public class AzureBlobAction implements RunAction {
         return containerName;
     }
 
+    public String getFileShareName() {
+        return fileShareName;
+    }
+
     @Exported
     public List<AzureBlob> getIndividualBlobs() {
         return individualBlobs;
