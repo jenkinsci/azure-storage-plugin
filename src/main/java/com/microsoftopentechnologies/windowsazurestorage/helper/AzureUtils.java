@@ -17,6 +17,7 @@
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.RetryNoRetry;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.StorageException;
@@ -35,10 +36,13 @@ import com.microsoft.azure.storage.file.SharedAccessFilePolicy;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
+import hudson.ProxyConfiguration;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
@@ -139,7 +143,7 @@ public final class AzureUtils {
             String containerName,
             String blobName) throws Exception {
 
-       CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+        CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
 
         // Create the blob client.
         CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
@@ -170,7 +174,7 @@ public final class AzureUtils {
      *
      * @param storageAccount
      * @param fileName
-     * @param shareName  container name
+     * @param shareName      container name
      * @return SAS URL
      * @throws Exception
      */
@@ -199,11 +203,23 @@ public final class AzureUtils {
         return policy;
     }
 
+    /**
+     * Set default proxy for Azure Storage SDK if Jenkins has proxy setting.
+     */
+    public static void updateDefaultProxy() {
+        Jenkins jenkinsInstance = Utils.getJenkinsInstance();
+        ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
+        if (proxyConfig != null) {
+            Proxy proxy = proxyConfig.createProxy(null);
+            OperationContext.setDefaultProxy(proxy);
+        }
+    }
+
     private static Date generateExpiryDate() {
         GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
         calendar.setTime(new Date());
         calendar.add(Calendar.HOUR, 1);
-        return  calendar.getTime();
+        return calendar.getTime();
     }
 
     private static void setContainerPermission(

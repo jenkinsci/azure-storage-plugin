@@ -408,7 +408,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             @Nonnull FilePath ws,
             @Nonnull Launcher launcher,
             @Nonnull TaskListener listener) throws InterruptedException, IOException {
-
+        AzureUtils.updateDefaultProxy();
         final EnvVars envVars = run.getEnvironment(listener);
 
         // Get storage account and set formatted blob endpoint url.

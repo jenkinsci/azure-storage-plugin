@@ -200,6 +200,7 @@ public class AzureCredentials extends BaseStandardCredentials {
                 @QueryParameter String blobEndpointURL) {
 
             try {
+                AzureUtils.updateDefaultProxy();
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
