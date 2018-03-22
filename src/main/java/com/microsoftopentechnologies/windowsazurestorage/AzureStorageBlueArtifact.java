@@ -1,5 +1,6 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import hudson.Extension;
 import hudson.model.Run;
 import io.jenkins.blueocean.rest.Reachable;
@@ -33,7 +34,7 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
 
     @Override
     public String getUrl() {
-        return String.format("/job/%s/%d/Azure/processDownloadRequest/%s", action.getContainerName(),
+        return String.format("/job/%s/%d/Azure/processDownloadRequest/%s", getStorageName(),
                 action.getBuild().number, artifact.getBlobName());
     }
 
@@ -45,6 +46,15 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
     @Override
     public boolean isDownloadable() {
         return true;
+    }
+
+    private String getStorageName() {
+        if (Constants.BLOB_STORAGE.equalsIgnoreCase(artifact.getStorageType())) {
+            return action.getContainerName();
+        } else if (Constants.FILE_STORAGE.equalsIgnoreCase(artifact.getStorageType())) {
+            return action.getFileShareName();
+        }
+        return "";
     }
 
     @Extension
