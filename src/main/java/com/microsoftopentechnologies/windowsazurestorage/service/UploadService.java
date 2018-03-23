@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -135,6 +136,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
         println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
         int filesNeedUpload = 0; // Counter to track no. of files that are need uploaded
+        int filesCount = 0;
         try {
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
             println(Messages.WAStoragePublisher_uploading());
@@ -164,17 +166,30 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
                 // List all the paths without the zip archives.
                 FilePath[] paths = workspacePath.list(fileName, excludedFilesAndZip());
-                archiveIncludes.append(",").append(fileName);
-                filesNeedUpload += paths.length;
+                FilePath[] uploadPaths = paths;
 
-                if (paths.length != 0 && serviceData.getUploadType() != UploadType.ZIP) {
+                if (serviceData.isOnlyUploadModifiedArtifacts()) {
+                    List<FilePath> modifiedPathsList = new ArrayList<>();
+                    for (FilePath path : paths) {
+                        if (path.lastModified() >= serviceData.getRun().getStartTimeInMillis()) {
+                            modifiedPathsList.add(path);
+                        }
+                    }
+                    uploadPaths = modifiedPathsList.toArray(new FilePath[0]);
+                }
+
+                archiveIncludes.append(",").append(fileName);
+                filesNeedUpload += uploadPaths.length;
+                filesCount += paths.length;
+
+                if (uploadPaths.length != 0 && serviceData.getUploadType() != UploadType.ZIP) {
                     // the uploadType is either INDIVIDUAL or BOTH, upload included individual files thus.
-                    uploadIndividuals(embeddedVP, paths);
+                    uploadIndividuals(embeddedVP, uploadPaths);
                 }
             }
 
             // if uploadType is BOTH or ZIP, create an archive.zip and upload
-            if (filesNeedUpload != 0 && (serviceData.getUploadType() != UploadType.INDIVIDUAL)) {
+            if (filesCount != 0 && (serviceData.getUploadType() != UploadType.INDIVIDUAL)) {
                 uploadArchive(archiveIncludes.toString());
                 // archive file should not be included in downloaded file count
                 filesUploaded.decrementAndGet();
@@ -184,7 +199,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         } catch (IOException | InterruptedException e) {
             throw new WAStorageException(e.getMessage(), e);
         }
-        return filesUploaded.get();
+
+        println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded.get()));
+        return filesCount;
     }
 
     protected void waitForUploadEnd() throws InterruptedException, WAStorageException {
