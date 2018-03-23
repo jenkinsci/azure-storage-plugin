@@ -117,6 +117,13 @@
                     <f:checkbox title="${%doNotWaitForPreviousBuild_title}"/>
                 </div>
             </f:entry>
+
+            <f:entry field="onlyUploadModifiedArtifacts"
+                     help="/plugin/windows-azure-storage/help-onlyUploadModifiedArtifacts.html">
+                <div align="left">
+                    <f:checkbox title="${%onlyUploadModifiedArtifacts_title}"/>
+                </div>
+            </f:entry>
         </f:advanced>
     </f:section>
 </j:jelly>

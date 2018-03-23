@@ -95,6 +95,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private boolean doNotWaitForPreviousBuild;
     private final String storageCredentialId;
     private transient AzureCredentials.StorageAccountCredential storageCreds;
+    private boolean onlyUploadModifiedArtifacts;
 
     @Deprecated
     public WAStoragePublisher(String storageAccName,
@@ -219,6 +220,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
+    public void setOnlyUploadModifiedArtifacts(boolean onlyUploadModifiedArtifacts) {
+        this.onlyUploadModifiedArtifacts = onlyUploadModifiedArtifacts;
+    }
+
+    @DataBoundSetter
     public void setMetadata(List<AzureBlobMetadataPair> metadata) {
         this.metadata = metadata;
     }
@@ -322,6 +328,10 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     public boolean isDoNotWaitForPreviousBuild() {
         return doNotWaitForPreviousBuild;
+    }
+
+    public boolean isOnlyUploadModifiedArtifacts() {
+        return onlyUploadModifiedArtifacts;
     }
 
     public String getStorageCredentialId() {
@@ -433,6 +443,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setCleanUpContainerOrShare(cleanUpContainerOrShare);
         serviceData.setUploadType(getArtifactUploadType());
         serviceData.setAzureBlobMetadata(metadata);
+        serviceData.setOnlyUploadModifiedArtifacts(onlyUploadModifiedArtifacts);
         // Resolve virtual path
         String expVP = replaceMacro(Util.fixNull(virtualPath), envVars);
 
@@ -443,13 +454,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         final UploadService service = getUploadService(serviceData);
         try {
-            int filesUploaded = service.execute();
-
-            listener.getLogger().println(Messages.WAStoragePublisher_files_uploaded_count(filesUploaded));
+            int filesCount = service.execute();
 
             // Mark build unstable if no files are uploaded and the user
             // doesn't want the build not to fail in that case.
-            if (filesUploaded == 0) {
+            if (filesCount == 0) {
                 listener.getLogger().println(Messages.WAStoragePublisher_nofiles_uploaded());
                 if (!doNotFailIfArchivingReturnsNothing) {
                     throw new IOException(Messages.WAStoragePublisher_nofiles_uploaded());

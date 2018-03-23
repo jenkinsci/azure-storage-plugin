@@ -38,6 +38,7 @@ public class UploadServiceData extends ServiceData {
     private String virtualPath;
     private String excludedFilesPath;
     private UploadType uploadType;
+    private boolean onlyUploadModifiedArtifacts;
     private List<AzureBlob> individualBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
     private List<AzureBlob> archiveBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
     private List<AzureBlobMetadataPair> azureBlobMetadata;
@@ -142,5 +143,13 @@ public class UploadServiceData extends ServiceData {
 
     public void setFileShareName(String fileShareName) {
         this.fileShareName = fileShareName;
+    }
+
+    public boolean isOnlyUploadModifiedArtifacts() {
+        return onlyUploadModifiedArtifacts;
+    }
+
+    public void setOnlyUploadModifiedArtifacts(boolean onlyUploadModifiedArtifacts) {
+        this.onlyUploadModifiedArtifacts = onlyUploadModifiedArtifacts;
     }
 }
