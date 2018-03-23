@@ -18,7 +18,6 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
 import com.microsoft.azure.storage.file.FileRequestOptions;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
@@ -41,7 +40,6 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -242,7 +240,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             throws WAStorageException {
         String hashedStorageAcc = AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName());
         try {
-            ensureDirExist(cloudFile.getParent());
             cloudFile.setMetadata(updateMetadata(cloudFile.getMetadata()));
 
             final MessageDigest md = DigestUtils.getMd5Digest();
@@ -265,23 +262,11 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
             println("Uploaded blob with uri " + cloudFile.getUri() + " in " + getTime(endTime - startTime));
             return DatatypeConverter.printHexBinary(md.digest());
-        } catch (IOException | InterruptedException | URISyntaxException | StorageException e) {
+        } catch (IOException | InterruptedException | StorageException e) {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", hashedStorageAcc,
                     "Message", e.getMessage());
             throw new WAStorageException("fail to upload file to azure file storage", e);
-        }
-    }
-
-    private void ensureDirExist(CloudFileDirectory directory)
-            throws WAStorageException {
-        try {
-            if (!directory.exists()) {
-                ensureDirExist(directory.getParent());
-                directory.create();
-            }
-        } catch (StorageException | URISyntaxException e) {
-            throw new WAStorageException("fail to create directory.", e);
         }
     }
 
