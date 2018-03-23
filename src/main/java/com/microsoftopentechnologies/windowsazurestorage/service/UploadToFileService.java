@@ -52,6 +52,7 @@ public class UploadToFileService extends UploadService {
             for (FilePath src : paths) {
                 final String filePath = getItemPath(src, embeddedVP);
                 final CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(filePath);
+                ensureDirExist(cloudFile.getParent());
                 getExecutorService().submit(new UploadThread(cloudFile, src, serviceData.getIndividualBlobs()));
             }
         } catch (URISyntaxException | StorageException | IOException | InterruptedException e) {
@@ -113,6 +114,18 @@ public class UploadToFileService extends UploadService {
 
         fileShare.createIfNotExists();
         return fileShare;
+    }
+
+    private void ensureDirExist(CloudFileDirectory directory)
+            throws WAStorageException {
+        try {
+            if (!directory.exists()) {
+                ensureDirExist(directory.getParent());
+                directory.create();
+            }
+        } catch (StorageException | URISyntaxException e) {
+            throw new WAStorageException("fail to create directory.", e);
+        }
     }
 
     private void deleteFiles(Iterable<ListFileItem> fileItems) throws StorageException {
