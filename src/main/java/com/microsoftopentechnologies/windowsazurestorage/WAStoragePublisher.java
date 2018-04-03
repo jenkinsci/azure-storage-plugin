@@ -29,6 +29,7 @@ import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobSer
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -73,7 +74,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
-    private final transient String storageAccName;
     private final String storageType;
     private String containerName;
     private String fileShareName;
@@ -94,55 +94,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private String virtualPath = "";
     private boolean doNotWaitForPreviousBuild;
     private final String storageCredentialId;
-    private transient AzureCredentials.StorageAccountCredential storageCreds;
     private boolean onlyUploadModifiedArtifacts;
 
-    @Deprecated
-    public WAStoragePublisher(String storageAccName,
-                              String storageCredentialId, String filesPath, String excludeFilesPath,
-                              String containerName, boolean pubAccessible, String virtualPath,
-                              String storageType, String fileShareName,
-                              AzureBlobProperties blobProperties, List<AzureBlobMetadataPair> metadata,
-                              boolean cleanUpContainerOrShare, boolean allowAnonymousAccess,
-                              boolean uploadArtifactsOnlyIfSuccessful,
-                              boolean doNotFailIfArchivingReturnsNothing,
-                              boolean doNotUploadIndividualFiles,
-                              boolean uploadZips,
-                              boolean doNotWaitForPreviousBuild) {
-        super();
-        this.filesPath = filesPath.trim();
-        this.excludeFilesPath = excludeFilesPath.trim();
-        this.storageType = storageType;
-        this.fileShareName = fileShareName.trim();
-        this.containerName = containerName.trim();
-        this.pubAccessible = pubAccessible;
-        this.virtualPath = virtualPath.trim();
-        this.blobProperties = blobProperties;
-        this.metadata = metadata;
-        this.cleanUpContainerOrShare = cleanUpContainerOrShare;
-        this.allowAnonymousAccess = allowAnonymousAccess;
-        this.uploadArtifactsOnlyIfSuccessful = uploadArtifactsOnlyIfSuccessful;
-        this.doNotFailIfArchivingReturnsNothing = doNotFailIfArchivingReturnsNothing;
-        this.doNotUploadIndividualFiles = doNotUploadIndividualFiles;
-        this.uploadZips = uploadZips;
-        this.doNotWaitForPreviousBuild = doNotWaitForPreviousBuild;
-        this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageCreds(this.storageCredentialId, storageAccName);
-        this.storageAccName = this.storageCreds.getStorageAccountName();
-    }
-
-    @Deprecated
-    public WAStoragePublisher(String storageCredentialId, String filesPath,
-                              String storageType, String containerName, String fileShareName) {
-        super();
-        this.filesPath = filesPath.trim();
-        this.storageType = storageType;
-        this.containerName = StringUtils.trimToEmpty(containerName);
-        this.fileShareName = StringUtils.trimToEmpty(fileShareName);
-        this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
-        this.storageAccName = this.storageCreds.getStorageAccountName();
-    }
+    private transient AzureCredentials.StorageAccountCredential storageCreds;
 
     @DataBoundConstructor
     public WAStoragePublisher(String storageCredentialId, String filesPath, String storageType) {
@@ -150,8 +104,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         this.filesPath = filesPath.trim();
         this.storageType = storageType;
         this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
-        this.storageAccName = this.storageCreds.getStorageAccountName();
     }
 
     @DataBoundSetter
@@ -335,9 +287,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     public String getStorageCredentialId() {
-        if (this.storageCredentialId == null && this.storageAccName != null) {
-            return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
-        }
         return storageCredentialId;
     }
 
@@ -358,10 +307,29 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
+     * @deprecated Use {@link #getStorageAccName(Item)}.
+     */
+    @Deprecated
+    public String getStorageAccName() {
+        return getStorageAccName(null);
+    }
+
+    /**
      * Windows Azure Storage Account Name.
      */
-    public String getStorageAccName() {
-        return storageAccName;
+    public String getStorageAccName(Item owner) {
+        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredentials(owner);
+        if (credential != null) {
+            return credential.getStorageAccountName();
+        }
+        return null;
+    }
+
+    public AzureCredentials.StorageAccountCredential getStorageAccountCredentials(Item owner) {
+        if (storageCreds == null) {
+            storageCreds = AzureCredentials.getStorageAccountCredential(owner, getStorageCredentialId());
+        }
+        return storageCreds;
     }
 
     /**
@@ -390,10 +358,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      *
      * @return StorageAccount
      */
+    @Deprecated
     public StorageAccountInfo getStorageAccount() {
+        String accountName = getStorageAccName();
         StorageAccountInfo storageAcc = null;
         for (StorageAccountInfo sa : getDescriptor().getStorageAccounts()) {
-            if (sa.getStorageAccName().equals(storageAccName)) {
+            if (sa.getStorageAccName().equals(accountName)) {
                 storageAcc = sa;
                 storageAcc.setBlobEndPointURL(Utils.getBlobEP(
                         storageAcc.getBlobEndPointURL()));
@@ -421,9 +391,14 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         AzureUtils.updateDefaultProxy();
         final EnvVars envVars = run.getEnvironment(listener);
 
+        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredentials(run.getParent());
+        if (credential == null) {
+            throw new AbortException(String.format("Cannot find storage account credentials with ID: '%s'",
+                    getStorageCredentialId()));
+        }
+
         // Get storage account and set formatted blob endpoint url.
-        final StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(
-                AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
+        final StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(credential);
 
         // Resolve container name or share name
         final String expContainerName = replaceMacro(Util.fixNull(containerName), envVars, Locale.ENGLISH);
@@ -469,9 +444,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                     zipArchiveBlob = serviceData.getArchiveBlobs().get(0);
                 }
 
-                run.addAction(new AzureBlobAction(run, storageAccountInfo.getStorageAccName(),
-                        expContainerName, expShareName, storageType,
-                        serviceData.getIndividualBlobs(), zipArchiveBlob, allowAnonymousAccess, storageCredentialId));
+                run.addAction(new AzureBlobAction(expContainerName, expShareName, storageType,
+                        serviceData.getIndividualBlobs(), zipArchiveBlob, allowAnonymousAccess,
+                        getStorageCredentialId()));
             }
         } catch (Exception e) {
             e.printStackTrace(listener.error(Messages
@@ -619,9 +594,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 //CHECKSTYLE:OFF
                 @QueryParameter String was_storageAccName,
                 @QueryParameter String was_storageAccountKey,
-                @QueryParameter String was_blobEndPointURL) throws IOException,
-                //CHECKSTYLE:ON
-                ServletException {
+                @QueryParameter String was_blobEndPointURL) throws IOException, ServletException {
+            //CHECKSTYLE:ON
 
             if (StringUtils.isBlank(was_storageAccName)) {
                 return FormValidation.error(Messages

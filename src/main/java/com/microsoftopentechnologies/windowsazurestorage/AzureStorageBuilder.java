@@ -28,6 +28,7 @@ import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromCon
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.StoragePluginService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
+import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -58,6 +59,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -68,7 +70,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     static final String CONTAINER = "container";
 
-    private final transient String storageAccName;
     private final String downloadType;
     private boolean deleteFromAzureAfterDownload;
     private String storageCredentialId;
@@ -89,8 +90,6 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             String storageCredentialId,
             String downloadType) {
         this.storageCredentialId = storageCredentialId;
-        this.storageCreds = AzureCredentials.getStorageAccountCredential(storageCredentialId);
-        this.storageAccName = storageCreds.getStorageAccountName();
         this.downloadType = downloadType;
     }
 
@@ -158,8 +157,20 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         return buildSelector;
     }
 
+    /**
+     * @deprecated use {@link #getStorageAccName(Item)}
+     */
+    @Deprecated
     public String getStorageAccName() {
-        return storageAccName;
+        return getStorageAccName(null);
+    }
+
+    public String getStorageAccName(Item owner) {
+        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredential(owner);
+        if (credential != null) {
+            return credential.getStorageAccountName();
+        }
+        return null;
     }
 
     public String getDownloadType() {
@@ -203,10 +214,14 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     public String getStorageCredentialId() {
-        if (this.storageCredentialId == null && this.storageAccName != null) {
-            return AzureCredentials.getStorageCreds(null, this.storageAccName).getId();
-        }
         return storageCredentialId;
+    }
+
+    public AzureCredentials.StorageAccountCredential getStorageAccountCredential(Item owner) {
+        if (storageCreds == null) {
+            storageCreds = AzureCredentials.getStorageAccountCredential(owner, getStorageCredentialId());
+        }
+        return storageCreds;
     }
 
     /**
@@ -217,23 +232,25 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
      */
     @Override
     public synchronized void perform(
-            Run<?, ?> run,
-            FilePath workspace,
-            Launcher launcher,
-            TaskListener listener) {
+            @Nonnull Run<?, ?> run,
+            @Nonnull FilePath workspace,
+            @Nonnull Launcher launcher,
+            @Nonnull TaskListener listener) throws IOException {
         AzureUtils.updateDefaultProxy();
         // Get storage account
-        StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(
-                AzureCredentials.getStorageCreds(this.storageCredentialId, this.storageAccName));
+        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredential(run.getParent());
+        if (credential == null) {
+            throw new AbortException(String.format("Cannot find storage account credentials with ID: '%s'",
+                    getStorageCredentialId()));
+        }
+
+        StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(credential);
         try {
 
             // Validate input data and resolve storage account
             validateData(run, listener, storageAccountInfo);
 
             final EnvVars envVars = run.getEnvironment(listener);
-            if (envVars == null) {
-                throw new IllegalStateException("Failed to capture information about running environment.");
-            }
 
             final DownloadServiceData builderServiceData =
                     new DownloadServiceData(run, workspace, launcher, listener, storageAccountInfo);

@@ -10,30 +10,31 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import java.io.IOException;
 import jenkins.model.Jenkins;
 import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+
 /**
- *
  * @author arroyc
  */
 public class AzureCredentialsTest {
     private String stName = "test1";
     private String stKey = "123";
     private String stURL = "http://test1";
-    
+
     private AzureCredentials azureCred;
     private AzureCredentials.StorageAccountCredential stCred;
     private Jenkins jenkinsInstance;
-    
-    @ClassRule 
+
+    @ClassRule
     public static JenkinsRule j = new JenkinsRule();
-    
+
     @Before
     public void setUp() throws IOException {
         jenkinsInstance = Jenkins.getInstance();
@@ -49,10 +50,10 @@ public class AzureCredentialsTest {
     @Test
     public void testGetStorageAccountCredential() {
         System.out.println("getStorageAccountCredential");
-        assertEquals(null, AzureCredentials.getStorageAccountCredential(null));
+        assertEquals(null, AzureCredentials.getStorageAccountCredential(null, null));
         String storageCredentialId = azureCred.getId();
 
-        AzureCredentials.StorageAccountCredential result = AzureCredentials.getStorageAccountCredential(storageCredentialId);
+        AzureCredentials.StorageAccountCredential result = AzureCredentials.getStorageAccountCredential(null, storageCredentialId);
         assertEquals(stCred.getStorageAccountKey(), result.getStorageAccountKey());
         assertEquals(stCred.getSecureKey(), result.getSecureKey());
         assertEquals(stCred.getStorageAccountName(), result.getStorageAccountName());
@@ -69,7 +70,7 @@ public class AzureCredentialsTest {
         assertEquals(stCred.getStorageAccountKey(), result.getStorageAccountKey());
         assertEquals(stCred.getStorageAccountName(), result.getStorageAccountName());
         assertEquals(stCred.getEndpointURL(), result.getEndpointURL());
-        
+
         result = AzureCredentials.getStorageCreds(null, stName);
         assertEquals(stCred.getStorageAccountKey(), result.getStorageAccountKey());
         assertEquals(stCred.getStorageAccountName(), result.getStorageAccountName());
@@ -100,7 +101,7 @@ public class AzureCredentialsTest {
     @Test
     public void testGetBlobEndpointURL() {
         System.out.println("getBlobEndpointURL");
-        assertEquals(stURL, azureCred.getBlobEndpointURL());        
+        assertEquals(stURL, azureCred.getBlobEndpointURL());
     }
 
     /**
@@ -127,5 +128,5 @@ public class AzureCredentialsTest {
         assertEquals(expResult.getBlobEndPointURL(), result.getBlobEndPointURL());
         assertEquals(expResult.getStorageAccountKey(), result.getStorageAccountKey());
     }
-    
+
 }
