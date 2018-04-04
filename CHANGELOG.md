@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 0.3.9 April 4, 2018
+---------------------------
+- Do not mark build as unstable if no files are downloaded (JENKINS-42341)
+- Support credentials binding for storage account (#99)
+- Support for parallel files upload and download (#86)
+- Fix broken image in job action (#104)
+- Support for Blue Ocean artifacts listing (#101)
+- Support for proxy set in Jenkins (#31)
+- Option to upload modified artifacts only (#52)
+- Support for credentials lookup in [Folders](https://plugins.jenkins.io/cloudbees-folder)
 
 Version 0.3.8 January 12, 2018
 ------------------------------
