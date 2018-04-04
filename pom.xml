@@ -22,7 +22,7 @@
         <findbugs.failOnError>true</findbugs.failOnError>
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <azure-commons.version>0.2.4</azure-commons.version>
+        <azure-commons.version>0.2.5</azure-commons.version>
     </properties>
 
     <licenses>
@@ -45,11 +45,6 @@
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-storage</artifactId>
             <version>4.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
@@ -172,6 +167,7 @@
                     <maskClasses>
                         com.microsoft.azure.management.
                         com.google.common.
+                        com.microsoft.jenkins.azurecommons.core.
                     </maskClasses>
                     <compatibleSinceVersion />
                 </configuration>

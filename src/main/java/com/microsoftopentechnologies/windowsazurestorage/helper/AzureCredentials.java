@@ -24,6 +24,7 @@ import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import hudson.Extension;
+import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
@@ -119,15 +120,15 @@ public class AzureCredentials extends BaseStandardCredentials {
         storageData = new StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
     }
 
-    public static AzureCredentials.StorageAccountCredential getStorageAccountCredential(
-            String storageCredentialId) {
-        if (storageCredentialId == null) {
+    public static AzureCredentials.StorageAccountCredential getStorageAccountCredential(Item owner,
+                                                                                        String storageCredentialId) {
+        if (StringUtils.isBlank(storageCredentialId)) {
             return null;
         }
         AzureCredentials creds = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
                         AzureCredentials.class,
-                        Jenkins.getInstance(),
+                        owner,
                         ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(storageCredentialId));
@@ -137,13 +138,24 @@ public class AzureCredentials extends BaseStandardCredentials {
         return creds.storageData;
     }
 
-    public static AzureCredentials.StorageAccountCredential getStorageCreds(
-            String credentialsId,
-            String storageAccName) {
+    /**
+     * @deprecated Use {@link #getStorageAccountCredential(Item, String)}.
+     */
+    @Deprecated
+    public static AzureCredentials.StorageAccountCredential getStorageAccountCredential(String storageCredentialId) {
+        return getStorageAccountCredential(null, storageCredentialId);
+    }
+
+    /**
+     * @deprecated Use {@link #getStorageAccountCredential(Item, String)}.
+     */
+    @Deprecated
+    public static AzureCredentials.StorageAccountCredential getStorageCreds(String credentialsId,
+                                                                            String storageAccName) {
         try {
             if (credentialsId != null) {
                 AzureCredentials.StorageAccountCredential credentials =
-                        AzureCredentials.getStorageAccountCredential(credentialsId);
+                        AzureCredentials.getStorageAccountCredential(null, credentialsId);
                 if (credentials != null) {
                     return credentials;
                 }

@@ -6,8 +6,8 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import hudson.model.Api;
 import hudson.model.Run;
-import hudson.model.RunAction;
 import jenkins.model.Jenkins;
+import jenkins.model.RunAction2;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -19,10 +19,9 @@ import java.io.IOException;
 import java.util.List;
 
 @ExportedBean
-public class AzureBlobAction implements RunAction {
+public class AzureBlobAction implements RunAction2 {
 
-    private final Run build;
-    private final String storageAccountName;
+    private transient Run<?, ?> build;
     private final String containerName;
     private final String fileShareName;
     private final String storageType;
@@ -32,8 +31,6 @@ public class AzureBlobAction implements RunAction {
     private final String storageCredentialId;
 
     public AzureBlobAction(
-            Run build,
-            String storageAccountName,
             String containerName,
             String shareName,
             String storageType,
@@ -41,14 +38,12 @@ public class AzureBlobAction implements RunAction {
             AzureBlob zipArchiveBlob,
             boolean allowAnonymousAccess,
             String storageCredentialId) {
-        this.storageAccountName = storageAccountName;
         this.containerName = containerName;
         this.fileShareName = shareName;
         this.storageType = storageType;
         this.individualBlobs = individualBlobs;
         this.allowAnonymousAccess = allowAnonymousAccess;
         this.zipArchiveBlob = zipArchiveBlob;
-        this.build = build;
         this.storageCredentialId = storageCredentialId;
     }
 
@@ -77,19 +72,8 @@ public class AzureBlobAction implements RunAction {
     }
 
     @Override
-    public void onAttached(Run arg0) {
-    }
-
-    @Override
-    public void onBuildComplete() {
-    }
-
-    @Override
-    public void onLoad() {
-    }
-
-    public String getStorageAccountName() {
-        return storageAccountName;
+    public void onAttached(Run<?, ?> r) {
+        build = r;
     }
 
     public String getContainerName() {
@@ -98,6 +82,11 @@ public class AzureBlobAction implements RunAction {
 
     public String getFileShareName() {
         return fileShareName;
+    }
+
+    @Override
+    public void onLoad(Run<?, ?> r) {
+        build = r;
     }
 
     @Exported
@@ -113,7 +102,7 @@ public class AzureBlobAction implements RunAction {
             StaplerRequest request,
             StaplerResponse response) throws IOException, ServletException {
         AzureCredentials.StorageAccountCredential accountCredentials =
-                AzureCredentials.getStorageCreds(storageCredentialId, storageAccountName);
+                AzureCredentials.getStorageAccountCredential(build.getParent(), storageCredentialId);
 
         if (accountCredentials == null) {
             response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
@@ -167,9 +156,9 @@ public class AzureBlobAction implements RunAction {
 
     private String generateSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
         if (storageType.equalsIgnoreCase(Constants.BLOB_STORAGE)) {
-            return  AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName);
+            return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName);
         } else if (storageType.equalsIgnoreCase(Constants.FILE_STORAGE)) {
-            return  AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName);
+            return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName);
         }
 
         throw new Exception("Unknown storage type. Please re-configure your job and build again.");
