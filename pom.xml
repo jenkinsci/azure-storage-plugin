@@ -169,7 +169,7 @@
                         com.google.common.
                         com.microsoft.jenkins.azurecommons.core.
                     </maskClasses>
-                    <compatibleSinceVersion />
+                    <compatibleSinceVersion>0.3.6</compatibleSinceVersion>
                 </configuration>
             </plugin>
             <plugin>
