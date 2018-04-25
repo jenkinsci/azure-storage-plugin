@@ -1,16 +1,15 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import hudson.Extension;
 import hudson.model.Run;
 import io.jenkins.blueocean.rest.Reachable;
 import io.jenkins.blueocean.rest.factory.BlueArtifactFactory;
 import io.jenkins.blueocean.rest.hal.Link;
 import io.jenkins.blueocean.rest.model.BlueArtifact;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public final class AzureStorageBlueArtifact extends BlueArtifact {
     private final AzureBlobAction action;
@@ -34,8 +33,8 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
 
     @Override
     public String getUrl() {
-        return String.format("/job/%s/%d/Azure/processDownloadRequest/%s", getStorageName(),
-                action.getBuild().number, artifact.getBlobName());
+        return String.format("/%s%s/processDownloadRequest/%s", action.getBuild().getUrl(), action.getUrlName(),
+                artifact.getBlobName());
     }
 
     @Override
@@ -46,15 +45,6 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
     @Override
     public boolean isDownloadable() {
         return true;
-    }
-
-    private String getStorageName() {
-        if (Constants.BLOB_STORAGE.equalsIgnoreCase(artifact.getStorageType())) {
-            return action.getContainerName();
-        } else if (Constants.FILE_STORAGE.equalsIgnoreCase(artifact.getStorageType())) {
-            return action.getFileShareName();
-        }
-        return "";
     }
 
     @Extension
