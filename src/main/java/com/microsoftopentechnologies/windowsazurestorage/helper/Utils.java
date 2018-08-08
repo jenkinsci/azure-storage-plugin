@@ -41,14 +41,14 @@ public final class Utils {
      * followed by a letter or number; consecutive dashes are not permitted in
      * container names. 3.All letters in a container name must be lowercase.
      * 4.Container names must be from 3 through 63 characters long. 5.Root
-     * container is specially treated.
+     * container and web container are specially treated.
      *
      * @param containerName Name of the Windows Azure storage container
      * @return true if container name is valid else returns false
      */
     public static boolean validateContainerName(String containerName) {
         if (containerName != null) {
-            if (containerName.equals(Constants.ROOT_CONTAINER)) {
+            if (containerName.equals(Constants.ROOT_CONTAINER) || containerName.equals(Constants.WEB_CONTAINER)) {
                 return true;
             }
 

@@ -24,6 +24,10 @@ public class WindowsAzureStorageTest extends TestCase {
 		// checking for container name with dash (-) characters
 		assertEquals(true, Utils.validateContainerName("abc-def"));
 
+        // checking for special container name
+        assertEquals(true, Utils.validateContainerName("$root"));
+        assertEquals(true, Utils.validateContainerName("$web"));
+
 		// Negative case : consecutive dashes are not allowed
 		assertEquals(false, Utils.validateContainerName("abc--def"));
 
