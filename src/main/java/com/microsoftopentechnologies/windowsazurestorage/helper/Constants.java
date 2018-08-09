@@ -34,6 +34,12 @@ public final class Constants {
      */
     public static final String ROOT_CONTAINER = "$root";
 
+    /**
+     * @see <a href="https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website">
+     *     Working with the static website hosting Web Container</a>
+     */
+    public static final String WEB_CONTAINER = "$web";
+
     /* Regular expression to match tokens in the format of $TOKEN or ${TOKEN} */
     public static final String TOKEN_FORMAT = "\\$([A-Za-z0-9_]+|\\{[A-Za-z0-9_]+\\})";
 
