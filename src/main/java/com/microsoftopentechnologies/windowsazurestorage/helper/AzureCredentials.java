@@ -182,6 +182,10 @@ public class AzureCredentials extends BaseStandardCredentials {
         return storageData.storageAccountName;
     }
 
+    public String getPlainStorageKey() {
+        return storageData.storageAccountKey.getPlainText();
+    }
+
     public String getStorageKey() {
         return storageData.storageAccountKey.getEncryptedValue();
     }

@@ -86,7 +86,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
         AzureCredentials credentials = getCredentials(build);
         Map<String, String> variableMap = new HashMap<>();
         variableMap.put(getStorageAccountNameVariable(), credentials.getStorageAccountName());
-        variableMap.put(getStorageAccountKeyVariable(), credentials.getStorageKey());
+        variableMap.put(getStorageAccountKeyVariable(), credentials.getPlainStorageKey());
         variableMap.put(getBlobEndpointUrlVariable(), credentials.getBlobEndpointURL());
         return new MultiEnvironment(variableMap);
     }
