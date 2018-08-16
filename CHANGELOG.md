@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.3.10 August 16, 2018
+---------------------------
+- Add support for static website hosting (#119)
+- Fix storage account not masked in Jenkins pipeline (#118)
+- Fix URL broken for Blue Ocean artifacts (#115)
+
 Version 0.3.9 April 4, 2018
 ---------------------------
 - Do not mark build as unstable if no files are downloaded (JENKINS-42341)
