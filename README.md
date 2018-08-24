@@ -1,7 +1,7 @@
 Azure Storage Plugin
 ====================
 
-A plugin for uploading build artifacts to, or downloading build dependencies from, Microsoft Azure Blob storage. (For a more detailed tutorial see http://go.microsoft.com/fwlink/?LinkId=280058)
+A plugin for uploading build artifacts to, or downloading build dependencies from, Microsoft Azure Blob storage or Azure Files. (For a more detailed tutorial see http://go.microsoft.com/fwlink/?LinkId=280058)
 
 Installing
 ----------
