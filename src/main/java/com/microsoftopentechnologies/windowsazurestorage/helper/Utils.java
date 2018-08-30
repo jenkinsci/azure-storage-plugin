@@ -235,7 +235,11 @@ public final class Utils {
      * @return
      */
     public static String replaceMacro(String s, Map<String, String> props, Locale locale) {
-        return Util.replaceMacro(s, props).trim().toLowerCase(locale);
+        String result = Util.replaceMacro(s, props);
+        if (result == null) {
+            return null;
+        }
+        return result.trim().toLowerCase(locale);
     }
 
     /**
@@ -246,7 +250,11 @@ public final class Utils {
      * @return
      */
     public static String replaceMacro(String s, Map<String, String> props) {
-        return Util.replaceMacro(s, props).trim();
+        String result = Util.replaceMacro(s, props);
+        if (result == null) {
+            return null;
+        }
+        return result.trim();
     }
 
     private Utils() {
