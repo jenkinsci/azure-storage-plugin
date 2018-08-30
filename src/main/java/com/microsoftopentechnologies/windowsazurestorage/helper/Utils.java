@@ -227,7 +227,7 @@ public final class Utils {
     }
 
     /**
-     * wrapper of method {@link hudson.Util#replaceMacro(String, Map)}, make the result into lower case
+     * wrapper of method {@link hudson.Util#replaceMacro(String, Map)}, make the result into lower case.
      *
      * @param s
      * @param props
@@ -239,7 +239,7 @@ public final class Utils {
     }
 
     /**
-     * wrapper of method {@link hudson.Util#replaceMacro(String, Map)}, trim the result
+     * wrapper of method {@link hudson.Util#replaceMacro(String, Map)}, trim the result.
      *
      * @param s
      * @param props
