@@ -18,6 +18,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.google.common.base.Strings;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
@@ -62,6 +63,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Locale;
 
 public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     public static final String DOWNLOAD_TYPE_CONTAINER = "container";
@@ -256,14 +258,14 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                     new DownloadServiceData(run, workspace, launcher, listener, storageAccountInfo);
 
             // Resolve include patterns
-            String expIncludePattern = Util.replaceMacro(includeFilesPattern, envVars);
+            String expIncludePattern = Utils.replaceMacro(includeFilesPattern, envVars);
             // If the include is empty, make **/*
             if (StringUtils.isBlank(expIncludePattern)) {
                 expIncludePattern = "**/*";
             }
 
             // Resolve exclude patterns
-            String expExcludePattern = Util.replaceMacro(excludeFilesPattern, envVars);
+            String expExcludePattern = Utils.replaceMacro(excludeFilesPattern, envVars);
             // Exclude archive.zip by default.
             if (!includeArchiveZips) {
                 if (expExcludePattern != null) {
@@ -273,12 +275,16 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
                 }
             }
 
+            // Resolve container name or share name
+            final String expContainerName = Utils.replaceMacro(Util.fixNull(containerName), envVars, Locale.ENGLISH);
+            final String expShareName = Utils.replaceMacro(Util.fixNull(fileShare), envVars, Locale.ENGLISH);
+
             // initialize service data
             builderServiceData.setIncludeFilesPattern(expIncludePattern);
             builderServiceData.setExcludeFilesPattern(expExcludePattern);
             builderServiceData.setDownloadDirLoc(Util.replaceMacro(downloadDirLoc, envVars));
-            builderServiceData.setContainerName(Util.replaceMacro(containerName, envVars));
-            builderServiceData.setFileShare(Util.replaceMacro(fileShare, envVars));
+            builderServiceData.setContainerName(expContainerName);
+            builderServiceData.setFileShare(expShareName);
             builderServiceData.setFlattenDirectories(flattenDirectories);
             builderServiceData.setDeleteFromAzureAfterDownload(deleteFromAzureAfterDownload);
             builderServiceData.setDownloadType(downloadType);
