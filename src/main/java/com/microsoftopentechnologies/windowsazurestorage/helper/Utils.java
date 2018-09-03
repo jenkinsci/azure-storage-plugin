@@ -17,6 +17,7 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.core.BaseRequest;
+import hudson.Util;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public final class Utils {
 
@@ -222,6 +224,37 @@ public final class Utils {
 
         opContext.setUserHeaders(temp);
         return opContext;
+    }
+
+    /**
+     * wrapper of method {@link hudson.Util#replaceMacro(String, Map)}, make the result into lower case.
+     *
+     * @param s
+     * @param props
+     * @param locale
+     * @return
+     */
+    public static String replaceMacro(String s, Map<String, String> props, Locale locale) {
+        String result = Util.replaceMacro(s, props);
+        if (result == null) {
+            return null;
+        }
+        return result.trim().toLowerCase(locale);
+    }
+
+    /**
+     * wrapper of method {@link hudson.Util#replaceMacro(String, Map)}, trim the result.
+     *
+     * @param s
+     * @param props
+     * @return
+     */
+    public static String replaceMacro(String s, Map<String, String> props) {
+        String result = Util.replaceMacro(s, props);
+        if (result == null) {
+            return null;
+        }
+        return result.trim();
     }
 
     private Utils() {

@@ -71,7 +71,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final String storageType;
@@ -374,14 +373,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return storageAcc;
     }
 
-    public String replaceMacro(String s, Map<String, String> props, Locale locale) {
-        return Util.replaceMacro(s, props).trim().toLowerCase(locale);
-    }
-
-    public String replaceMacro(String s, Map<String, String> props) {
-        return Util.replaceMacro(s, props).trim();
-    }
-
     @Override
     public synchronized void perform(
             @Nonnull Run<?, ?> run,
@@ -401,8 +392,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         final StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(credential);
 
         // Resolve container name or share name
-        final String expContainerName = replaceMacro(Util.fixNull(containerName), envVars, Locale.ENGLISH);
-        final String expShareName = replaceMacro(Util.fixNull(fileShareName), envVars, Locale.ENGLISH);
+        final String expContainerName = Utils.replaceMacro(Util.fixNull(containerName), envVars, Locale.ENGLISH);
+        final String expShareName = Utils.replaceMacro(Util.fixNull(fileShareName), envVars, Locale.ENGLISH);
 
         if (!validateData(run, listener, storageAccountInfo, expContainerName, expShareName)) {
             throw new IOException("Plugin can not continue, until previous errors are addressed");
@@ -411,8 +402,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         final UploadServiceData serviceData = new UploadServiceData(run, ws, launcher, listener, storageAccountInfo);
         serviceData.setContainerName(expContainerName);
         serviceData.setFileShareName(expShareName);
-        serviceData.setFilePath(replaceMacro(Util.fixNull(filesPath), envVars));
-        serviceData.setExcludedFilesPath(replaceMacro(Util.fixNull(excludeFilesPath), envVars));
+        serviceData.setFilePath(Utils.replaceMacro(Util.fixNull(filesPath), envVars));
+        serviceData.setExcludedFilesPath(Utils.replaceMacro(Util.fixNull(excludeFilesPath), envVars));
         serviceData.setBlobProperties(blobProperties);
         serviceData.setPubAccessible(pubAccessible);
         serviceData.setCleanUpContainerOrShare(cleanUpContainerOrShare);
@@ -420,7 +411,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setAzureBlobMetadata(metadata);
         serviceData.setOnlyUploadModifiedArtifacts(onlyUploadModifiedArtifacts);
         // Resolve virtual path
-        String expVP = replaceMacro(Util.fixNull(virtualPath), envVars);
+        String expVP = Utils.replaceMacro(Util.fixNull(virtualPath), envVars);
 
         if (!(StringUtils.isBlank(expVP) || expVP.endsWith(Constants.FWD_SLASH))) {
             expVP += Constants.FWD_SLASH;
