@@ -435,9 +435,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                     zipArchiveBlob = serviceData.getArchiveBlobs().get(0);
                 }
 
-                run.addAction(new AzureBlobAction(expContainerName, expShareName, storageType,
-                        serviceData.getIndividualBlobs(), zipArchiveBlob, allowAnonymousAccess,
-                        getStorageCredentialId()));
+                List<AzureBlob> individualBlobs = serviceData.getIndividualBlobs();
+                AzureBlobAction existAction = run.getAction(AzureBlobAction.class);
+                if (existAction != null) {
+                    existAction.getIndividualBlobs().addAll(individualBlobs);
+                } else {
+                    run.addAction(new AzureBlobAction(expContainerName, expShareName, storageType,
+                            individualBlobs, zipArchiveBlob, allowAnonymousAccess,
+                            getStorageCredentialId()));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace(listener.error(Messages
