@@ -40,6 +40,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -279,7 +280,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
             println("Uploaded blob with uri " + cloudFile.getUri() + " in " + getTime(endTime - startTime));
             return DatatypeConverter.printHexBinary(md.digest());
-        } catch (IOException | InterruptedException | StorageException e) {
+        } catch (IOException | InterruptedException | StorageException | URISyntaxException e) {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", hashedStorageAcc,
                     "Message", e.getMessage());
