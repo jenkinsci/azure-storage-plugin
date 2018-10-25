@@ -31,6 +31,7 @@ import org.springframework.util.AntPathMatcher;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -118,7 +119,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
                 cloudFile.deleteIfExists();
                 println("cloud file " + cloudFile.getName() + " is deleted from Azure.");
             }
-        } catch (IOException | InterruptedException | StorageException e) {
+        } catch (IOException | InterruptedException | StorageException | URISyntaxException e) {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, DOWNLOAD_FAILED,
                     "StorageAccount", hashedStorageAcc,
                     "ContentLength", String.valueOf(cloudFile.getProperties().getLength()),

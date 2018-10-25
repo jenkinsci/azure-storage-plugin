@@ -128,7 +128,7 @@ public class UploadToFileService extends UploadService {
         }
     }
 
-    private void deleteFiles(Iterable<ListFileItem> fileItems) throws StorageException {
+    private void deleteFiles(Iterable<ListFileItem> fileItems) throws StorageException, URISyntaxException {
         for (final ListFileItem fileItem : fileItems) {
             if (fileItem instanceof CloudFileDirectory) {
                 final CloudFileDirectory directory = (CloudFileDirectory) fileItem;
