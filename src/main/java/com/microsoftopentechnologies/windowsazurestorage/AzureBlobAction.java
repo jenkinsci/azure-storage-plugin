@@ -155,9 +155,9 @@ public class AzureBlobAction implements RunAction2 {
     }
 
     private String generateSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
-        if (storageType.equalsIgnoreCase(Constants.BLOB_STORAGE)) {
+        if (getStorageType().equalsIgnoreCase(Constants.BLOB_STORAGE)) {
             return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName);
-        } else if (storageType.equalsIgnoreCase(Constants.FILE_STORAGE)) {
+        } else if (getStorageType().equalsIgnoreCase(Constants.FILE_STORAGE)) {
             return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName);
         }
 
@@ -170,5 +170,12 @@ public class AzureBlobAction implements RunAction2 {
 
     public Api getApi() {
         return new Api(this);
+    }
+
+    public String getStorageType() {
+        if (Constants.FILE_STORAGE.equals(storageType)) {
+            return storageType;
+        }
+        return Constants.BLOB_STORAGE;
     }
 }
