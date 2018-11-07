@@ -121,7 +121,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     @DataBoundSetter
     public void setContainerName(String containerName) {
-        if (downloadType.equals(DOWNLOAD_TYPE_CONTAINER)) {
+        if (getDownloadType().equals(DOWNLOAD_TYPE_CONTAINER)) {
             this.containerName = containerName;
         }
     }
@@ -133,14 +133,14 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     @DataBoundSetter
     public void setBuildSelector(BuildSelector buildSelector) {
-        if (downloadType.equals(DOWNLOAD_TYPE_PROJECT)) {
+        if (getDownloadType().equals(DOWNLOAD_TYPE_PROJECT)) {
             this.buildSelector = buildSelector;
         }
     }
 
     @DataBoundSetter
     public void setProjectName(String projectName) {
-        if (downloadType.equals(DOWNLOAD_TYPE_PROJECT)) {
+        if (getDownloadType().equals(DOWNLOAD_TYPE_PROJECT)) {
             this.projectName = projectName;
         }
     }
@@ -175,7 +175,10 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     public String getDownloadType() {
-        return downloadType;
+        if (DOWNLOAD_TYPE_FILE_SHARE.equals(downloadType) || DOWNLOAD_TYPE_PROJECT.equals(downloadType)) {
+            return downloadType;
+        }
+        return DOWNLOAD_TYPE_CONTAINER;
     }
 
     public String getContainerName() {
@@ -286,7 +289,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             builderServiceData.setFileShare(expShareName);
             builderServiceData.setFlattenDirectories(flattenDirectories);
             builderServiceData.setDeleteFromAzureAfterDownload(deleteFromAzureAfterDownload);
-            builderServiceData.setDownloadType(downloadType);
+            builderServiceData.setDownloadType(getDownloadType());
             builderServiceData.setProjectName(Util.replaceMacro(projectName, envVars));
             builderServiceData.setBuildSelector(buildSelector);
 
@@ -306,7 +309,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     private StoragePluginService getDownloadService(DownloadServiceData data) {
-        switch (this.downloadType) {
+        switch (getDownloadType()) {
             case DOWNLOAD_TYPE_FILE_SHARE:
                 return new DownloadFromFileService(data);
             case DOWNLOAD_TYPE_PROJECT:
