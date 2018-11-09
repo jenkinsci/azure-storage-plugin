@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 0.3.11 November 9, 2018
+---------------------------
+- Upgrade Azure Storage SDK to version 6.1.0 (#132)
+- Make compatibility with versions before 0.3.6 (#135)
+- Fix naming convention rules not consist issue (#126)
+- Fix pipeline with multi azureUpload commands cannot list artifacts action properly (#129)
+- Fix cannot upload empty files to share file (#111)
+
+
 Version 0.3.10 August 16, 2018
 ---------------------------
 - Add support for static website hosting (#119)
