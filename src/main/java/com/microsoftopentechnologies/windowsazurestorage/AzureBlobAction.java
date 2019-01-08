@@ -17,6 +17,7 @@ import org.kohsuke.stapler.export.ExportedBean;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.List;
+import static java.net.URLDecoder.decode;
 
 @ExportedBean
 public class AzureBlobAction implements RunAction2 {
@@ -139,10 +140,10 @@ public class AzureBlobAction implements RunAction2 {
         }
 
         for (AzureBlob blob : individualBlobs) {
-            if (blob.getBlobName().equals(blobName)) {
+            if (blobName.equals(decode(blob.getBlobName(), "UTF-8"))) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
-                            + generateSASURL(accountInfo, blobName));
+                            + generateSASURL(accountInfo, blob.getBlobName()));
                 } catch (Exception e) {
                     response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                             "Error occurred while downloading artifact " + e.getMessage());
