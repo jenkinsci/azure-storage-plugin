@@ -17,7 +17,7 @@ import org.kohsuke.stapler.export.ExportedBean;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.List;
-import static java.net.URLDecoder.decode;
+import java.net.URLDecoder;
 
 @ExportedBean
 public class AzureBlobAction implements RunAction2 {
@@ -140,7 +140,7 @@ public class AzureBlobAction implements RunAction2 {
         }
 
         for (AzureBlob blob : individualBlobs) {
-            if (blobName.equals(decode(blob.getBlobName(), "UTF-8"))) {
+            if (blobName.equals(URLDecoder.decode(blob.getBlobName(), "UTF-8"))) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
                             + generateSASURL(accountInfo, blob.getBlobName()));
