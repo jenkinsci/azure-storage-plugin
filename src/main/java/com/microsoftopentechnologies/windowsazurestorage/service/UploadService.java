@@ -39,6 +39,7 @@ import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
@@ -46,6 +47,7 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.FileRequestEntity;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -85,6 +87,11 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     private AtomicInteger filesUploaded = new AtomicInteger(0);
     private ExecutorService executorService = new ThreadPoolExecutor(UPLOAD_THREAD_COUNT, UPLOAD_THREAD_COUNT,
             KEEP_ALIVE_TIME, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
+
+    static {
+        CLIENT.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+                new DefaultHttpMethodRetryHandler());
+    }
 
     protected UploadService(UploadServiceData serviceData) {
         super(serviceData);
@@ -404,7 +411,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
          */
         private ImmutablePair<Integer, String> execute(HttpMethod method) {
             int code = 0;
-            String responseBody = "";
+            String responseBody = null;
             try {
                 code = CLIENT.executeMethod(method);
                 responseBody = method.getResponseBodyAsString();
@@ -413,6 +420,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             } finally {
                 method.releaseConnection();
             }
+            responseBody = StringUtils.trimToEmpty(responseBody);
             return new ImmutablePair<>(code, responseBody);
         }
 
