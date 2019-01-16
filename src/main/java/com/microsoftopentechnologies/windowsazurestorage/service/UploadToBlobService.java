@@ -76,14 +76,9 @@ public class UploadToBlobService extends UploadService {
 
             final CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
 
-            StorageAccountInfo accountInfo = serviceData.getStorageAccountInfo();
-            String sas = generateWriteSASURL(accountInfo, blob.getName(),
-                    Constants.BLOB_STORAGE, container.getName());
-            String blobURL = blob.getUri().toString().replace("http://", "https://");
             List<UploadObject> uploadObjects = new ArrayList<>();
-            UploadObject uploadObject = new UploadObject(blob.getName(), zipPath, blobURL, sas, Constants.BLOB_STORAGE,
-                    blob.getServiceClient().getCredentials().getAccountName(),
-                    blob.getProperties(), blob.getMetadata());
+            UploadObject uploadObject = generateUploadObject(zipPath, serviceData.getStorageAccountInfo(),
+                    blob, container.getName());
             uploadObjects.add(uploadObject);
 
             UploadOnSlave uploadOnSlave = new UploadOnSlave(uploadObjects);
@@ -101,6 +96,16 @@ public class UploadToBlobService extends UploadService {
         }
     }
 
+    private UploadObject generateUploadObject(FilePath path, StorageAccountInfo accountInfo,
+                                              CloudBlockBlob blob, String containerName) throws Exception {
+        String sas = generateWriteSASURL(accountInfo, blob.getName(),
+                Constants.BLOB_STORAGE, containerName);
+        String blobURL = blob.getUri().toString().replace("http://", "https://");
+        return new UploadObject(blob.getName(), path, blobURL, sas, Constants.BLOB_STORAGE,
+                blob.getServiceClient().getCredentials().getAccountName(),
+                blob.getProperties(), blob.getMetadata());
+    }
+
     @Override
     protected void uploadIndividuals(String embeddedVP, FilePath[] paths, FilePath workspace)
             throws WAStorageException {
@@ -113,15 +118,9 @@ public class UploadToBlobService extends UploadService {
                 final String blobPath = getItemPath(src, embeddedVP);
                 final CloudBlockBlob blob = container.getBlockBlobReference(blobPath);
                 configureBlobPropertiesAndMetadata(blob, src);
-                // filepath url
 
-                StorageAccountInfo accountInfo = serviceData.getStorageAccountInfo();
-                String sas = generateWriteSASURL(accountInfo, blob.getName(),
-                        Constants.BLOB_STORAGE, container.getName());
-                String blobURL = blob.getUri().toString().replace("http://", "https://");
-                UploadObject uploadObject = new UploadObject(blob.getName(), src, blobURL, sas, Constants.BLOB_STORAGE,
-                        blob.getServiceClient().getCredentials().getAccountName(),
-                        blob.getProperties(), blob.getMetadata());
+                UploadObject uploadObject = generateUploadObject(src, serviceData.getStorageAccountInfo(),
+                        blob, container.getName());
                 uploadObjects.add(uploadObject);
             }
 
