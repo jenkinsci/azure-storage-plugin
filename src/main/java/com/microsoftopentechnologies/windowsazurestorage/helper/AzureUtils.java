@@ -138,6 +138,7 @@ public final class AzureUtils {
      * @return SAS URL
      * @throws Exception
      */
+    @Deprecated
     public static String generateBlobSASURL(
             StorageAccountInfo storageAccount,
             String containerName,
@@ -161,11 +162,43 @@ public final class AzureUtils {
         return sas;
     }
 
+    @Deprecated
     public static SharedAccessBlobPolicy generateBlobPolicy() {
         SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
         policy.setSharedAccessExpiryTime(generateExpiryDate());
         policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
 
+        return policy;
+    }
+
+    public static String generateBlobSASURL(
+            StorageAccountInfo storageAccount,
+            String containerName,
+            String blobName,
+            EnumSet<SharedAccessBlobPermissions> permissions) throws Exception {
+
+        CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+
+        // Create the blob client.
+        CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
+        CloudBlobContainer container = blobClient.getContainerReference(containerName);
+
+        // At this point need to throw an error back since container itself did not exist.
+        if (!container.exists()) {
+            throw new Exception("WAStorageClient: generateBlobSASURL: Container " + containerName
+                    + " does not exist in storage account " + storageAccount.getStorageAccName());
+        }
+
+        CloudBlob blob = container.getBlockBlobReference(blobName);
+        String sas = blob.generateSharedAccessSignature(generateBlobPolicy(permissions), null);
+
+        return sas;
+    }
+
+    public static SharedAccessBlobPolicy generateBlobPolicy(EnumSet<SharedAccessBlobPermissions> permissions) {
+        SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
+        policy.setSharedAccessExpiryTime(generateExpiryDate());
+        policy.setPermissions(permissions);
         return policy;
     }
 
@@ -178,6 +211,7 @@ public final class AzureUtils {
      * @return SAS URL
      * @throws Exception
      */
+    @Deprecated
     public static String generateFileSASURL(
             StorageAccountInfo storageAccount,
             String shareName,
@@ -195,11 +229,46 @@ public final class AzureUtils {
         return cloudFile.generateSharedAccessSignature(generateFilePolicy(), null);
     }
 
+    @Deprecated
     public static SharedAccessFilePolicy generateFilePolicy() {
         SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
         policy.setSharedAccessExpiryTime(generateExpiryDate());
         policy.setPermissions(EnumSet.of(SharedAccessFilePermissions.READ));
 
+        return policy;
+    }
+
+    /**
+     * Generates SAS URL for file item in Azure storage File Share.
+     *
+     * @param storageAccount
+     * @param fileName
+     * @param shareName      container name
+     * @return SAS URL
+     * @throws Exception
+     */
+    public static String generateFileSASURL(
+            StorageAccountInfo storageAccount,
+            String shareName,
+            String fileName,
+            EnumSet<SharedAccessFilePermissions> permissions) throws Exception {
+        CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+
+        CloudFileClient fileClient = cloudStorageAccount.createCloudFileClient();
+        CloudFileShare fileShare = fileClient.getShareReference((shareName));
+        if (!fileShare.exists()) {
+            throw new Exception("WAStorageClient: generateFileSASURL: Share " + shareName
+                    + " does not exist in storage account " + storageAccount.getStorageAccName());
+        }
+
+        CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(fileName);
+        return cloudFile.generateSharedAccessSignature(generateFilePolicy(permissions), null);
+    }
+
+    public static SharedAccessFilePolicy generateFilePolicy(EnumSet<SharedAccessFilePermissions> permissions) {
+        SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
+        policy.setSharedAccessExpiryTime(generateExpiryDate());
+        policy.setPermissions(permissions);
         return policy;
     }
 
