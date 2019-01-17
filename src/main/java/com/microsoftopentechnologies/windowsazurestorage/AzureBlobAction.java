@@ -1,5 +1,7 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
+import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
+import com.microsoft.azure.storage.file.SharedAccessFilePermissions;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -16,6 +18,7 @@ import org.kohsuke.stapler.export.ExportedBean;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 
 @ExportedBean
@@ -130,7 +133,7 @@ public class AzureBlobAction implements RunAction2 {
         if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-                        + generateSASURL(accountInfo, blobName));
+                        + generateReadSASURL(accountInfo, blobName));
             } catch (Exception e) {
                 response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                         "Error occurred while downloading artifact " + e.getMessage());
@@ -142,7 +145,7 @@ public class AzureBlobAction implements RunAction2 {
             if (blob.getBlobName().equals(blobName)) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
-                            + generateSASURL(accountInfo, blobName));
+                            + generateReadSASURL(accountInfo, blobName));
                 } catch (Exception e) {
                     response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                             "Error occurred while downloading artifact " + e.getMessage());
@@ -154,13 +157,14 @@ public class AzureBlobAction implements RunAction2 {
         response.sendError(Constants.HTTP_NOT_FOUND, "Azure artifact is not available");
     }
 
-    private String generateSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
+    private String generateReadSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
         if (getStorageType().equalsIgnoreCase(Constants.BLOB_STORAGE)) {
-            return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName);
+            return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName,
+                    EnumSet.of(SharedAccessBlobPermissions.READ));
         } else if (getStorageType().equalsIgnoreCase(Constants.FILE_STORAGE)) {
-            return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName);
+            return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName,
+                    EnumSet.of(SharedAccessFilePermissions.READ));
         }
-
         throw new Exception("Unknown storage type. Please re-configure your job and build again.");
     }
 
