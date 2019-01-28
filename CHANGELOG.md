@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 0.3.12 January 28, 2019
+---------------------------
+- Upload files to Blob service on agents using SAS instead of sdk
+
 Version 0.3.11 November 9, 2018
 ---------------------------
 - Upgrade Azure Storage SDK to version 6.1.0 (#132)
