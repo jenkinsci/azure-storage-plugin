@@ -337,7 +337,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                     azureBlobs.add(azureBlob);
 
                     long interval = uploadResult.getEndTime() - uploadResult.getStartTime();
-                    println(Messages.UploadService_https_uploaded(uploadResult.getUrl(), interval));
+                    println(Messages.UploadService_https_uploaded(uploadResult.getUrl(), getTime(interval)));
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
