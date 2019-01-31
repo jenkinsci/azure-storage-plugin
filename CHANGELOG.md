@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 0.3.13 January 31, 2019
+---------------------------
+- Fix serialize issue from master to agent
+
 Version 0.3.12 January 28, 2019
 ---------------------------
 - Upload files to Blob service on agents using SAS instead of sdk
