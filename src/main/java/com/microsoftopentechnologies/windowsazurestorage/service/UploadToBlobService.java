@@ -16,6 +16,7 @@
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.blob.BlobProperties;
 import com.microsoft.azure.storage.blob.CloudBlob;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlobDirectory;
@@ -29,6 +30,7 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.PartialBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -40,7 +42,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 
 /**
  * Service to upload files to Windows Azure Blob Storage.
@@ -82,7 +83,7 @@ public class UploadToBlobService extends UploadService {
             uploadObjects.add(uploadObject);
 
             UploadOnSlave uploadOnSlave = new UploadOnSlave(uploadObjects);
-            List<Future<UploadResult>> results = workspacePath.act(uploadOnSlave);
+            List<UploadResult> results = workspacePath.act(uploadOnSlave);
 
             updateAzureBlobs(results, serviceData.getArchiveBlobs());
 
@@ -103,7 +104,12 @@ public class UploadToBlobService extends UploadService {
         String blobURL = blob.getUri().toString().replace("http://", "https://");
         return new UploadObject(blob.getName(), path, blobURL, sas, Constants.BLOB_STORAGE,
                 blob.getServiceClient().getCredentials().getAccountName(),
-                blob.getProperties(), blob.getMetadata());
+                convertBlobProperties(blob.getProperties()), blob.getMetadata());
+    }
+
+    private PartialBlobProperties convertBlobProperties(BlobProperties properties) {
+        return new PartialBlobProperties(properties.getContentEncoding(), properties.getContentLanguage(),
+                properties.getCacheControl(), properties.getContentType());
     }
 
     @Override
@@ -125,7 +131,7 @@ public class UploadToBlobService extends UploadService {
             }
 
             UploadOnSlave uploadOnSlave = new UploadOnSlave(uploadObjects);
-            List<Future<UploadResult>> results = workspace.act(uploadOnSlave);
+            List<UploadResult> results = workspace.act(uploadOnSlave);
 
             updateAzureBlobs(results, serviceData.getIndividualBlobs());
 
