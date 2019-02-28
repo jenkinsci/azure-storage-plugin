@@ -26,8 +26,10 @@ import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
+import org.apache.commons.lang.StringUtils;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 
 public class DownloadFromFileService extends DownloadService {
@@ -56,20 +58,40 @@ public class DownloadFromFileService extends DownloadService {
         return getFilesDownloaded();
     }
 
-    private int scanFileItems(Iterable<ListFileItem> fileItems) throws WAStorageException {
+    public String getPrefix(ListFileItem fileItem) throws URISyntaxException, StorageException {
+        URI fileUri = fileItem.getUri();
+        URI shareUri = fileItem.getShare().getUri();
+        String difference = StringUtils.difference(shareUri.toString(), fileUri.toString());
+        if (difference.startsWith("/")) {
+            difference = difference.substring(1);
+        }
+        return difference;
+    }
+
+    private int scanFileItems(Iterable<ListFileItem> fileItems) throws URISyntaxException, StorageException {
         final DownloadServiceData data = getServiceData();
         int filesNeedDownload = 0;
         for (final ListFileItem fileItem : fileItems) {
             if (fileItem instanceof CloudFile) {
                 final CloudFile cloudFile = (CloudFile) fileItem;
-                final boolean shouldDownload = shouldDownload(data.getIncludeFilesPattern(),
-                        data.getExcludeFilesPattern(), cloudFile.getName(), true);
+                final boolean shouldDownload = shouldDownload(
+                        data.getIncludeFilesPattern(),
+                        data.getExcludeFilesPattern(),
+                        getPrefix(cloudFile),
+                        true);
                 if (shouldDownload) {
                     getExecutorService().submit(new DownloadThread(cloudFile));
                     filesNeedDownload++;
                 }
             } else if (fileItem instanceof CloudFileDirectory) {
-                filesNeedDownload += scanFileItems(((CloudFileDirectory) fileItem).listFilesAndDirectories());
+                CloudFileDirectory cloudFileDirectory = (CloudFileDirectory) fileItem;
+                if (shouldDownload(
+                        data.getIncludeFilesPattern(),
+                        data.getExcludeFilesPattern(),
+                        getPrefix(cloudFileDirectory) + "/",
+                        false)) {
+                    filesNeedDownload += scanFileItems(((CloudFileDirectory) fileItem).listFilesAndDirectories());
+                }
             }
         }
         return filesNeedDownload;
