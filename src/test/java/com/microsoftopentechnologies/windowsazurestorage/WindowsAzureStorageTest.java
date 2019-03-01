@@ -74,8 +74,11 @@ public class WindowsAzureStorageTest extends TestCase {
 		CloudFileDirectory directory = new CloudFileDirectory(directoryUri, credentials);
 		URI fileUri = new URI("https://blob.core.windows.net/share/test/file.txt");
 		CloudFile file = new CloudFile(fileUri, credentials);
+		URI subUri = new URI("https://blob.core.windows.net/share/test/sub/sub.txt");
+		CloudFile subFile = new CloudFile(subUri, credentials);
 		DownloadFromFileService service = new DownloadFromFileService(null);
 		assertEquals("test", service.getPrefix(directory));
 		assertEquals("test/file.txt", service.getPrefix(file));
+		assertEquals("test/sub/sub.txt", service.getPrefix(subFile));
 	}
 }
