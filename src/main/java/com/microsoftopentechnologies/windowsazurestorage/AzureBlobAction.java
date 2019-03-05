@@ -16,6 +16,7 @@ import org.kohsuke.stapler.export.ExportedBean;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.net.URLDecoder;
 
@@ -128,10 +129,12 @@ public class AzureBlobAction implements RunAction2 {
         String blobName = queryPath.substring(1);
 
         // Check the archive blob if it is non-null
-        if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
+        if (zipArchiveBlob != null
+                && blobName.equals(URLDecoder.decode(zipArchiveBlob.getBlobName(),
+                StandardCharsets.UTF_8.toString()))) {
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-                        + generateSASURL(accountInfo, blobName));
+                        + generateSASURL(accountInfo, zipArchiveBlob.getBlobName()));
             } catch (Exception e) {
                 response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                         "Error occurred while downloading artifact " + e.getMessage());
@@ -140,7 +143,7 @@ public class AzureBlobAction implements RunAction2 {
         }
 
         for (AzureBlob blob : individualBlobs) {
-            if (blobName.equals(URLDecoder.decode(blob.getBlobName(), "UTF-8"))) {
+            if (blobName.equals(URLDecoder.decode(blob.getBlobName(), StandardCharsets.UTF_8.toString()))) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
                             + generateSASURL(accountInfo, blob.getBlobName()));
