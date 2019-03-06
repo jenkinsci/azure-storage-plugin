@@ -1,5 +1,7 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
+import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
+import com.microsoft.azure.storage.file.SharedAccessFilePermissions;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -158,13 +160,14 @@ public class AzureBlobAction implements RunAction2 {
         response.sendError(Constants.HTTP_NOT_FOUND, "Azure artifact is not available");
     }
 
-    private String generateSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
+    private String generateReadSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
         if (getStorageType().equalsIgnoreCase(Constants.BLOB_STORAGE)) {
-            return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName);
+            return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName,
+                    EnumSet.of(SharedAccessBlobPermissions.READ));
         } else if (getStorageType().equalsIgnoreCase(Constants.FILE_STORAGE)) {
-            return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName);
+            return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName,
+                    EnumSet.of(SharedAccessFilePermissions.READ));
         }
-
         throw new Exception("Unknown storage type. Please re-configure your job and build again.");
     }
 

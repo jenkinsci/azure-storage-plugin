@@ -138,10 +138,29 @@ public final class AzureUtils {
      * @return SAS URL
      * @throws Exception
      */
+    @Deprecated
     public static String generateBlobSASURL(
             StorageAccountInfo storageAccount,
             String containerName,
             String blobName) throws Exception {
+        return generateBlobSASURL(storageAccount, containerName, blobName,
+                EnumSet.of(SharedAccessBlobPermissions.READ));
+    }
+
+    @Deprecated
+    public static SharedAccessBlobPolicy generateBlobPolicy() {
+        SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
+        policy.setSharedAccessExpiryTime(generateExpiryDate());
+        policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
+
+        return policy;
+    }
+
+    public static String generateBlobSASURL(
+            StorageAccountInfo storageAccount,
+            String containerName,
+            String blobName,
+            EnumSet<SharedAccessBlobPermissions> permissions) throws Exception {
 
         CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
 
@@ -156,15 +175,41 @@ public final class AzureUtils {
         }
 
         CloudBlob blob = container.getBlockBlobReference(blobName);
-        String sas = blob.generateSharedAccessSignature(generateBlobPolicy(), null);
+        String sas = blob.generateSharedAccessSignature(generateBlobPolicy(permissions), null);
 
         return sas;
     }
 
-    public static SharedAccessBlobPolicy generateBlobPolicy() {
+    public static SharedAccessBlobPolicy generateBlobPolicy(EnumSet<SharedAccessBlobPermissions> permissions) {
         SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
         policy.setSharedAccessExpiryTime(generateExpiryDate());
-        policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
+        policy.setPermissions(permissions);
+        return policy;
+    }
+
+    /**
+     * Generates SAS URL for file item in Azure storage File Share.
+     *
+     * @param storageAccount
+     * @param fileName
+     * @param shareName      container name
+     * @return SAS URL
+     * @throws Exception
+     */
+    @Deprecated
+    public static String generateFileSASURL(
+            StorageAccountInfo storageAccount,
+            String shareName,
+            String fileName) throws Exception {
+        return generateFileSASURL(storageAccount, shareName, fileName,
+                EnumSet.of(SharedAccessFilePermissions.READ));
+    }
+
+    @Deprecated
+    public static SharedAccessFilePolicy generateFilePolicy() {
+        SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
+        policy.setSharedAccessExpiryTime(generateExpiryDate());
+        policy.setPermissions(EnumSet.of(SharedAccessFilePermissions.READ));
 
         return policy;
     }
@@ -181,7 +226,8 @@ public final class AzureUtils {
     public static String generateFileSASURL(
             StorageAccountInfo storageAccount,
             String shareName,
-            String fileName) throws Exception {
+            String fileName,
+            EnumSet<SharedAccessFilePermissions> permissions) throws Exception {
         CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
 
         CloudFileClient fileClient = cloudStorageAccount.createCloudFileClient();
@@ -192,14 +238,13 @@ public final class AzureUtils {
         }
 
         CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(fileName);
-        return cloudFile.generateSharedAccessSignature(generateFilePolicy(), null);
+        return cloudFile.generateSharedAccessSignature(generateFilePolicy(permissions), null);
     }
 
-    public static SharedAccessFilePolicy generateFilePolicy() {
+    public static SharedAccessFilePolicy generateFilePolicy(EnumSet<SharedAccessFilePermissions> permissions) {
         SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
         policy.setSharedAccessExpiryTime(generateExpiryDate());
-        policy.setPermissions(EnumSet.of(SharedAccessFilePermissions.READ));
-
+        policy.setPermissions(permissions);
         return policy;
     }
 
