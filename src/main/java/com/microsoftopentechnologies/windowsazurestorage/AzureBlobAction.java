@@ -137,7 +137,7 @@ public class AzureBlobAction implements RunAction2 {
                 StandardCharsets.UTF_8.toString()))) {
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-                        + generateSASURL(accountInfo, zipArchiveBlob.getBlobName()));
+                        + generateReadSASURL(accountInfo, zipArchiveBlob.getBlobName()));
             } catch (Exception e) {
                 response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                         "Error occurred while downloading artifact " + e.getMessage());
@@ -149,7 +149,7 @@ public class AzureBlobAction implements RunAction2 {
             if (blobName.equals(URLDecoder.decode(blob.getBlobName(), StandardCharsets.UTF_8.toString()))) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
-                            + generateSASURL(accountInfo, blob.getBlobName()));
+                            + generateReadSASURL(accountInfo, blob.getBlobName()));
                 } catch (Exception e) {
                     response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                             "Error occurred while downloading artifact " + e.getMessage());
