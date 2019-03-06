@@ -18,6 +18,7 @@ import org.kohsuke.stapler.export.ExportedBean;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.net.URLDecoder;
