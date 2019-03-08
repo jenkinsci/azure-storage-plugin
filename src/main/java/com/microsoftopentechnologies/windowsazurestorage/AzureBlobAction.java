@@ -19,7 +19,9 @@ import org.kohsuke.stapler.export.ExportedBean;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.net.URLDecoder;
 
 @ExportedBean
 public class AzureBlobAction implements RunAction2 {
@@ -130,10 +132,12 @@ public class AzureBlobAction implements RunAction2 {
         String blobName = queryPath.substring(1);
 
         // Check the archive blob if it is non-null
-        if (zipArchiveBlob != null && zipArchiveBlob.getBlobName().equals(blobName)) {
+        if (zipArchiveBlob != null
+                && blobName.equals(URLDecoder.decode(zipArchiveBlob.getBlobName(),
+                StandardCharsets.UTF_8.toString()))) {
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-                        + generateReadSASURL(accountInfo, blobName));
+                        + generateReadSASURL(accountInfo, zipArchiveBlob.getBlobName()));
             } catch (Exception e) {
                 response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                         "Error occurred while downloading artifact " + e.getMessage());
@@ -142,10 +146,10 @@ public class AzureBlobAction implements RunAction2 {
         }
 
         for (AzureBlob blob : individualBlobs) {
-            if (blob.getBlobName().equals(blobName)) {
+            if (blobName.equals(URLDecoder.decode(blob.getBlobName(), StandardCharsets.UTF_8.toString()))) {
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
-                            + generateReadSASURL(accountInfo, blobName));
+                            + generateReadSASURL(accountInfo, blob.getBlobName()));
                 } catch (Exception e) {
                     response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                             "Error occurred while downloading artifact " + e.getMessage());
