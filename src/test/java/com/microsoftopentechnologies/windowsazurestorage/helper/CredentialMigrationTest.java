@@ -58,7 +58,7 @@ public class CredentialMigrationTest {
     "<storageAccounts>\n" +
     "<storageAccName>abcdef</storageAccName>\n" +
     "<storageAccountKey>12345</storageAccountKey>\n" +
-    "<blobEndPointURL>http://blob.core.windows.net/</blobEndPointURL>\n" +
+    "<blobEndPointURL>https://blob.core.windows.net/</blobEndPointURL>\n" +
     "</storageAccounts>\n" +
     "</com.microsoftopentechnologies.windowsazurestorage.AzureStoragePublisher_-WAStorageDescriptor>";
     
