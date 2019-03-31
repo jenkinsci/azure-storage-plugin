@@ -98,7 +98,7 @@ public class CredentialMigrationTest {
 
         assertEquals(u.getStorageAccountName(), storageCred.getStorageAccountName());
         assertEquals(u.getEndpointURL(), storageCred.getBlobEndpointURL());
-        assertEquals(u.getSecureKey().getEncryptedValue(), storageCred.getStorageKey());
+        assertEquals(u.getSecureKey().getPlainText(), storageCred.getPlainStorageKey());
         
     }
 

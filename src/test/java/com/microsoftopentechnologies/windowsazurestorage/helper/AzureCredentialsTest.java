@@ -30,14 +30,12 @@ public class AzureCredentialsTest {
 
     private AzureCredentials azureCred;
     private AzureCredentials.StorageAccountCredential stCred;
-    private Jenkins jenkinsInstance;
 
     @ClassRule
     public static JenkinsRule j = new JenkinsRule();
 
     @Before
     public void setUp() throws IOException {
-        jenkinsInstance = Jenkins.getInstance();
         azureCred = new AzureCredentials(CredentialsScope.GLOBAL, Utils.getMD5(stName.concat(stKey)), null, stName, stKey, stURL);
         stCred = new AzureCredentials.StorageAccountCredential(stName, stKey, stURL);
         CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
@@ -84,15 +82,6 @@ public class AzureCredentialsTest {
     public void testGetStorageAccountName() {
         System.out.println("getStorageAccountName");
         assertEquals(stName, azureCred.getStorageAccountName());
-    }
-
-    /**
-     * Test of getStorageKey method, of class AzureCredentials.
-     */
-    @Test
-    public void testGetStorageKey() {
-        System.out.println("getStorageKey");
-        assertEquals(stCred.getSecureKey().getEncryptedValue(), azureCred.getStorageKey());
     }
 
     /**
