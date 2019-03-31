@@ -23,7 +23,6 @@
         <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <azure-commons.version>0.2.5</azure-commons.version>
-        <configuration-as-code.version>1.9-SNAPSHOT</configuration-as-code.version>
     </properties>
 
     <licenses>
