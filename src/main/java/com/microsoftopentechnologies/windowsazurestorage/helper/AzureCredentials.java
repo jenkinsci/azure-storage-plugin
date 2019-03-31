@@ -30,6 +30,7 @@ import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -199,6 +200,7 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     @Extension
+    @Symbol("azureStorageAccount")
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         @Override
