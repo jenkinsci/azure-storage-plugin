@@ -44,11 +44,7 @@ public class AzureBlobMetadataPair implements Describable<AzureBlobMetadataPair>
     @Override
     public Descriptor<AzureBlobMetadataPair> getDescriptor() {
         Jenkins instance = Jenkins.getInstance();
-        if (instance == null) {
-            return null;
-        } else {
-            return instance.getDescriptor(getClass());
-        }
+        return instance.getDescriptor(getClass());
     }
 
     @Extension

@@ -41,7 +41,7 @@ public class AzureCredentialsTest {
     public void setUp() throws IOException {
         azureCred = new AzureCredentials(CredentialsScope.GLOBAL, UUID.randomUUID().toString(), null, stName, stKey, stURL);
         stCred = new AzureCredentials.StorageAccountCredential(stName, stKey, stURL);
-        CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.get()).iterator().next();
+        CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
         s.addCredentials(Domain.global(), azureCred);
     }
 

@@ -104,11 +104,7 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
     @Override
     public Descriptor<AzureBlobProperties> getDescriptor() {
         Jenkins instance = Jenkins.getInstance();
-        if (instance == null) {
-            return null;
-        } else {
-            return instance.getDescriptor(getClass());
-        }
+        return instance.getDescriptor(getClass());
     }
 
     @Extension
