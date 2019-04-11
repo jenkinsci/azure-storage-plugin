@@ -31,7 +31,7 @@ import java.util.Map;
 
 public final class Utils {
 
-    public static final String DEF_BLOB_URL = "http://blob.core.windows.net/";
+    public static final String DEF_BLOB_URL = "https://blob.core.windows.net/";
     public static final String BLOB_ENDPOINT_ENDSUFFIX_KEYWORD = "core";
     public static final int BLOB_NAME_LENGTH_LIMIT = 1024;
 
