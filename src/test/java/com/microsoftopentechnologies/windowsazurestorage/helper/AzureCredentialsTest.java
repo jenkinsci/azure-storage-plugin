@@ -11,6 +11,7 @@ import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import hudson.util.Secret;
+import java.util.UUID;
 import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -20,6 +21,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author arroyc
@@ -37,7 +39,7 @@ public class AzureCredentialsTest {
 
     @Before
     public void setUp() throws IOException {
-        azureCred = new AzureCredentials(CredentialsScope.GLOBAL, Utils.getMD5(stName.concat(stKey)), null, stName, stKey, stURL);
+        azureCred = new AzureCredentials(CredentialsScope.GLOBAL, UUID.randomUUID().toString(), null, stName, stKey, stURL);
         stCred = new AzureCredentials.StorageAccountCredential(stName, stKey, stURL);
         CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
         s.addCredentials(Domain.global(), azureCred);
@@ -49,10 +51,11 @@ public class AzureCredentialsTest {
     @Test
     public void testGetStorageAccountCredential() {
         System.out.println("getStorageAccountCredential");
-        assertEquals(null, AzureCredentials.getStorageAccountCredential(null, null));
+        assertNull(AzureCredentials.getStorageAccountCredential(null, null));
         String storageCredentialId = azureCred.getId();
 
         AzureCredentials.StorageAccountCredential result = AzureCredentials.getStorageAccountCredential(null, storageCredentialId);
+        assert result != null;
         assertEquals(stCred.getStorageAccountKey(), result.getStorageAccountKey());
         assertEquals(stCred.getSecureKey(), result.getSecureKey());
         assertEquals(stCred.getStorageAccountName(), result.getStorageAccountName());
