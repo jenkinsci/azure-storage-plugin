@@ -10,6 +10,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -82,6 +83,15 @@ public class AzureCredentialsTest {
     public void testGetStorageAccountName() {
         System.out.println("getStorageAccountName");
         assertEquals(stName, azureCred.getStorageAccountName());
+    }
+
+    /**
+     * Test of getStorageKey method, of class AzureCredentials.
+     */
+    @Test
+    public void testGetStorageKey() {
+        System.out.println("getStorageKey");
+        assertEquals(stCred.getSecureKey().getPlainText(), Secret.decrypt(azureCred.getStorageKey()).getPlainText());
     }
 
     /**
