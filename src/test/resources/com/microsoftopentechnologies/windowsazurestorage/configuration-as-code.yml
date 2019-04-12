@@ -1,0 +1,11 @@
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - azureStorageAccount:
+              blobEndpointURL: "https://blob.core.windows.net/"
+              description: "Account"
+              id: "storage-account"
+              scope: GLOBAL
+              storageAccountName: "a-storage-account"
+              storageKey: "Password12"
