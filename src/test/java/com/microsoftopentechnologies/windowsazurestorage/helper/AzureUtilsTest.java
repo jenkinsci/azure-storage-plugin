@@ -37,7 +37,7 @@ public class AzureUtilsTest {
                 "foo", Base64.encode(new byte[]{'k'}), "");
         final CloudStorageAccount account = AzureUtils.getCloudStorageAccount(info);
         Assert.assertNull(account.getEndpointSuffix());
-        assertCloudStorageAccountWithDefaultEndpoint(account, false);
+        assertCloudStorageAccountWithDefaultEndpoint(account, true);
     }
 
     @Test
