@@ -45,7 +45,7 @@ public final class Constants {
 
     public static final String DEF_BLOB_URL = "https://blob.core.windows.net/";
     public static final String FWD_SLASH = "/";
-    public static final String HTTP_PRT = "http://";
+    public static final String HTTP_PRT = "https://";
     // http Protocol separator
     //CHECKSTYLE:OFF
     public static final String PRT_SEP = "://";
