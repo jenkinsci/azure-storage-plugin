@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 1.0.0 June 11, 2019
+---------------------------
+- Bump Jenkins baseline to 2.89.4
+- Add support for configuration as code
+- Fix failing to download when there is a slash in blob name
+- Fix download share file ant syntax issue
+- Change default blob URL to https
+- Fix failing to upload large files to blob
+
 Version 0.3.13 January 31, 2019
 ---------------------------
 - Fix serialize issue from master to agent
