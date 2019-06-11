@@ -60,7 +60,7 @@ public class WindowsAzureStorageTest extends TestCase {
 
 	@Test
 	public void testGetBlobEPAddsHttpProtocolWhenNoProtocolPresent() throws Exception {
-		assertEquals("http://blob.host.domain.tld/", Utils.getBlobEP("blob.host.domain.tld"));
+		assertEquals("https://blob.host.domain.tld/", Utils.getBlobEP("blob.host.domain.tld"));
 	}
 
 	@Test

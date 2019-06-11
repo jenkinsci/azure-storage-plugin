@@ -88,7 +88,7 @@ public class UtilsTest {
         String result = Utils.getBlobEP(blobURL);
         assertEquals(expResult, result);
         result = Utils.getBlobEP("abcd");
-        assertEquals("http://abcd/", result);
+        assertEquals("https://abcd/", result);
     }
 
     /**
