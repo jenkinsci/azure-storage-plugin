@@ -88,7 +88,7 @@ public final class AzureUtils {
                 storageAccount.getStorageAccountKey());
 
         if (StringUtils.isBlank(blobURLStr) || blobURLStr.equalsIgnoreCase(Constants.DEF_BLOB_URL)) {
-            cloudStorageAccount = new CloudStorageAccount(credentials);
+            cloudStorageAccount = new CloudStorageAccount(credentials, true, null);
         } else {
             final URL blobURL = new URL(blobURLStr);
             boolean useHttps = blobURL.getProtocol().equalsIgnoreCase("https");
