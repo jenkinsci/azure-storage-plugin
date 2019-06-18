@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.0.1 June 18, 2019
+---------------------------
+- Fix missing small files bug
+
 Version 1.0.0 June 11, 2019
 ---------------------------
 - Bump Jenkins baseline to 2.89.4
