@@ -473,7 +473,10 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 response = putBlobList(blockIdList);
             } else {
                 RequestEntity requestEntity = new FileRequestEntity(new File(src.getRemote()), null);
-                response = putBlob(DEFAULT_ENCODED_BLOCKID, requestEntity);
+                PutMethod method = generateBlobWriteMethod(uploadObject.getUrl(), uploadObject.getSas(),
+                        uploadObject.getBlobProperties(), uploadObject.getMetadata());
+                method.setRequestEntity(requestEntity);
+                response = execute(method);
             }
             long endTime = System.currentTimeMillis();
 
@@ -573,8 +576,19 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         }
 
         private PutMethod generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
+                                                  Map<String, String> metadatas) {
+            String sasUrl = url + "?" + sas;
+            return generateBlobWriteMethod(sasUrl, blobProperties, metadatas);
+        }
+
+        private PutMethod generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
                                                   Map<String, String> metadatas, String blockId) {
             String sasUrl = String.format("%s?comp=block&blockid=%s&%s", url, blockId, sas);
+            return generateBlobWriteMethod(sasUrl, blobProperties, metadatas);
+        }
+
+        private PutMethod generateBlobWriteMethod(String sasUrl,
+                                                  PartialBlobProperties blobProperties, Map<String, String> metadatas) {
             PutMethod method = new PutMethod(sasUrl);
             method.addRequestHeader("x-ms-blob-type", "BlockBlob");
             method.addRequestHeader("Cache-Control", blobProperties.getCacheControl());
