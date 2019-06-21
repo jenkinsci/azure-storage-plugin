@@ -40,18 +40,20 @@ import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.methods.FileRequestEntity;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -75,6 +77,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
@@ -104,16 +107,13 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     private static final int KEEP_ALIVE_TIME = 1;
     private static final int TIME_OUT = 1;
     private static final TimeUnit TIME_OUT_UNIT = TimeUnit.DAYS;
-    private static final HttpClient CLIENT = new HttpClient(new MultiThreadedHttpConnectionManager());
+    private static final CloseableHttpClient CLIENT = HttpClientBuilder.create()
+            .setConnectionManager(new PoolingHttpClientConnectionManager())
+            .setRetryHandler(new DefaultHttpRequestRetryHandler()).build();
 
     private AtomicInteger filesUploaded = new AtomicInteger(0);
     private ExecutorService executorService = new ThreadPoolExecutor(UPLOAD_THREAD_COUNT, UPLOAD_THREAD_COUNT,
             KEEP_ALIVE_TIME, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
-
-    static {
-        CLIENT.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
-                new DefaultHttpMethodRetryHandler());
-    }
 
     protected UploadService(UploadServiceData serviceData) {
         super(serviceData);
@@ -447,7 +447,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                             String encodedBlockId = getEncodedBlockId(index);
                             blockIdList.add(encodedBlockId);
 
-                            RequestEntity requestEntity = new FileRequestEntity(new File(splitFileName), null);
+                            HttpEntity requestEntity = new FileEntity(new File(splitFileName));
                             putBlob(encodedBlockId, requestEntity);
                         }
                     }
@@ -463,7 +463,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                             String encodedBlockId = getEncodedBlockId(blockCount + 1);
                             blockIdList.add(encodedBlockId);
 
-                            RequestEntity requestEntity = new FileRequestEntity(new File(splitFileName), null);
+                            HttpEntity requestEntity = new FileEntity(new File(splitFileName));
                             putBlob(encodedBlockId, requestEntity);
                         }
                     }
@@ -472,10 +472,10 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 // put block list
                 response = putBlobList(blockIdList);
             } else {
-                RequestEntity requestEntity = new FileRequestEntity(new File(src.getRemote()), null);
-                PutMethod method = generateBlobWriteMethod(uploadObject.getUrl(), uploadObject.getSas(),
+                HttpEntity requestEntity = new FileEntity(new File(src.getRemote()));
+                HttpPut method = generateBlobWriteMethod(uploadObject.getUrl(), uploadObject.getSas(),
                         uploadObject.getBlobProperties(), uploadObject.getMetadata());
-                method.setRequestEntity(requestEntity);
+                method.setEntity(requestEntity);
                 response = execute(method);
             }
             long endTime = System.currentTimeMillis();
@@ -509,13 +509,13 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         }
 
         private ImmutablePair<Integer, String> putBlobList(List<String> blockIdList) throws WAStorageException {
-            PutMethod putMethod = generateBlockListWrtieMethod(uploadObject.getUrl(), uploadObject.getSas());
+            HttpPut putMethod = generateBlockListWrtieMethod(uploadObject.getUrl(), uploadObject.getSas());
             String blockListBody = generateBlockListBody(blockIdList);
-            putMethod.setRequestEntity(new StringRequestEntity(blockListBody));
+            putMethod.setEntity(new StringEntity(blockListBody, StandardCharsets.UTF_8));
             return execute(putMethod);
         }
 
-        private ImmutablePair<Integer, String> putBlob(String blockId, RequestEntity requestEntity) throws
+        private ImmutablePair<Integer, String> putBlob(String blockId, HttpEntity requestEntity) throws
                 WAStorageException, IOException, InterruptedException {
             FilePath src = uploadObject.getSrc();
             String storageType = uploadObject.getStorageType();
@@ -525,9 +525,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
             ImmutablePair<Integer, String> response;
             if (Constants.BLOB_STORAGE.equals(storageType)) {
-                PutMethod method = generateBlobWriteMethod(url, sas, uploadObject.getBlobProperties(),
+                HttpPut method = generateBlobWriteMethod(url, sas, uploadObject.getBlobProperties(),
                         uploadObject.getMetadata(), blockId);
-                method.setRequestEntity(requestEntity);
+                method.setEntity(requestEntity);
                 response = execute(method);
             } else {
                 throw new WAStorageException("Now only support Azure Blob Service for https uploading.");
@@ -554,12 +554,14 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
          * @param method http method needs to be executed.
          * @return Pair of http code and response message.
          */
-        private ImmutablePair<Integer, String> execute(HttpMethod method) {
+        private ImmutablePair<Integer, String> execute(HttpRequestBase method) {
             int code = 0;
             String responseBody = null;
             try {
-                code = CLIENT.executeMethod(method);
-                responseBody = method.getResponseBodyAsString();
+                HttpResponse response = CLIENT.execute(method);
+                code = response.getStatusLine().getStatusCode();
+                HttpEntity entity = response.getEntity();
+                responseBody = entity != null ? EntityUtils.toString(entity) : null;
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -569,34 +571,34 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             return new ImmutablePair<>(code, responseBody);
         }
 
-        private PutMethod generateBlockListWrtieMethod(String url, String sas) {
+        private HttpPut generateBlockListWrtieMethod(String url, String sas) {
             String sasUrl = String.format("%s?comp=blocklist&%s", url, sas);
-            PutMethod method = new PutMethod(sasUrl);
+            HttpPut method = new HttpPut(sasUrl);
             return method;
         }
 
-        private PutMethod generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
-                                                  Map<String, String> metadatas) {
+        private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
+                                                Map<String, String> metadatas) {
             String sasUrl = url + "?" + sas;
             return generateBlobWriteMethod(sasUrl, blobProperties, metadatas);
         }
 
-        private PutMethod generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
-                                                  Map<String, String> metadatas, String blockId) {
+        private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
+                                                Map<String, String> metadatas, String blockId) {
             String sasUrl = String.format("%s?comp=block&blockid=%s&%s", url, blockId, sas);
             return generateBlobWriteMethod(sasUrl, blobProperties, metadatas);
         }
 
-        private PutMethod generateBlobWriteMethod(String sasUrl,
-                                                  PartialBlobProperties blobProperties, Map<String, String> metadatas) {
-            PutMethod method = new PutMethod(sasUrl);
-            method.addRequestHeader("x-ms-blob-type", "BlockBlob");
-            method.addRequestHeader("Cache-Control", blobProperties.getCacheControl());
-            method.addRequestHeader("x-ms-blob-content-type", blobProperties.getContentType());
-            method.addRequestHeader("x-ms-blob-content-encoding", blobProperties.getContentEncoding());
-            method.addRequestHeader("x-ms-blob-content-language", blobProperties.getContentLanguage());
+        private HttpPut generateBlobWriteMethod(String sasUrl,
+                                                PartialBlobProperties blobProperties, Map<String, String> metadatas) {
+            HttpPut method = new HttpPut(sasUrl);
+            method.addHeader("x-ms-blob-type", "BlockBlob");
+            method.addHeader("Cache-Control", blobProperties.getCacheControl());
+            method.addHeader("x-ms-blob-content-type", blobProperties.getContentType());
+            method.addHeader("x-ms-blob-content-encoding", blobProperties.getContentEncoding());
+            method.addHeader("x-ms-blob-content-language", blobProperties.getContentLanguage());
             for (Map.Entry<String, String> node : metadatas.entrySet()) {
-                method.addRequestHeader(String.format("x-ms-meta-%s", node.getKey()), node.getValue());
+                method.addHeader(String.format("x-ms-meta-%s", node.getKey()), node.getValue());
             }
             return method;
         }
