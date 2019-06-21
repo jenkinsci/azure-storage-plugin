@@ -36,13 +36,16 @@ import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadSer
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
 import hudson.FilePath;
+import hudson.ProxyConfiguration;
 import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPut;
@@ -107,13 +110,26 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     private static final int KEEP_ALIVE_TIME = 1;
     private static final int TIME_OUT = 1;
     private static final TimeUnit TIME_OUT_UNIT = TimeUnit.DAYS;
-    private static final CloseableHttpClient CLIENT = HttpClientBuilder.create()
-            .setConnectionManager(new PoolingHttpClientConnectionManager())
-            .setRetryHandler(new DefaultHttpRequestRetryHandler()).build();
+    private static final CloseableHttpClient CLIENT;
 
     private AtomicInteger filesUploaded = new AtomicInteger(0);
     private ExecutorService executorService = new ThreadPoolExecutor(UPLOAD_THREAD_COUNT, UPLOAD_THREAD_COUNT,
             KEEP_ALIVE_TIME, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
+
+    static {
+        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
+                .setConnectionManager(new PoolingHttpClientConnectionManager())
+                .setRetryHandler(new DefaultHttpRequestRetryHandler());
+
+        Jenkins jenkinsInstance = Utils.getJenkinsInstance();
+        ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
+        if (proxyConfig != null) {
+            HttpHost proxy = new HttpHost(proxyConfig.name, proxyConfig.port, HttpHost.DEFAULT_SCHEME_NAME);
+            httpClientBuilder.setProxy(proxy);
+        }
+
+        CLIENT = httpClientBuilder.build();
+    }
 
     protected UploadService(UploadServiceData serviceData) {
         super(serviceData);
