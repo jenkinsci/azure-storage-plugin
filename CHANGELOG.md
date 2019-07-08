@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.0.2 July 8, 2019
+---------------------------
+- Fix using Jenkins proxy issue
+- Delete temporary directory after uploading
+- Fix possible ConcurrentModificationException
+
 Version 1.0.1 June 18, 2019
 ---------------------------
 - Fix missing small files bug
