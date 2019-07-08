@@ -42,6 +42,7 @@ import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.http.HttpEntity;
@@ -100,6 +101,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public abstract class UploadService extends StoragePluginService<UploadServiceData> {
     protected static final String ZIP_FOLDER_NAME = "artifactsArchive";
@@ -413,6 +415,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         private static final int BLOCK_SIZE = 100 * 1024 * 1024;
         private static final String DEFAULT_ENCODED_BLOCKID = "MDAwMA==";
         private static final String TEMP_FILE_PATTERN = "%s/%ssplit.%d";
+        private static final Logger LOGGER = Logger.getLogger(UploadThread.class.getName());
 
         UploadThread(UploadObject uploadObject) {
             this.uploadObject = uploadObject;
@@ -487,6 +490,11 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
                 // put block list
                 response = putBlobList(blockIdList);
+                try {
+                    FileUtils.deleteDirectory(tempDirectory.toFile());
+                } catch (IOException e) {
+                    LOGGER.warning(String.format("Failed to delete temporary directory %s, ignore.", tempDirectory));
+                }
             } else {
                 HttpEntity requestEntity = new FileEntity(new File(src.getRemote()));
                 HttpPut method = generateBlobWriteMethod(uploadObject.getUrl(), uploadObject.getSas(),
