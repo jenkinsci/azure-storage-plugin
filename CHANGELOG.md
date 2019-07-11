@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.0.3 July 11, 2019
+---------------------------
+- Change temporary file name ruling
+
 Version 1.0.2 July 8, 2019
 ---------------------------
 - Fix using Jenkins proxy issue
