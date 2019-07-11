@@ -449,7 +449,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             ImmutablePair<Integer, String> response;
             long startTime = System.currentTimeMillis();
             if (length > BLOCK_SIZE) {
-                Path tempDirectory = Files.createTempDirectory(uploadObject.getName());
+                String tempDirectoryName = uploadObject.getName().replace('/', '.');
+                Path tempDirectory = Files.createTempDirectory(tempDirectoryName);
 
                 try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
                     int blockCount = (int) (length / BLOCK_SIZE);
