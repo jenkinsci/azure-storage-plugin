@@ -83,6 +83,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      */
     private boolean pubAccessible;
     private boolean cleanUpContainerOrShare;
+    private boolean cleanUpVirtualPath;
     private boolean allowAnonymousAccess;
     private boolean uploadArtifactsOnlyIfSuccessful;
     private boolean doNotFailIfArchivingReturnsNothing;
@@ -128,6 +129,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     @DataBoundSetter
     public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
         this.cleanUpContainerOrShare = cleanUpContainerOrShare;
+    }
+
+    @DataBoundSetter
+    public void setCleanUpVirtualPath(boolean cleanUpVirtualPath) {
+        this.cleanUpVirtualPath = cleanUpVirtualPath;
     }
 
     @DataBoundSetter
@@ -239,6 +245,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      */
     public boolean isCleanUpContainerOrShare() {
         return cleanUpContainerOrShare;
+    }
+
+    /**
+     * Windows Azure storage virtual path cleanup option.
+     */
+    public boolean isCleanUpVirtualPath() {
+        return cleanUpVirtualPath;
     }
 
     /**
@@ -407,6 +420,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setBlobProperties(blobProperties);
         serviceData.setPubAccessible(pubAccessible);
         serviceData.setCleanUpContainerOrShare(cleanUpContainerOrShare);
+        serviceData.setCleanUpVirtualPath(cleanUpVirtualPath);
         serviceData.setUploadType(getArtifactUploadType());
         serviceData.setAzureBlobMetadata(metadata);
         serviceData.setOnlyUploadModifiedArtifacts(onlyUploadModifiedArtifacts);
