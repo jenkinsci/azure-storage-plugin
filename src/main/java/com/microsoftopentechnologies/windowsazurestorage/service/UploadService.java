@@ -101,9 +101,11 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class UploadService extends StoragePluginService<UploadServiceData> {
+    private static final Logger LOGGER = Logger.getLogger(UploadService.class.getName());
     protected static final String ZIP_FOLDER_NAME = "artifactsArchive";
     protected static final String ZIP_NAME = "archive.zip";
     protected static final String UPLOAD = "Upload";
@@ -119,17 +121,24 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             KEEP_ALIVE_TIME, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
 
     static {
-        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
-                .setConnectionManager(new PoolingHttpClientConnectionManager())
-                .setRetryHandler(new DefaultHttpRequestRetryHandler());
+        HttpClientBuilder httpClientBuilder;
+        try {
+            httpClientBuilder = HttpClientBuilder.create()
+                    .setConnectionManager(new PoolingHttpClientConnectionManager())
+                    .setRetryHandler(new DefaultHttpRequestRetryHandler());
 
-        Jenkins jenkinsInstance = Utils.getJenkinsInstance();
-        ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
-        if (proxyConfig != null) {
-            HttpHost proxy = new HttpHost(proxyConfig.name, proxyConfig.port, HttpHost.DEFAULT_SCHEME_NAME);
-            httpClientBuilder.setProxy(proxy);
+            Jenkins jenkinsInstance = Utils.getJenkinsInstance();
+            if (jenkinsInstance != null) {
+                ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
+                if (proxyConfig != null) {
+                    HttpHost proxy = new HttpHost(proxyConfig.name, proxyConfig.port, HttpHost.DEFAULT_SCHEME_NAME);
+                    httpClientBuilder.setProxy(proxy);
+                }
+            }
+        } catch (Throwable t) {
+            LOGGER.log(Level.SEVERE, null, t);
+            throw t;
         }
-
         CLIENT = httpClientBuilder.build();
     }
 
