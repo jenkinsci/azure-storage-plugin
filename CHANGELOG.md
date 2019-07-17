@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.0.4 July 17, 2019
+---------------------------
+- Fix NoClassDefFoundError on agent
+
 Version 1.0.3 July 11, 2019
 ---------------------------
 - Change temporary file name ruling
