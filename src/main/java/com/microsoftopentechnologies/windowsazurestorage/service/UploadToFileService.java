@@ -117,10 +117,13 @@ public class UploadToFileService extends UploadService {
             println("Clean up existing files in  file share " + serviceData.getFileShareName());
             deleteFiles(fileShare.getRootDirectoryReference().listFilesAndDirectories());
         } else if (serviceData.isCleanUpVirtualPath() && StringUtils.isNotBlank(serviceData.getVirtualPath())) {
-            println("Clean up existing files in file share directory " + serviceData.getVirtualPath() + ", "
-                    + serviceData.getFileShareName());
-            deleteFiles(fileShare.getRootDirectoryReference().getDirectoryReference(serviceData.getVirtualPath())
-                    .listFilesAndDirectories());
+            CloudFileDirectory directory = fileShare.getRootDirectoryReference()
+                    .getDirectoryReference(serviceData.getVirtualPath());
+            if (directory.exists()) {
+                println("Clean up existing files in file share directory " + serviceData.getVirtualPath() + ", "
+                        + serviceData.getFileShareName());
+                deleteFiles(directory.listFilesAndDirectories());
+            }
         }
 
         fileShare.createIfNotExists();
