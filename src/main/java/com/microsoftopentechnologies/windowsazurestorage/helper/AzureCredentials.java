@@ -77,7 +77,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
 
             if (StringUtils.isBlank(blobEndpointURL)) {
-                throw new WAStorageException("Error: bloblEndpointURL is invalid or missing");
+                throw new WAStorageException("Error: blobEndpointURL is invalid or missing");
             }
 
             return true;
