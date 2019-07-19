@@ -185,8 +185,7 @@ public final class Utils {
     }
 
     public static String getPluginVersion() {
-        String version = Utils.class.getPackage().getImplementationVersion();
-        return version;
+        return Utils.class.getPackage().getImplementationVersion();
     }
 
     public static OperationContext updateUserAgent() throws IOException {

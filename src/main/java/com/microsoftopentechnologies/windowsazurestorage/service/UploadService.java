@@ -607,8 +607,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
         private HttpPut generateBlockListWrtieMethod(String url, String sas) {
             String sasUrl = String.format("%s?comp=blocklist&%s", url, sas);
-            HttpPut method = new HttpPut(sasUrl);
-            return method;
+            return new HttpPut(sasUrl);
         }
 
         private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,

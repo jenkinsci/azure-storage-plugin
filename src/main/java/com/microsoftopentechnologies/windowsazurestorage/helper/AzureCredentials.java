@@ -232,9 +232,8 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public static StorageAccountInfo convertToStorageAccountInfo(StorageAccountCredential storageCreds) {
-        StorageAccountInfo storageAccount = new StorageAccountInfo(storageCreds.getStorageAccountName(),
-                storageCreds.getStorageAccountKey(), storageCreds.getEndpointURL());
-        return storageAccount;
+        return new StorageAccountInfo(storageCreds.getStorageAccountName(), storageCreds.getStorageAccountKey(),
+                storageCreds.getEndpointURL());
     }
 
 }

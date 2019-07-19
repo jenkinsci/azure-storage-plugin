@@ -751,13 +751,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
-            ListBoxModel m = new StandardListBoxModel().withAll(
+            return new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
                             AzureCredentials.class,
                             owner,
                             ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList()));
-            return m;
         }
 
         @Restricted(NoExternalUse.class)
