@@ -171,9 +171,6 @@ public final class CredentialMigration {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return;
-
     }
 
     private CredentialMigration() {
