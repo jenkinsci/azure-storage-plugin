@@ -28,6 +28,7 @@ import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.FilePath;
 import hudson.util.DirScanner;
 import org.apache.commons.lang.StringUtils;
@@ -54,6 +55,10 @@ public class UploadToFileService extends UploadService {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudFileShare fileShare = getCloudFileShare();
+            UploadType uploadType = serviceData.getUploadType();
+            if (uploadType == UploadType.INDIVIDUAL || uploadType == UploadType.BOTH) {
+                cleanupFileShare(fileShare);
+            }
 
             for (FilePath src : paths) {
                 final String filePath = getItemPath(src, embeddedVP);
@@ -75,6 +80,9 @@ public class UploadToFileService extends UploadService {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudFileShare fileShare = getCloudFileShare();
+            if (serviceData.getUploadType() == UploadType.ZIP) {
+                cleanupFileShare(fileShare);
+            }
 
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
             // Create a temp dir for the upload
@@ -111,12 +119,17 @@ public class UploadToFileService extends UploadService {
                 AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
         final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
         final CloudFileShare fileShare = cloudFileClient.getShareReference(serviceData.getFileShareName());
+        fileShare.createIfNotExists();
+        return fileShare;
+    }
 
+    private void cleanupFileShare(CloudFileShare fileShare) throws URISyntaxException, StorageException {
+        final UploadServiceData serviceData = getServiceData();
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare() && fileShare.exists()) {
             println("Clean up existing files in  file share " + serviceData.getFileShareName());
             deleteFiles(fileShare.getRootDirectoryReference().listFilesAndDirectories());
-        } else if (serviceData.isCleanUpVirtualPath() && StringUtils.isNotBlank(serviceData.getVirtualPath())) {
+        } else if (serviceData.isCleanUpVirtualPath() && StringUtils.isNotBlank(serviceData.getVirtualPath()) && fileShare.exists()) {
             CloudFileDirectory directory = fileShare.getRootDirectoryReference()
                     .getDirectoryReference(serviceData.getVirtualPath());
             if (directory.exists()) {
@@ -124,9 +137,6 @@ public class UploadToFileService extends UploadService {
                 deleteFiles(directory.listFilesAndDirectories());
             }
         }
-
-        fileShare.createIfNotExists();
-        return fileShare;
     }
 
     private void ensureDirExist(CloudFileDirectory directory)
