@@ -93,7 +93,7 @@ public class UploadToBlobService extends UploadService {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", storageAcc,
                     "Message", e.getMessage());
-            throw new WAStorageException("Fail to upload individual files to blob", e);
+            throw new WAStorageException("Fail to upload archive to blob", e);
         }
     }
 
@@ -140,7 +140,7 @@ public class UploadToBlobService extends UploadService {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", storageAcc,
                     "Message", e.getMessage());
-            throw new WAStorageException("Fail to upload archive to blob", e);
+            throw new WAStorageException("Fail to upload individual files to blob", e);
         }
     }
 
