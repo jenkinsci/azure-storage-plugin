@@ -60,8 +60,7 @@ public class UploadToBlobService extends UploadService {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudBlobContainer container = getCloudBlobContainer();
-            UploadType uploadType = serviceData.getUploadType();
-            if (uploadType == UploadType.BOTH || uploadType == UploadType.INDIVIDUAL) {
+            if (serviceData.getUploadType() == UploadType.ZIP) {
                 cleanupContainer(container);
             }
 
@@ -123,7 +122,8 @@ public class UploadToBlobService extends UploadService {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudBlobContainer container = getCloudBlobContainer();
-            if (serviceData.getUploadType() == UploadType.ZIP) {
+            UploadType uploadType = serviceData.getUploadType();
+            if (uploadType == UploadType.INDIVIDUAL || uploadType == UploadType.BOTH) {
                 cleanupContainer(container);
             }
 
