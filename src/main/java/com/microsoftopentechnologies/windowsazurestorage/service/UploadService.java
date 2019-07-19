@@ -677,7 +677,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
                     // Separate fileName and Virtual directory name.
                     if (fileName.length() > embVPSepIndex + 1) {
-                        embeddedVP = fileName.substring(embVPSepIndex + 2, fileName.length());
+                        embeddedVP = fileName.substring(embVPSepIndex + 2);
 
                         if (StringUtils.isBlank(embeddedVP)) {
                             embeddedVP = null;
