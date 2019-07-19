@@ -34,6 +34,7 @@ public class UploadServiceData extends ServiceData {
     private AzureBlobProperties blobProperties;
     private boolean pubAccessible;
     private boolean cleanUpContainerOrShare;
+    private boolean cleanUpVirtualPath;
     private String filePath;
     private String virtualPath;
     private String excludedFilesPath;
@@ -87,6 +88,14 @@ public class UploadServiceData extends ServiceData {
 
     public void setCleanUpContainerOrShare(boolean cleanUpContainerOrShare) {
         this.cleanUpContainerOrShare = cleanUpContainerOrShare;
+    }
+
+    public boolean isCleanUpVirtualPath() {
+        return cleanUpVirtualPath;
+    }
+
+    public void setCleanUpVirtualPath(boolean cleanUpVirtualPath) {
+        this.cleanUpVirtualPath = cleanUpVirtualPath;
     }
 
     public String getFilePath() {

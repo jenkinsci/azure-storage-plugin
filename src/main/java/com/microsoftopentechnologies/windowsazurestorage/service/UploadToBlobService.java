@@ -179,6 +179,8 @@ public class UploadToBlobService extends UploadService {
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare()) {
             deleteBlobs(container.listBlobs());
+        } else if (serviceData.isCleanUpVirtualPath() && StringUtils.isNotBlank(serviceData.getVirtualPath())) {
+            deleteBlobs(container.getDirectoryReference(serviceData.getVirtualPath()).listBlobs());
         }
         return container;
     }

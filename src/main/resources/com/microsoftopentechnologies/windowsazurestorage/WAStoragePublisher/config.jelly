@@ -80,6 +80,12 @@
                 </div>
             </f:entry>
 
+            <f:entry field="cleanUpVirtualPath" help="/plugin/windows-azure-storage/help-cleanVirtualPath.html">
+                <div align="left">
+                    <f:checkbox title="${%cleanVirtualPath_title}"/>
+                </div>
+            </f:entry>
+
             <f:entry field="allowAnonymousAccess" help="/plugin/windows-azure-storage/help-allowAnonymousAccess.html">
                 <div align="left">
                     <f:checkbox title="${%allowAnonymousAccess_title}"/>
