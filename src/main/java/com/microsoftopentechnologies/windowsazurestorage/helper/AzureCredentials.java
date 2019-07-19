@@ -222,8 +222,6 @@ public class AzureCredentials extends BaseStandardCredentials {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
-                //AzureCredentials.StorageAccountCredential storageCreds =
-                // new AzureCredentials.StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
             } catch (Exception e) {
                 return FormValidation.error(e.getMessage());
             }
