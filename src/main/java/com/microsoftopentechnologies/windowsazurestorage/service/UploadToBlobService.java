@@ -93,7 +93,7 @@ public class UploadToBlobService extends UploadService {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", storageAcc,
                     "Message", e.getMessage());
-            throw new WAStorageException("Fail to upload individual files to blob", e);
+            throw new WAStorageException("Fail to upload archive to blob", e);
         }
     }
 
@@ -140,7 +140,7 @@ public class UploadToBlobService extends UploadService {
             AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
                     "StorageAccount", storageAcc,
                     "Message", e.getMessage());
-            throw new WAStorageException("Fail to upload archive to blob", e);
+            throw new WAStorageException("Fail to upload individual files to blob", e);
         }
     }
 
@@ -178,8 +178,10 @@ public class UploadToBlobService extends UploadService {
 
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare()) {
+            println("Clean up existing blobs in container " + serviceData.getContainerName());
             deleteBlobs(container.listBlobs());
         } else if (serviceData.isCleanUpVirtualPath() && StringUtils.isNotBlank(serviceData.getVirtualPath())) {
+            println("Clean up existing blobs in container path " + serviceData.getVirtualPath());
             deleteBlobs(container.getDirectoryReference(serviceData.getVirtualPath()).listBlobs());
         }
         return container;

@@ -77,7 +77,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
 
             if (StringUtils.isBlank(blobEndpointURL)) {
-                throw new WAStorageException("Error: bloblEndpointURL is invalid or missing");
+                throw new WAStorageException("Error: blobEndpointURL is invalid or missing");
             }
 
             return true;
@@ -222,8 +222,6 @@ public class AzureCredentials extends BaseStandardCredentials {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
-                //AzureCredentials.StorageAccountCredential storageCreds =
-                // new AzureCredentials.StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
             } catch (Exception e) {
                 return FormValidation.error(e.getMessage());
             }
@@ -234,9 +232,8 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public static StorageAccountInfo convertToStorageAccountInfo(StorageAccountCredential storageCreds) {
-        StorageAccountInfo storageAccount = new StorageAccountInfo(storageCreds.getStorageAccountName(),
-                storageCreds.getStorageAccountKey(), storageCreds.getEndpointURL());
-        return storageAccount;
+        return new StorageAccountInfo(storageCreds.getStorageAccountName(), storageCreds.getStorageAccountKey(),
+                storageCreds.getEndpointURL());
     }
 
 }

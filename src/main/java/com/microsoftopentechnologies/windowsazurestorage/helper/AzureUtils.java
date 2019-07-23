@@ -112,7 +112,6 @@ public final class AzureUtils {
         if (!allowRetry) {
             // Setting no retry policy
             final RetryNoRetry rnr = new RetryNoRetry();
-            // serviceClient.setRetryPolicyFactory(rnr);
             serviceClient.getDefaultRequestOptions().setRetryPolicyFactory(rnr);
         }
 

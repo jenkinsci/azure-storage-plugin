@@ -112,57 +112,54 @@ public final class CredentialMigration {
             File backUp = backupFile(sourceFile.getCanonicalPath());
             List<StorageAccountInfo> oldStorages = getOldStorageConfig(sourceFile);
 
-            if (oldStorages.size() > 0) {
-                for (StorageAccountInfo sa : oldStorages) {
-                    String storageAccount = sa.getStorageAccName();
-                    String storageAccountKey = sa.getStorageAccountKey();
-                    String storageBlobURL = sa.getBlobEndPointURL();
+            for (StorageAccountInfo sa : oldStorages) {
+                String storageAccount = sa.getStorageAccName();
+                String storageAccountKey = sa.getStorageAccountKey();
+                String storageBlobURL = sa.getBlobEndPointURL();
 
-                    AzureCredentials.StorageAccountCredential u =
-                            new AzureCredentials.StorageAccountCredential(
-                                    storageAccount, storageAccountKey, storageBlobURL);
-                    AzureCredentials cred = CredentialsMatchers.firstOrNull(
-                            CredentialsProvider.lookupCredentials(
-                                    AzureCredentials.class,
-                                    Jenkins.getInstance(),
-                                    ACL.SYSTEM,
-                                    Collections.<DomainRequirement>emptyList()),
-                            CredentialsMatchers.withId(u.getId()));
-                    if (cred != null) {
-                        return;
+                AzureCredentials.StorageAccountCredential u =
+                        new AzureCredentials.StorageAccountCredential(
+                                storageAccount, storageAccountKey, storageBlobURL);
+                AzureCredentials cred = CredentialsMatchers.firstOrNull(
+                        CredentialsProvider.lookupCredentials(
+                                AzureCredentials.class,
+                                Jenkins.getInstance(),
+                                ACL.SYSTEM,
+                                Collections.<DomainRequirement>emptyList()),
+                        CredentialsMatchers.withId(u.getId()));
+                if (cred != null) {
+                    return;
+                }
+
+                LOGGER.log(Level.INFO,
+                        "Moving Storage Account names and their keys to credential store, "
+                                + "a creddential Id will be created for each pair of account name and key.");
+
+                // no matching, so make our own.
+                AzureCredentials tempCred = new AzureCredentials(
+                        CredentialsScope.GLOBAL,
+                        Utils.getMD5(storageAccount.concat(storageAccountKey)),
+                        "credential for " + storageAccount,
+                        storageAccount,
+                        storageAccountKey,
+                        storageBlobURL);
+                final SecurityContext securityContext = ACL.impersonate(ACL.SYSTEM);
+
+                try {
+                    CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
+                    try {
+                        s.addCredentials(Domain.global(), tempCred);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
 
-                    LOGGER.log(Level.INFO,
-                            "Moving Storage Account names and their keys to credential store, "
-                                    + "a creddential Id will be created for each pair of account name and key.");
+                } finally {
 
-                    // no matching, so make our own.
-                    AzureCredentials tempCred = new AzureCredentials(
-                            CredentialsScope.GLOBAL,
-                            Utils.getMD5(storageAccount.concat(storageAccountKey)),
-                            "credential for " + storageAccount,
-                            storageAccount,
-                            storageAccountKey,
-                            storageBlobURL);
-                    final SecurityContext securityContext = ACL.impersonate(ACL.SYSTEM);
+                    SecurityContextHolder.setContext(securityContext);
 
-                    try {
-                        CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
-                        try {
-                            s.addCredentials(Domain.global(), tempCred);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                } // end finally
 
-                    } finally {
-
-                        SecurityContextHolder.setContext(securityContext);
-
-                    } // end finally
-
-                } //end for
-
-            } // end if
+            } //end for
 
             LOGGER.log(Level.INFO, "Migrated successfully, deleting legacy config files...");
             removeFile(sourceFile.getCanonicalPath());
@@ -171,9 +168,6 @@ public final class CredentialMigration {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return;
-
     }
 
     private CredentialMigration() {

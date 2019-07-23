@@ -39,7 +39,7 @@ Build actions
 Download from Azure Blob storage
 --------------------------------
 
-The `Download from Azure blob storage’ build step downloads blob contents from Azure blob or Azure Files.
+The `Download from Azure blob storage` build step downloads blob contents from Azure blob or Azure Files.
 
 1. Select the storage account name to use from the dropdown control
 2. Select 'Download From Container', 'Download From Azure Files' or 'Download artifact from build'.

@@ -607,8 +607,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
         private HttpPut generateBlockListWrtieMethod(String url, String sas) {
             String sasUrl = String.format("%s?comp=blocklist&%s", url, sas);
-            HttpPut method = new HttpPut(sasUrl);
-            return method;
+            return new HttpPut(sasUrl);
         }
 
         private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
@@ -678,7 +677,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
                     // Separate fileName and Virtual directory name.
                     if (fileName.length() > embVPSepIndex + 1) {
-                        embeddedVP = fileName.substring(embVPSepIndex + 2, fileName.length());
+                        embeddedVP = fileName.substring(embVPSepIndex + 2);
 
                         if (StringUtils.isBlank(embeddedVP)) {
                             embeddedVP = null;

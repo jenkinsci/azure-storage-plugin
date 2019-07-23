@@ -305,9 +305,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private UploadType computeArtifactUploadType(boolean zips, boolean doNotUploadIndividual) {
         if (zips && !doNotUploadIndividual) {
             return UploadType.BOTH;
-        } else if (!zips && !doNotUploadIndividual) {
+        } else if (!doNotUploadIndividual) {
             return UploadType.INDIVIDUAL;
-        } else if (zips && doNotUploadIndividual) {
+        } else if (zips) {
             return UploadType.ZIP;
         } else {
             return UploadType.INVALID;
@@ -751,13 +751,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
-            ListBoxModel m = new StandardListBoxModel().withAll(
+            return new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
                             AzureCredentials.class,
                             owner,
                             ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList()));
-            return m;
         }
 
         @Restricted(NoExternalUse.class)
