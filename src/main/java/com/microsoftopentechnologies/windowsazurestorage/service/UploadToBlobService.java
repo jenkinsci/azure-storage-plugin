@@ -32,6 +32,7 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.PartialBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.util.DirScanner;
@@ -59,6 +60,9 @@ public class UploadToBlobService extends UploadService {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudBlobContainer container = getCloudBlobContainer();
+            if (serviceData.getUploadType() == UploadType.ZIP) {
+                cleanupContainer(container);
+            }
 
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
             // Create a temp dir for the upload
@@ -118,6 +122,10 @@ public class UploadToBlobService extends UploadService {
         final UploadServiceData serviceData = getServiceData();
         try {
             final CloudBlobContainer container = getCloudBlobContainer();
+            UploadType uploadType = serviceData.getUploadType();
+            if (uploadType == UploadType.INDIVIDUAL || uploadType == UploadType.BOTH) {
+                cleanupContainer(container);
+            }
 
             List<UploadObject> uploadObjects = new ArrayList<>();
             for (FilePath src : paths) {
@@ -176,6 +184,12 @@ public class UploadToBlobService extends UploadService {
                 true,
                 serviceData.isPubAccessible());
 
+        return container;
+    }
+
+    private void cleanupContainer(CloudBlobContainer container) throws
+            StorageException, IOException, URISyntaxException {
+        final UploadServiceData serviceData = getServiceData();
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare()) {
             println("Clean up existing blobs in container " + serviceData.getContainerName());
@@ -184,7 +198,6 @@ public class UploadToBlobService extends UploadService {
             println("Clean up existing blobs in container path " + serviceData.getVirtualPath());
             deleteBlobs(container.getDirectoryReference(serviceData.getVirtualPath()).listBlobs());
         }
-        return container;
     }
 
     /**
