@@ -187,7 +187,8 @@ public class UploadToBlobService extends UploadService {
         return container;
     }
 
-    private void cleanupContainer(CloudBlobContainer container) throws StorageException, IOException, URISyntaxException {
+    private void cleanupContainer(CloudBlobContainer container) throws
+            StorageException, IOException, URISyntaxException {
         final UploadServiceData serviceData = getServiceData();
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare()) {
