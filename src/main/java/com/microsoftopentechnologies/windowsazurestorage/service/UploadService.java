@@ -422,7 +422,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     static class UploadThread implements Callable<UploadResult> {
         private UploadObject uploadObject;
         private static final int BLOCK_SIZE = 100 * 1024 * 1024;
-        private static final String DEFAULT_ENCODED_BLOCKID = "MDAwMA==";
         private static final String TEMP_FILE_PATTERN = "%s/%ssplit.%d";
         private static final Logger LOGGER = Logger.getLogger(UploadThread.class.getName());
 
@@ -507,8 +506,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 }
             } else {
                 HttpEntity requestEntity = new FileEntity(new File(src.getRemote()));
-                HttpPut method = generateBlobWriteMethod(uploadObject.getUrl(), uploadObject.getSas(),
-                        uploadObject.getBlobProperties(), uploadObject.getMetadata());
+                HttpPut method = generateBlobWriteMethod(uploadObject.getUrl(), uploadObject.getSas());
                 method.setEntity(requestEntity);
                 response = execute(method);
             }
@@ -559,8 +557,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
             ImmutablePair<Integer, String> response;
             if (Constants.BLOB_STORAGE.equals(storageType)) {
-                HttpPut method = generateBlobWriteMethod(url, sas, uploadObject.getBlobProperties(),
-                        uploadObject.getMetadata(), blockId);
+                HttpPut method = generateBlobWriteMethod(url, sas, blockId);
                 method.setEntity(requestEntity);
                 response = execute(method);
             } else {
@@ -607,8 +604,13 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
         private HttpPut generateBlockListWriteMethod(String url, String sas) {
             String sasUrl = String.format("%s?comp=blocklist&%s", url, sas);
-            PartialBlobProperties blobProperties = uploadObject.blobProperties;
             HttpPut method = new HttpPut(sasUrl);
+            updateHeader(method);
+            return method;
+        }
+
+        private void updateHeader(HttpPut method) {
+            PartialBlobProperties blobProperties = uploadObject.blobProperties;
             method.addHeader("Cache-Control", blobProperties.getCacheControl());
             method.addHeader("x-ms-blob-content-type", blobProperties.getContentType());
             method.addHeader("x-ms-blob-content-encoding", blobProperties.getContentEncoding());
@@ -616,32 +618,23 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             for (Map.Entry<String, String> node : uploadObject.getMetadata().entrySet()) {
                 method.addHeader(String.format("x-ms-meta-%s", node.getKey()), node.getValue());
             }
-            return method;
         }
 
-        private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
-                                                Map<String, String> metadatas) {
+        private HttpPut generateBlobWriteMethod(String url, String sas) {
             String sasUrl = url + "?" + sas;
-            return generateBlobWriteMethod(sasUrl, blobProperties, metadatas);
+            return generateBlobWriteMethod(sasUrl);
         }
 
-        private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
-                                                Map<String, String> metadatas, String blockId) {
+        private HttpPut generateBlobWriteMethod(String url, String sas,
+                                                String blockId) {
             String sasUrl = String.format("%s?comp=block&blockid=%s&%s", url, blockId, sas);
-            return generateBlobWriteMethod(sasUrl, blobProperties, metadatas);
+            return generateBlobWriteMethod(sasUrl);
         }
 
-        private HttpPut generateBlobWriteMethod(String sasUrl,
-                                                PartialBlobProperties blobProperties, Map<String, String> metadatas) {
+        private HttpPut generateBlobWriteMethod(String sasUrl) {
             HttpPut method = new HttpPut(sasUrl);
             method.addHeader("x-ms-blob-type", "BlockBlob");
-            method.addHeader("Cache-Control", blobProperties.getCacheControl());
-            method.addHeader("x-ms-blob-content-type", blobProperties.getContentType());
-            method.addHeader("x-ms-blob-content-encoding", blobProperties.getContentEncoding());
-            method.addHeader("x-ms-blob-content-language", blobProperties.getContentLanguage());
-            for (Map.Entry<String, String> node : metadatas.entrySet()) {
-                method.addHeader(String.format("x-ms-meta-%s", node.getKey()), node.getValue());
-            }
+            updateHeader(method);
             return method;
         }
     }
