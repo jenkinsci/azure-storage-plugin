@@ -543,7 +543,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         }
 
         private ImmutablePair<Integer, String> putBlobList(List<String> blockIdList) throws WAStorageException {
-            HttpPut putMethod = generateBlockListWrtieMethod(uploadObject.getUrl(), uploadObject.getSas());
+            HttpPut putMethod = generateBlockListWriteMethod(uploadObject.getUrl(), uploadObject.getSas());
             String blockListBody = generateBlockListBody(blockIdList);
             putMethod.setEntity(new StringEntity(blockListBody, StandardCharsets.UTF_8));
             return execute(putMethod);
@@ -605,9 +605,18 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             return new ImmutablePair<>(code, responseBody);
         }
 
-        private HttpPut generateBlockListWrtieMethod(String url, String sas) {
+        private HttpPut generateBlockListWriteMethod(String url, String sas) {
             String sasUrl = String.format("%s?comp=blocklist&%s", url, sas);
-            return new HttpPut(sasUrl);
+            PartialBlobProperties blobProperties = uploadObject.blobProperties;
+            HttpPut method = new HttpPut(sasUrl);
+            method.addHeader("Cache-Control", blobProperties.getCacheControl());
+            method.addHeader("x-ms-blob-content-type", blobProperties.getContentType());
+            method.addHeader("x-ms-blob-content-encoding", blobProperties.getContentEncoding());
+            method.addHeader("x-ms-blob-content-language", blobProperties.getContentLanguage());
+            for (Map.Entry<String, String> node : uploadObject.getMetadata().entrySet()) {
+                method.addHeader(String.format("x-ms-meta-%s", node.getKey()), node.getValue());
+            }
+            return method;
         }
 
         private HttpPut generateBlobWriteMethod(String url, String sas, PartialBlobProperties blobProperties,
