@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.1.0 July 25, 2019
+---------------------------
+- Add option to clean up virtual path
+- Fix potential cleanup container twice
+- Fix large file missing metadata
+
 Version 1.0.4 July 17, 2019
 ---------------------------
 - Fix NoClassDefFoundError on agent
