@@ -3,7 +3,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
 import com.microsoft.azure.storage.file.SharedAccessFilePermissions;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import hudson.model.Api;
@@ -106,8 +106,8 @@ public class AzureBlobAction implements RunAction2 {
     public void doProcessDownloadRequest(
             StaplerRequest request,
             StaplerResponse response) throws IOException, ServletException {
-        AzureCredentials.StorageAccountCredential accountCredentials =
-                AzureCredentials.getStorageAccountCredential(build.getParent(), storageCredentialId);
+        AzureStorageAccount.StorageAccountCredential accountCredentials =
+                AzureStorageAccount.getStorageAccountCredential(build.getParent(), storageCredentialId);
 
         if (accountCredentials == null) {
             response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
@@ -115,7 +115,7 @@ public class AzureBlobAction implements RunAction2 {
             return;
         }
 
-        StorageAccountInfo accountInfo = AzureCredentials.convertToStorageAccountInfo(accountCredentials);
+        StorageAccountInfo accountInfo = AzureStorageAccount.convertToStorageAccountInfo(accountCredentials);
 
         if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
             String url = request.getOriginalRequestURI();

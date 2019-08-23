@@ -117,12 +117,12 @@ public final class CredentialMigration {
                 String storageAccountKey = sa.getStorageAccountKey();
                 String storageBlobURL = sa.getBlobEndPointURL();
 
-                AzureCredentials.StorageAccountCredential u =
-                        new AzureCredentials.StorageAccountCredential(
+                AzureStorageAccount.StorageAccountCredential u =
+                        new AzureStorageAccount.StorageAccountCredential(
                                 storageAccount, storageAccountKey, storageBlobURL);
-                AzureCredentials cred = CredentialsMatchers.firstOrNull(
+                AzureStorageAccount cred = CredentialsMatchers.firstOrNull(
                         CredentialsProvider.lookupCredentials(
-                                AzureCredentials.class,
+                                AzureStorageAccount.class,
                                 Jenkins.getInstance(),
                                 ACL.SYSTEM,
                                 Collections.<DomainRequirement>emptyList()),
@@ -136,7 +136,7 @@ public final class CredentialMigration {
                                 + "a creddential Id will be created for each pair of account name and key.");
 
                 // no matching, so make our own.
-                AzureCredentials tempCred = new AzureCredentials(
+                AzureStorageAccount tempCred = new AzureStorageAccount(
                         CredentialsScope.GLOBAL,
                         Utils.getMD5(storageAccount.concat(storageAccountKey)),
                         "credential for " + storageAccount,

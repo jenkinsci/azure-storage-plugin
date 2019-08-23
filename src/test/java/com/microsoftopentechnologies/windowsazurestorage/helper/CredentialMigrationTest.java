@@ -92,8 +92,8 @@ public class CredentialMigrationTest {
 
         assertEquals(2, s.getCredentials(Domain.global()).size());
                 
-        AzureCredentials.StorageAccountCredential u = new AzureCredentials.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL);
-        AzureCredentials storageCred = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(AzureCredentials.class, jenkinsInstance, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()),
+        AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL);
+        AzureStorageAccount storageCred = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(AzureStorageAccount.class, jenkinsInstance, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(u.getId()));
 
         assertEquals(u.getStorageAccountName(), storageCred.getStorageAccountName());

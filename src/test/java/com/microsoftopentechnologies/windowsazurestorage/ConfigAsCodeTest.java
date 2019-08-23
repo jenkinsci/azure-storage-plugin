@@ -2,7 +2,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
@@ -25,7 +25,7 @@ public class ConfigAsCodeTest {
     @Test
     @ConfiguredWithCode("configuration-as-code.yml")
     public void should_support_configuration_as_code() {
-        AzureCredentials credentials = (AzureCredentials) SystemCredentialsProvider.getInstance().getCredentials()
+        AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(0);
 
         assertEquals(credentials.getScope(), CredentialsScope.GLOBAL);
