@@ -85,7 +85,7 @@ public final class CredentialRename {
                     .collect(Collectors.toList());
             Files.write(path, collect);
         } catch (IOException e) {
-            LOGGER.warning("Fail to rename azure storage credential in credentials.xml file");
+            LOGGER.warning("Failed to rename azure storage credential in credentials.xml file");
             recoverFile(backUp.getCanonicalPath());
         }
 
