@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
 
-public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
+public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
     public static final String DEFAULT_STORAGE_ACCOUNT_NAME = "AZURE_STORAGE_ACCOUNT_NAME";
     public static final String DEFAULT_STORAGE_ACCOUNT_KEY = "AZURE_STORAGE_ACCOUNT_KEY";
     public static final String DEFAULT_BLOB_ENDPOINT_URL = "AZURE_BLOB_ENDPOINT_URL";
@@ -73,8 +73,8 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     }
 
     @Override
-    protected Class<AzureCredentials> type() {
-        return AzureCredentials.class;
+    protected Class<AzureStorageAccount> type() {
+        return AzureStorageAccount.class;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
                                  @Nullable Launcher launcher,
                                  @Nonnull TaskListener listener)
             throws IOException {
-        AzureCredentials credentials = getCredentials(build);
+        AzureStorageAccount credentials = getCredentials(build);
         Map<String, String> variableMap = new HashMap<>();
         variableMap.put(getStorageAccountNameVariable(), credentials.getStorageAccountName());
         variableMap.put(getStorageAccountKeyVariable(), credentials.getPlainStorageKey());
@@ -102,10 +102,10 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
 
     @Symbol("azureStorage")
     @Extension
-    public static class DescriptorImpl extends BindingDescriptor<AzureCredentials> {
+    public static class DescriptorImpl extends BindingDescriptor<AzureStorageAccount> {
         @Override
-        protected Class<AzureCredentials> type() {
-            return AzureCredentials.class;
+        protected Class<AzureStorageAccount> type() {
+            return AzureStorageAccount.class;
         }
 
         @Override

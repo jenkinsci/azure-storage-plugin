@@ -5,13 +5,7 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage.beans;
 
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

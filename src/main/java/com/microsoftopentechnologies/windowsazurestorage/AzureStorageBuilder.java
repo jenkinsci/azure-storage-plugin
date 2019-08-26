@@ -20,7 +20,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromBuildService;
@@ -84,7 +84,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private BuildSelector buildSelector;
     private String projectName = "";
 
-    private transient AzureCredentials.StorageAccountCredential storageCreds;
+    private transient AzureStorageAccount.StorageAccountCredential storageCreds;
 
     @DataBoundConstructor
     public AzureStorageBuilder(
@@ -167,7 +167,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     }
 
     public String getStorageAccName(Item owner) {
-        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredential(owner);
+        AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredential(owner);
         if (credential != null) {
             return credential.getStorageAccountName();
         }
@@ -221,9 +221,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         return storageCredentialId;
     }
 
-    public AzureCredentials.StorageAccountCredential getStorageAccountCredential(Item owner) {
+    public AzureStorageAccount.StorageAccountCredential getStorageAccountCredential(Item owner) {
         if (storageCreds == null) {
-            storageCreds = AzureCredentials.getStorageAccountCredential(owner, getStorageCredentialId());
+            storageCreds = AzureStorageAccount.getStorageAccountCredential(owner, getStorageCredentialId());
         }
         return storageCreds;
     }
@@ -242,13 +242,13 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             @Nonnull TaskListener listener) throws IOException {
         AzureUtils.updateDefaultProxy();
         // Get storage account
-        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredential(run.getParent());
+        AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredential(run.getParent());
         if (credential == null) {
             throw new AbortException(String.format("Cannot find storage account credentials with ID: '%s'",
                     getStorageCredentialId()));
         }
 
-        StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(credential);
+        StorageAccountInfo storageAccountInfo = AzureStorageAccount.convertToStorageAccountInfo(credential);
         try {
 
             // Validate input data and resolve storage account
@@ -384,7 +384,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
             return new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
-                            AzureCredentials.class, owner, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()));
+                            AzureStorageAccount.class, owner, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()));
         }
 
         public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter String value) {

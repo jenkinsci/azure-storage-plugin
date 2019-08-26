@@ -19,10 +19,11 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.CredentialMigration;
+import com.microsoftopentechnologies.windowsazurestorage.helper.CredentialRename;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
@@ -96,7 +97,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final String storageCredentialId;
     private boolean onlyUploadModifiedArtifacts;
 
-    private transient AzureCredentials.StorageAccountCredential storageCreds;
+    private transient AzureStorageAccount.StorageAccountCredential storageCreds;
 
     @DataBoundConstructor
     public WAStoragePublisher(String storageCredentialId, String filesPath, String storageType) {
@@ -330,16 +331,16 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
      * Windows Azure Storage Account Name.
      */
     public String getStorageAccName(Item owner) {
-        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredentials(owner);
+        AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredentials(owner);
         if (credential != null) {
             return credential.getStorageAccountName();
         }
         return null;
     }
 
-    public AzureCredentials.StorageAccountCredential getStorageAccountCredentials(Item owner) {
+    public AzureStorageAccount.StorageAccountCredential getStorageAccountCredentials(Item owner) {
         if (storageCreds == null) {
-            storageCreds = AzureCredentials.getStorageAccountCredential(owner, getStorageCredentialId());
+            storageCreds = AzureStorageAccount.getStorageAccountCredential(owner, getStorageCredentialId());
         }
         return storageCreds;
     }
@@ -395,14 +396,14 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         AzureUtils.updateDefaultProxy();
         final EnvVars envVars = run.getEnvironment(listener);
 
-        AzureCredentials.StorageAccountCredential credential = getStorageAccountCredentials(run.getParent());
+        AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredentials(run.getParent());
         if (credential == null) {
             throw new AbortException(String.format("Cannot find storage account credentials with ID: '%s'",
                     getStorageCredentialId()));
         }
 
         // Get storage account and set formatted blob endpoint url.
-        final StorageAccountInfo storageAccountInfo = AzureCredentials.convertToStorageAccountInfo(credential);
+        final StorageAccountInfo storageAccountInfo = AzureStorageAccount.convertToStorageAccountInfo(credential);
 
         // Resolve container name or share name
         final String expContainerName = Utils.replaceMacro(Util.fixNull(containerName), envVars, Locale.ENGLISH);
@@ -573,6 +574,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         public static void doUpgrade() {
             try {
                 CredentialMigration.upgradeStorageConfig();
+                CredentialRename.renameStorageConfig();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -753,7 +755,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
             return new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
-                            AzureCredentials.class,
+                            AzureStorageAccount.class,
                             owner,
                             ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList()));
@@ -764,7 +766,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             Item owner = null;
             ListBoxModel allCreds = new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
-                            AzureCredentials.class,
+                            AzureStorageAccount.class,
                             owner,
                             ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList()));

@@ -10,7 +10,7 @@ import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.file.CloudFileShare;
 import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsGlobalConfig;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureCredentials;
+import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import org.junit.ClassRule;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -50,7 +50,7 @@ public class IntegrationTest {
             azureStorageAccountKey2 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY2");
             
             blobURL = Utils.DEF_BLOB_URL;
-            AzureCredentials.StorageAccountCredential u = new AzureCredentials.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL);
+            AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL);
             sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL);
             containerName = name;
             shareName = name;
