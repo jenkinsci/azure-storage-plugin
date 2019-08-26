@@ -64,12 +64,9 @@ public final class CredentialRename {
 
     public static void renameStorageConfig() throws IOException {
         File sourceFile = new File(Utils.getWorkDirectory(), "credentials.xml");
-        File backUp;
         if (!sourceFile.exists()) {
             return;
         }
-        LOGGER.log(Level.INFO, sourceFile + " exists, rename azure storage credential will start now...");
-        backUp = backupFile(sourceFile.getCanonicalPath());
         Path path = Paths.get(sourceFile.getCanonicalPath());
 
         try (Stream<String> stream = Files.lines(path)) {
@@ -78,6 +75,9 @@ public final class CredentialRename {
                 return;
             }
         }
+
+        LOGGER.log(Level.INFO, sourceFile + " exists, rename azure storage credential will start now...");
+        File backUp = backupFile(sourceFile.getCanonicalPath());
 
         try (Stream<String> stream = Files.lines(path)) {
             List<String> collect = stream
