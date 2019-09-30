@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.1.1 September 30, 2019
+---------------------------
+- Rename AzureCredentials to AzureStorageAccount (JENKINS-58710)
+
 Version 1.1.0 July 25, 2019
 ---------------------------
 - Add option to clean up virtual path
