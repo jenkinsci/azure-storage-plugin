@@ -24,7 +24,7 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <azure-commons.version>1.0.4</azure-commons.version>
         <configuration-as-code.version>1.10</configuration-as-code.version>
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.9.10</jackson.version>
     </properties>
 
     <licenses>
@@ -178,7 +178,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.9.9.2</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
