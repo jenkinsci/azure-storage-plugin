@@ -8,7 +8,7 @@
 
 
     <artifactId>windows-azure-storage</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.2</version>
     <packaging>hpi</packaging>
     <name>Windows Azure Storage plugin</name>
     <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
@@ -218,7 +218,7 @@
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/windows-azure-storage-plugin.git
         </developerConnection>
         <url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
-        <tag>HEAD</tag>
+        <tag>windows-azure-storage-1.1.2</tag>
     </scm>
 
     <repositories>
