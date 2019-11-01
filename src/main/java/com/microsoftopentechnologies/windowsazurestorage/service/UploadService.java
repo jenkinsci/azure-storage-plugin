@@ -725,7 +725,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         } catch (IOException | InterruptedException e) {
             throw new WAStorageException(e.getMessage(), e);
         }
-        if (filesUploaded.get() != filesNeedUpload) {
+        if (serviceData.getUploadType() != UploadType.ZIP && filesUploaded.get() != filesNeedUpload) {
             throw new WAStorageException(String.format("Only %d/%d files are successfully uploaded.",
                     filesUploaded.get(), filesNeedUpload));
         }
