@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.1.2 November 1, 2019
+---------------------------
+- Remove check for uploaded count when only uploading archived file
+
 Version 1.1.1 September 30, 2019
 ---------------------------
 - Rename AzureCredentials to AzureStorageAccount (JENKINS-58710)
