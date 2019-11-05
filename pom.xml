@@ -24,7 +24,7 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <azure-commons.version>1.0.4</azure-commons.version>
         <configuration-as-code.version>1.10</configuration-as-code.version>
-        <jackson.version>2.9.10</jackson.version>
+        <jackson.version>2.10.0</jackson.version>
     </properties>
 
     <licenses>
