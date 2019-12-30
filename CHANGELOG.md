@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.1.3 December 30, 2019
+---------------------------
+- Fix MD5 missing for large file
+
 Version 1.1.2 November 1, 2019
 ---------------------------
 - Remove check for uploaded count when only uploading archived file
