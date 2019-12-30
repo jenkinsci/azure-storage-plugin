@@ -450,8 +450,10 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             List<String> blockIdList = new ArrayList<>();
 
             String md;
+            byte[] mdBytes;
             try (InputStream is = src.read()) {
                 md = DigestUtils.md5Hex(is);
+                mdBytes = DigestUtils.md5(is);
             }
 
             ImmutablePair<Integer, String> response;
@@ -498,7 +500,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 }
 
                 // put block list
-                response = putBlobList(blockIdList);
+                response = putBlobList(blockIdList, mdBytes);
                 try {
                     FileUtils.deleteDirectory(tempDirectory.toFile());
                 } catch (IOException e) {
@@ -540,8 +542,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             }
         }
 
-        private ImmutablePair<Integer, String> putBlobList(List<String> blockIdList) throws WAStorageException {
-            HttpPut putMethod = generateBlockListWriteMethod(uploadObject.getUrl(), uploadObject.getSas());
+        private ImmutablePair<Integer, String> putBlobList(List<String> blockIdList, byte[] md)
+                throws WAStorageException {
+            HttpPut putMethod = generateBlockListWriteMethod(uploadObject.getUrl(), uploadObject.getSas(), md);
             String blockListBody = generateBlockListBody(blockIdList);
             putMethod.setEntity(new StringEntity(blockListBody, StandardCharsets.UTF_8));
             return execute(putMethod);
@@ -602,10 +605,12 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             return new ImmutablePair<>(code, responseBody);
         }
 
-        private HttpPut generateBlockListWriteMethod(String url, String sas) {
+        private HttpPut generateBlockListWriteMethod(String url, String sas, byte[] md) {
             String sasUrl = String.format("%s?comp=blocklist&%s", url, sas);
             HttpPut method = new HttpPut(sasUrl);
             updateHeader(method);
+            String s = Base64.getEncoder().encodeToString(md);
+            method.addHeader("x-ms-blob-content-md5", s);
             return method;
         }
 
