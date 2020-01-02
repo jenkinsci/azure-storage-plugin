@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.1.4 January 2, 2020
+---------------------------
+- Fix wrong MD5 value
+
 Version 1.1.3 December 30, 2019
 ---------------------------
 - Fix MD5 missing for large file
