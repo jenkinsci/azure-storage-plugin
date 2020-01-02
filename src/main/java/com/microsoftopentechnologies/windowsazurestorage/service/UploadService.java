@@ -41,6 +41,7 @@ import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -452,8 +453,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             String md;
             byte[] mdBytes;
             try (InputStream is = src.read()) {
-                md = DigestUtils.md5Hex(is);
                 mdBytes = DigestUtils.md5(is);
+                md = Hex.encodeHexString(mdBytes);
             }
 
             ImmutablePair<Integer, String> response;
