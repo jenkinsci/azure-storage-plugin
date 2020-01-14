@@ -2,6 +2,7 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.casc.CredentialsRootConfigurator;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.ConfigurationContext;
@@ -10,7 +11,6 @@ import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
 import io.jenkins.plugins.casc.model.CNode;
 import io.jenkins.plugins.casc.model.Mapping;
-import io.jenkins.plugins.casc.support.credentials.CredentialsRootConfigurator;
 import org.junit.Rule;
 import org.junit.Test;
 
