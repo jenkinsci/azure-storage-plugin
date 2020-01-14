@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.1.5 January 14, 2020
+---------------------------
+- Upgrade jcasc test harness 
+
 Version 1.1.4 January 2, 2020
 ---------------------------
 - Fix wrong MD5 value
