@@ -422,7 +422,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
      */
     static class UploadThread implements Callable<UploadResult> {
         private UploadObject uploadObject;
-        private static final int BLOCK_SIZE = 100 * 1024 * 1024;
+        // Azure backend calculates block size in SI bytes
+        private static final int BLOCK_SIZE = 100 * 1000 * 1000;
         private static final String TEMP_FILE_PATTERN = "%s/%ssplit.%d";
         private static final Logger LOGGER = Logger.getLogger(UploadThread.class.getName());
 
