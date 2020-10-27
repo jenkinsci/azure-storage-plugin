@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 1.1.6 October 27, 2020
+---------------------------
+- Bump junit from 4.12 to 4.13.1
+- Update maintainer 
+
 Version 1.1.5 January 14, 2020
 ---------------------------
 - Upgrade jcasc test harness 
