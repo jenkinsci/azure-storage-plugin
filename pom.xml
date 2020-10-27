@@ -36,9 +36,9 @@
 
     <developers>
         <developer>
-            <id>vscjenkins</id>
-            <name>Visual Studio China Jenkins Team</name>
-            <email>vscjenkins@microsoft.com</email>
+            <id>xuzhang</id>
+            <name>Xu Zhang</name>
+            <email>xuzhang3@microsoft.com</email>
         </developer>
     </developers>
 
@@ -123,7 +123,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
-            <version>4.12</version>
+            <version>4.13.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.hamcrest</groupId>
