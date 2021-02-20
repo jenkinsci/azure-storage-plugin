@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 1.1.7 February 20, 2021
+---------------------------
+- Update document
+
 Version 1.1.6 October 27, 2020
 ---------------------------
 - Bump junit from 4.12 to 4.13.1

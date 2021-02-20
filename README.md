@@ -1,6 +1,9 @@
 Azure Storage Plugin
 ====================
 
+> ***Important***: This plugin is being retired and will be out of support as of February 29, 2024. Azure CLI is the currently recommended way to integrate Jenkins with Azure services. Refer to [Tutorial: Use Azure Storage for build artifacts](https://docs.microsoft.com/en-us/azure/developer/jenkins/azure-storage-blobs-as-build-artifact-repository?toc=https%3A%2F%2Fdocs.microsoft.com%2Fen-us%2Fazure%2Fdeveloper%2Fjenkins%2Ftoc.json&bc=https%3A%2F%2Fdocs.microsoft.com%2Fen-us%2Fazure%2Fdeveloper%2Fbreadcrumb%2Ftoc.json) for more details.
+
+
 A plugin for uploading build artifacts to, or downloading build dependencies from, Microsoft Azure Blob storage or Azure Files. (For a more detailed tutorial see http://go.microsoft.com/fwlink/?LinkId=280058)
 
 Installing
@@ -43,12 +46,12 @@ The `Download from Azure blob storage` build step downloads blob contents from A
 
 1. Select the storage account name to use from the dropdown control
 2. Select 'Download From Container', 'Download From Azure Files' or 'Download artifact from build'.
- - **'Download From Container'** >> Enter the name of the container to download from. Environment variables can also be referenced. For example: ${JOB_NAME}
- - **'Download From Files'** >> Enter the name of the file share to download from. Environment variables can also be referenced. For example: ${JOB_NAME}
- - **'Download artifact from build'** >> Enter Project Name and select the build from the drop-down for 'Build to download' . For example: 'Latest successful build'.
+- **'Download From Container'** >> Enter the name of the container to download from. Environment variables can also be referenced. For example: ${JOB_NAME}
+- **'Download From Files'** >> Enter the name of the file share to download from. Environment variables can also be referenced. For example: ${JOB_NAME}
+- **'Download artifact from build'** >> Enter Project Name and select the build from the drop-down for 'Build to download' . For example: 'Latest successful build'.
 3. Enter the name of the blob or file to download. You may also use the wild card "*" at the end to select multiple blob or file downloads sharing the same prefix, for example: project*
 4. Optionally, enter the target download path. If not specified, the files will be downloaded into the job's workspace.
-Environment variables can also be referenced, for example: ${JOB_NAME}
+   Environment variables can also be referenced, for example: ${JOB_NAME}
 
 For a tutorial, see http://go.microsoft.com/fwlink/?LinkId=280058.
 
