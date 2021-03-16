@@ -1,7 +1,7 @@
 Azure Storage Plugin
 ====================
 
-> ***Important***: This plugin is being retired and will be out of support as of February 29, 2024. Azure CLI is the currently recommended way to integrate Jenkins with Azure services. Refer to [Tutorial: Use Azure Storage for build artifacts](https://docs.microsoft.com/en-us/azure/developer/jenkins/azure-storage-blobs-as-build-artifact-repository?toc=https%3A%2F%2Fdocs.microsoft.com%2Fen-us%2Fazure%2Fdeveloper%2Fjenkins%2Ftoc.json&bc=https%3A%2F%2Fdocs.microsoft.com%2Fen-us%2Fazure%2Fdeveloper%2Fbreadcrumb%2Ftoc.json) for more details.
+> ***Important***: This plug-in is maintained by the Jenkins community and won’t be supported by Microsoft as of February 29, 2024.
 
 
 A plugin for uploading build artifacts to, or downloading build dependencies from, Microsoft Azure Blob storage or Azure Files. (For a more detailed tutorial see http://go.microsoft.com/fwlink/?LinkId=280058)
