@@ -26,19 +26,19 @@ import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tika.Tika;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class AzureBlobProperties implements Describable<AzureBlobProperties> {
 
-    private final String cacheControl;
-    private final String contentEncoding;
-    private final String contentLanguage;
-    private final String contentType;
-    private final boolean detectContentType;
+    private String cacheControl;
+    private String contentEncoding;
+    private String contentLanguage;
+    private String contentType;
+    private boolean detectContentType = true;
 
-    @DataBoundConstructor
     public AzureBlobProperties(
             final String cacheControl,
             final String contentEncoding,
@@ -46,11 +46,15 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
             final String contentType,
             final boolean detectContentType
     ) {
-        this.cacheControl = cacheControl;
-        this.contentEncoding = contentEncoding;
-        this.contentLanguage = contentLanguage;
-        this.contentType = contentType;
+        this.cacheControl = Util.fixEmpty(cacheControl);
+        this.contentEncoding = Util.fixEmpty(contentEncoding);
+        this.contentLanguage = Util.fixEmpty(contentLanguage);
+        this.contentType = Util.fixEmpty(contentType);
         this.detectContentType = detectContentType;
+    }
+
+    @DataBoundConstructor
+    public AzureBlobProperties() {
     }
 
     public String getCacheControl() {
@@ -71,6 +75,31 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
 
     public boolean getDetectContentType() {
         return detectContentType;
+    }
+
+    @DataBoundSetter
+    public void setCacheControl(String cacheControl) {
+        this.cacheControl = Util.fixEmpty(cacheControl);
+    }
+
+    @DataBoundSetter
+    public void setContentEncoding(String contentEncoding) {
+        this.contentEncoding = Util.fixEmpty(contentEncoding);
+    }
+
+    @DataBoundSetter
+    public void setContentLanguage(String contentLanguage) {
+        this.contentLanguage = Util.fixEmpty(contentLanguage);
+    }
+
+    @DataBoundSetter
+    public void setContentType(String contentType) {
+        this.contentType = Util.fixEmpty(contentType);
+    }
+
+    @DataBoundSetter
+    public void setDetectContentType(boolean detectContentType) {
+        this.detectContentType = detectContentType;
     }
 
     public void configure(CloudBlob blob, FilePath src, EnvVars env) throws InterruptedException, IOException {

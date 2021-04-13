@@ -128,7 +128,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     @DataBoundSetter
     public void setFileShare(String fileShare) {
-        this.fileShare = fileShare;
+        this.fileShare = Util.fixEmpty(fileShare);
     }
 
     @DataBoundSetter

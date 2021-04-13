@@ -114,7 +114,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     @DataBoundSetter
     public void setFileShareName(String fileShareName) {
-        this.fileShareName = fileShareName;
+        this.fileShareName = Util.fixEmpty(fileShareName);
     }
 
     @DataBoundSetter
