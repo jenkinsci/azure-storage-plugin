@@ -53,13 +53,4 @@ The `Download from Azure blob storage` build step downloads blob contents from A
 4. Optionally, enter the target download path. If not specified, the files will be downloaded into the job's workspace.
    Environment variables can also be referenced, for example: ${JOB_NAME}
 
-For a tutorial, see http://go.microsoft.com/fwlink/?LinkId=280058.
-
-## Reporting bugs and feature requests
-
-We use [Jenkins JIRA](https://issues.jenkins-ci.org/) to record all bugs and feature requests. Please follow below steps to create your own issues.
-
-1. Search in Jira to see if the issue was existed already.
-2. Create a new issue with the component `windows-azure-storage-plugin` .
-
-You can refer to [Jira doc](https://confluence.atlassian.com/jiracoreserver/creating-issues-and-sub-tasks-939937904.html#Creatingissuesandsub-tasks-Creatinganissue) for detailed instructions about creating an issue.
+For a tutorial, see https://go.microsoft.com/fwlink/?LinkId=280058.

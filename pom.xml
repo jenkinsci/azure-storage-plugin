@@ -3,28 +3,25 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.55</version>
+        <version>4.18</version>
     </parent>
 
-
     <artifactId>windows-azure-storage</artifactId>
-    <version>1.1.8-SNAPSHOT</version>
+    <version>${changelist}</version>
     <packaging>hpi</packaging>
-    <name>Windows Azure Storage plugin</name>
+    <name>Azure Storage plugin</name>
     <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
-    <url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
+    <url>https://github.com/jenkinsci/azure-storage-plugin</url>
 
     <properties>
+        <changelist>9999-SNAPSHOT</changelist>
+        <gitHubRepo>jenkinsci/azure-storage-plugin</gitHubRepo>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jenkins.version>2.89.4</jenkins.version>
+        <jenkins.version>2.277.1</jenkins.version>
         <java.level>8</java.level>
-        <findbugs.failOnError>true</findbugs.failOnError>
-        <findbugs.excludeFilterFile>exclude-findbugs.xml</findbugs.excludeFilterFile>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <azure-commons.version>1.0.4</azure-commons.version>
-        <configuration-as-code.version>1.35</configuration-as-code.version>
-        <jackson.version>2.12.1</jackson.version>
+        <azure-commons.version>1.1.2</azure-commons.version>
     </properties>
 
     <licenses>
@@ -50,7 +47,10 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>apache-httpcomponents-client-4-api</artifactId>
-            <version>4.5.5-3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jackson2-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
@@ -60,108 +60,73 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.7</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>4.1.6.RELEASE</version>
+            <version>3.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>copyartifact</artifactId>
-            <version>1.38</version>
+            <version>1.46</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.4.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.11</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>1.22</version>
+            <version>1.26</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>matrix-project</artifactId>
-            <version>1.3</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
-            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>azure-commons</artifactId>
             <version>${azure-commons.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.microsoft.azure</groupId>
-                    <artifactId>azure-client-runtime</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.microsoft.azure</groupId>
-                    <artifactId>azure-client-authentication</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
-            <version>4.13.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.hamcrest</groupId>
-                    <artifactId>hamcrest-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>junit</artifactId>
-            <version>1.20</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials-binding</artifactId>
-            <version>1.11</version>
         </dependency>
         <dependency>
             <groupId>io.jenkins.blueocean</groupId>
             <artifactId>blueocean-rest</artifactId>
-            <version>1.3.5</version>
+            <version>1.24.6</version>
         </dependency>
 
         <dependency>
             <groupId>io.jenkins</groupId>
             <artifactId>configuration-as-code</artifactId>
-            <version>${configuration-as-code.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.jenkins.configuration-as-code</groupId>
             <artifactId>test-harness</artifactId>
-            <version>${configuration-as-code.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -169,59 +134,30 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>4.5.7</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>3.12.0</version>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.277.x</artifactId>
+                <version>27</version>
+                <scope>import</scope>
+                <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.7</version>
+                <version>2.10.2</version>
             </dependency>
             <dependency>
                 <groupId>io.reactivex</groupId>
                 <artifactId>rxjava</artifactId>
                 <version>1.3.8</version>
             </dependency>
-            <dependency>
-                <groupId>org.jenkins-ci</groupId>
-                <artifactId>symbol-annotation</artifactId>
-                <version>1.7</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>structs</artifactId>
-                <version>1.7</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/windows-azure-storage-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/windows-azure-storage-plugin.git
-        </developerConnection>
-        <url>https://github.com/jenkinsci/windows-azure-storage-plugin</url>
-        <tag>HEAD</tag>
+        <connection>scm:git:ssh://github.com/${gitHubRepo}.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/${gitHubRepo}.git</developerConnection>
+        <url>https://github.com/${gitHubRepo}</url>
+        <tag>${scmTag}</tag>
     </scm>
 
     <repositories>
@@ -247,33 +183,12 @@
                 <configuration>
                     <minimumJavaVersion>1.8</minimumJavaVersion>
                     <pluginFirstClassLoader>true</pluginFirstClassLoader>
-                    <maskClasses>
-                        com.microsoft.azure.management.
-                        com.google.common.
-                        com.microsoft.jenkins.azurecommons.core.
-                    </maskClasses>
                     <compatibleSinceVersion>0.3.6</compatibleSinceVersion>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M1</version>
-                <configuration>
-                    <excludes>
-                        <exclude>InjectedTest.java</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M1</version>
                 <configuration>
                     <forkCount>10</forkCount>
                     <reuseForks>true</reuseForks>
@@ -284,7 +199,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.17</version>
+                <version>3.1.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.41.1</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>validate</id>

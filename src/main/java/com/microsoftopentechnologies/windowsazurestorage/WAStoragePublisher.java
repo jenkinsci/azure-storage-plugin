@@ -80,7 +80,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private AzureBlobProperties blobProperties;
     private List<AzureBlobMetadataPair> metadata;
     /**
-     * Windows Azure storage container access.
+     * Azure storage container access.
      */
     private boolean pubAccessible;
     private boolean cleanUpContainerOrShare;
@@ -203,7 +203,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * Windows Azure storage container name.
+     * Azure storage container name.
      */
     public String getContainerName() {
         return containerName;
@@ -223,7 +223,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * Windows Azure storage blob properties.
+     * Azure storage blob properties.
      */
     public AzureBlobProperties getBlobProperties() {
         return blobProperties;
@@ -235,21 +235,21 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * Windows Azure storage container access.
+     * Azure storage container access.
      */
     public boolean isPubAccessible() {
         return pubAccessible;
     }
 
     /**
-     * Windows Azure storage container cleanup option.
+     * Azure storage container cleanup option.
      */
     public boolean isCleanUpContainerOrShare() {
         return cleanUpContainerOrShare;
     }
 
     /**
-     * Windows Azure storage virtual path cleanup option.
+     * Azure storage virtual path cleanup option.
      */
     public boolean isCleanUpVirtualPath() {
         return cleanUpVirtualPath;
@@ -328,7 +328,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     /**
-     * Windows Azure Storage Account Name.
+     * Azure Storage Account Name.
      */
     public String getStorageAccName(Item owner) {
         AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredentials(owner);

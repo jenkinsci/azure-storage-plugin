@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service to upload files to Windows Azure Blob Storage.
+ * Service to upload files to Azure Blob Storage.
  */
 public class UploadToBlobService extends UploadService {
 
