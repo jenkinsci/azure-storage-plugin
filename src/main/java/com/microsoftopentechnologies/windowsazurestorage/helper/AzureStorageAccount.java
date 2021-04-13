@@ -203,7 +203,7 @@ public class AzureStorageAccount extends BaseStandardCredentials {
 
         @Override
         public String getDisplayName() {
-            return "Microsoft Azure Storage";
+            return "Azure Storage";
         }
 
         public String getDefaultBlobURL() {

@@ -45,7 +45,7 @@ public final class Utils {
      * 4.Container names must be from 3 through 63 characters long. 5.Root
      * container and web container are specially treated.
      *
-     * @param containerName Name of the Windows Azure storage container
+     * @param containerName Name of the Azure storage container
      * @return true if container name is valid else returns false
      */
     public static boolean validateContainerName(String containerName) {

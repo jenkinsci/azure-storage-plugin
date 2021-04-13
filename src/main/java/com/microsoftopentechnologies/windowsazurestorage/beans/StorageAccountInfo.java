@@ -20,17 +20,17 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class StorageAccountInfo {
 
     /**
-     * Windows Azure storage account name.
+     * Azure storage account name.
      */
     private String storageAccName;
 
     /**
-     * Windows azure storage account primary access key.
+     * Azure storage account primary access key.
      */
     private String storageAccountKey;
 
     /**
-     * Windows Azure stoarge blob end point url.
+     * Azure stoarge blob end point url.
      */
     private String blobEndPointURL;
 

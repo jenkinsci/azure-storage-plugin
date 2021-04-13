@@ -7,51 +7,54 @@ import com.microsoft.azure.storage.file.CloudFileDirectory;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromFileService;
-import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class WindowsAzureStorageTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class AzureStorageTest {
 
 	@Test
-	public void testContainerName() throws Exception {
+	public void testContainerName() {
 
 		// checking for container name length of 3 characters
-		assertEquals(true, Utils.validateContainerName("abc"));
+		assertTrue(Utils.validateContainerName("abc"));
 
 		// checking for container name length of 5 characters
-		assertEquals(true, Utils.validateContainerName("1abc3"));
+		assertTrue(Utils.validateContainerName("1abc3"));
 
 		// checking for container name length of 63 characters
-		assertEquals(true, Utils.validateContainerName("abcde12345abcde12345abcde12345abcde12345abcde12345abcde12345abc"));
+		assertTrue(Utils.validateContainerName("abcde12345abcde12345abcde12345abcde12345abcde12345abcde12345abc"));
 
 		// checking for container name with dash (-) characters
-		assertEquals(true, Utils.validateContainerName("abc-def"));
+		assertTrue(Utils.validateContainerName("abc-def"));
 
         // checking for special container name
-        assertEquals(true, Utils.validateContainerName("$root"));
-        assertEquals(true, Utils.validateContainerName("$web"));
+		assertTrue(Utils.validateContainerName("$root"));
+		assertTrue(Utils.validateContainerName("$web"));
 
 		// Negative case : consecutive dashes are not allowed
-		assertEquals(false, Utils.validateContainerName("abc--def"));
+		assertFalse(Utils.validateContainerName("abc--def"));
 
 		// Negative case : dash canot be first character
-		assertEquals(false, Utils.validateContainerName("-abc12def"));
+		assertFalse(Utils.validateContainerName("-abc12def"));
 
 		// Negative case : dash canot be last character
-		assertEquals(false, Utils.validateContainerName("abc12def-"));
+		assertFalse(Utils.validateContainerName("abc12def-"));
 
 		// Negative case : more than 63 characters
-		assertEquals(false, Utils.validateContainerName("abcde12345abcde12345abcde12345abcde12345abcde12345abcde12345abc34"));
+		assertFalse(Utils.validateContainerName("abcde12345abcde12345abcde12345abcde12345abcde12345abcde12345abc34"));
 
 		// Negative case : only 2 characters
-		assertEquals(false, Utils.validateContainerName("ab"));
+		assertFalse(Utils.validateContainerName("ab"));
 	}
 
 	@Test
-	public void testGetBlobEPReturnsDefaultURL() throws Exception {
+	public void testGetBlobEPReturnsDefaultURL() {
 		// return default blob host given null URL
 		assertEquals(Constants.DEF_BLOB_URL, Utils.getBlobEP(null));
 		// return default blob host given the default blob URL
@@ -59,15 +62,16 @@ public class WindowsAzureStorageTest extends TestCase {
 	}
 
 	@Test
-	public void testGetBlobEPAddsHttpProtocolWhenNoProtocolPresent() throws Exception {
+	public void testGetBlobEPAddsHttpProtocolWhenNoProtocolPresent() {
 		assertEquals("https://blob.host.domain.tld/", Utils.getBlobEP("blob.host.domain.tld"));
 	}
 
 	@Test
-	public void testGetBlobEPAddsTrailingForwardSlashWhenMissing() throws Exception {
+	public void testGetBlobEPAddsTrailingForwardSlashWhenMissing() {
 		assertEquals("https://blob.core.windows.net/", Utils.getBlobEP("https://blob.core.windows.net"));
 	}
 
+	@Test
 	public void testFileItemPrefix() throws URISyntaxException, StorageException {
 		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey("test", "ZndhZndlYXJ2ZQ==");
 		URI directoryUri = new URI("https://blob.core.windows.net/share/test");
