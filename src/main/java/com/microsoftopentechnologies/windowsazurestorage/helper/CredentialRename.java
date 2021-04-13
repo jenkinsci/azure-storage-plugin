@@ -16,6 +16,7 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -69,11 +70,8 @@ public final class CredentialRename {
         }
         Path path = Paths.get(sourceFile.getCanonicalPath());
 
-        try (Stream<String> stream = Files.lines(path)) {
-            boolean needRename = stream.anyMatch(s -> s.contains(SOURCE_CONTENT));
-            if (!needRename) {
-                return;
-            }
+        if (renameNotNeededFor(path)) {
+            return;
         }
 
         LOGGER.log(Level.INFO, sourceFile + " exists, rename azure storage credential will start now...");
@@ -90,6 +88,17 @@ public final class CredentialRename {
         }
 
         removeFile(backUp.getCanonicalPath());
+    }
+
+    @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE") // Bug in spotbugs for try-with-resources
+    private static boolean renameNotNeededFor(Path path) throws IOException {
+        try (Stream<String> stream = Files.lines(path)) {
+            boolean needRename = stream.anyMatch(s -> s.contains(SOURCE_CONTENT));
+            if (!needRename) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void removeFile(String sourceFile) {
