@@ -389,7 +389,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter String value) {
             AutoCompletionCandidates projectList = new AutoCompletionCandidates();
-            for (AbstractProject<?, ?> project : Utils.getJenkinsInstance().getItems(AbstractProject.class)) {
+            for (AbstractProject<?, ?> project : Jenkins.get().getItems(AbstractProject.class)) {
                 if (project.getName().toLowerCase().startsWith(value.toLowerCase())) {
                     projectList.add(project.getName());
                 }
@@ -409,7 +409,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         public StorageAccountInfo[] getStorageAccounts() {
             WAStoragePublisher.WAStorageDescriptor publisherDescriptor =
-                    Utils.getJenkinsInstance().getDescriptorByType(WAStoragePublisher.WAStorageDescriptor.class);
+                    Jenkins.get().getDescriptorByType(WAStoragePublisher.WAStorageDescriptor.class);
 
             return publisherDescriptor.getStorageAccounts();
         }

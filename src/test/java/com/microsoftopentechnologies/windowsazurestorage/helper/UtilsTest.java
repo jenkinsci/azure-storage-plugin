@@ -106,7 +106,7 @@ public class UtilsTest {
     public void testGetJenkinsInstance() {
         System.out.println("getJenkinsInstance");
         Jenkins expResult = Jenkins.getInstance();
-        Jenkins result = Utils.getJenkinsInstance();
+        Jenkins result = Jenkins.get();
         assertEquals(expResult, result);
     }
 

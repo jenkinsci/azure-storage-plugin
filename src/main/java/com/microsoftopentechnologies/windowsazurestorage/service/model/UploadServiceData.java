@@ -43,6 +43,7 @@ public class UploadServiceData extends ServiceData {
     private List<AzureBlob> individualBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
     private List<AzureBlob> archiveBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
     private List<AzureBlobMetadataPair> azureBlobMetadata;
+    private String credentialsId;
 
     public UploadServiceData(Run<?, ?> run,
                              FilePath workspace,
@@ -67,6 +68,14 @@ public class UploadServiceData extends ServiceData {
 
     public void setBlobProperties(AzureBlobProperties blobProperties) {
         this.blobProperties = blobProperties;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
+    }
+
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
     }
 
     /**

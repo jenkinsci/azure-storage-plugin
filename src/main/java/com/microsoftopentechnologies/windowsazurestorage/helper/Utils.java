@@ -21,7 +21,6 @@ import hudson.Util;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -132,11 +131,6 @@ public final class Utils {
         return Constants.DEF_BLOB_URL;
     }
 
-    @Nonnull
-    public static Jenkins getJenkinsInstance() {
-        return Jenkins.getInstance();
-    }
-
     /**
      * Returns md5 hash in string format for a given string.
      *
@@ -162,7 +156,7 @@ public final class Utils {
 
     public static String getWorkDirectory() {
         File jenkinsRoot;
-        jenkinsRoot = Utils.getJenkinsInstance().root;
+        jenkinsRoot = Jenkins.get().root;
         if (jenkinsRoot == null) {
             throw new IllegalStateException("Root isn't configured. Couldn't find Jenkins work directory.");
         }
@@ -174,10 +168,10 @@ public final class Utils {
     public static String getPluginInstance() {
         String instanceId = null;
         try {
-            if (Utils.getJenkinsInstance().getLegacyInstanceId() == null) {
+            if (Jenkins.get().getLegacyInstanceId() == null) {
                 instanceId = "local";
             } else {
-                instanceId = Utils.getJenkinsInstance().getLegacyInstanceId();
+                instanceId = Jenkins.get().getLegacyInstanceId();
             }
         } catch (Exception e) {
         }

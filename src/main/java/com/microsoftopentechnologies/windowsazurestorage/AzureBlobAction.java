@@ -6,15 +6,16 @@ import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInf
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.Api;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
 import jenkins.model.RunAction2;
-import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
+import org.springframework.security.core.Authentication;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -106,18 +107,7 @@ public class AzureBlobAction implements RunAction2 {
     public void doProcessDownloadRequest(
             StaplerRequest request,
             StaplerResponse response) throws IOException, ServletException {
-        AzureStorageAccount.StorageAccountCredential accountCredentials =
-                AzureStorageAccount.getStorageAccountCredential(build.getParent(), storageCredentialId);
-
-        if (accountCredentials == null) {
-            response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
-                    "Azure Storage account global configuration is missing");
-            return;
-        }
-
-        StorageAccountInfo accountInfo = AzureStorageAccount.convertToStorageAccountInfo(accountCredentials);
-
-        if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication())) {
+        if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication2())) {
             String url = request.getOriginalRequestURI();
             response.sendRedirect(request.getContextPath() + "/login?from=" + url);
             return;
@@ -135,6 +125,14 @@ public class AzureBlobAction implements RunAction2 {
         if (zipArchiveBlob != null
                 && blobName.equals(URLDecoder.decode(zipArchiveBlob.getBlobName(),
                 StandardCharsets.UTF_8.toString()))) {
+            StorageAccountInfo accountInfo = getStorageAccountInfo(storageCredentialId);
+
+            if (accountInfo == null) {
+                response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
+                        "Azure Storage account global configuration is missing");
+                return;
+            }
+
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
                         + generateReadSASURL(accountInfo, zipArchiveBlob.getBlobName()));
@@ -147,6 +145,14 @@ public class AzureBlobAction implements RunAction2 {
 
         for (AzureBlob blob : individualBlobs) {
             if (blobName.equals(URLDecoder.decode(blob.getBlobName(), StandardCharsets.UTF_8.toString()))) {
+                StorageAccountInfo accountInfo = getStorageAccountInfo(blob.getCredentialsId());
+
+                if (accountInfo == null) {
+                    response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
+                            "Azure Storage account global configuration is missing");
+                    return;
+                }
+
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
                             + generateReadSASURL(accountInfo, blob.getBlobName()));
@@ -159,6 +165,18 @@ public class AzureBlobAction implements RunAction2 {
         }
 
         response.sendError(Constants.HTTP_NOT_FOUND, "Azure artifact is not available");
+    }
+
+    @CheckForNull
+    private StorageAccountInfo getStorageAccountInfo(String credentialsId) {
+        AzureStorageAccount.StorageAccountCredential accountCredentials =
+                AzureStorageAccount.getStorageAccountCredential(build.getParent(), credentialsId);
+
+        if (accountCredentials == null) {
+            return null;
+        }
+
+        return AzureStorageAccount.convertToStorageAccountInfo(accountCredentials);
     }
 
     private String generateReadSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
