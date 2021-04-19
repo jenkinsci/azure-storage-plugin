@@ -41,6 +41,7 @@ import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
+import jenkins.util.JenkinsJVM;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -128,8 +129,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                     .setConnectionManager(new PoolingHttpClientConnectionManager())
                     .setRetryHandler(new DefaultHttpRequestRetryHandler());
 
-            Jenkins jenkinsInstance = Utils.getJenkinsInstance();
-            if (jenkinsInstance != null) {
+            if (JenkinsJVM.isJenkinsJVM()) {
+                Jenkins jenkinsInstance = Jenkins.get();
                 ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
                 if (proxyConfig != null) {
                     HttpHost proxy = new HttpHost(proxyConfig.name, proxyConfig.port, HttpHost.DEFAULT_SCHEME_NAME);
@@ -178,7 +179,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                         uploadItem.getUri().toString().replace("http://", "https://"),
                         uploadedFileHash,
                         filePath.length(),
-                        Constants.FILE_STORAGE);
+                        Constants.FILE_STORAGE,
+                        getServiceData().getCredentialsId()
+                        );
                 filesUploaded.addAndGet(1);
                 azureBlobs.add(azureBlob);
             } catch (WAStorageException | InterruptedException | IOException e) {
@@ -379,7 +382,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     }
 
     /**
-     * Update Jenkins master's records of uploaded files.
+     * Update Jenkins controller's records of uploaded files.
      *
      * @param results    Response from the the agents.
      * @param azureBlobs Records of the uploaded files.
@@ -394,7 +397,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                         result.getUrl(),
                         result.getFileHash(),
                         result.getByteSize(),
-                        result.getStorageType());
+                        result.getStorageType(),
+                        getServiceData().getCredentialsId());
 
                 filesUploaded.addAndGet(1);
                 azureBlobs.add(azureBlob);
@@ -751,7 +755,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
 
     protected String uploadCloudFile(CloudFile cloudFile, FilePath localPath)
             throws WAStorageException {
-        String hashedStorageAcc = AppInsightsUtils.hash(cloudFile.getServiceClient().getCredentials().getAccountName());
         try {
             cloudFile.setMetadata(updateMetadata(cloudFile.getMetadata()));
 
@@ -768,17 +771,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             }
             long endTime = System.currentTimeMillis();
 
-            // send AI event.
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD,
-                    "StorageAccount", hashedStorageAcc,
-                    "ContentLength", String.valueOf(localPath.length()));
-
             println("Uploaded blob with uri " + cloudFile.getUri() + " in " + getTime(endTime - startTime));
             return DatatypeConverter.printHexBinary(md.digest());
         } catch (IOException | InterruptedException | StorageException | URISyntaxException e) {
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
-                    "StorageAccount", hashedStorageAcc,
-                    "Message", e.getMessage());
             throw new WAStorageException("fail to upload file to azure file storage", e);
         }
     }

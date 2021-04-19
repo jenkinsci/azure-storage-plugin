@@ -425,6 +425,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setUploadType(getArtifactUploadType());
         serviceData.setAzureBlobMetadata(metadata);
         serviceData.setOnlyUploadModifiedArtifacts(onlyUploadModifiedArtifacts);
+        serviceData.setCredentialsId(getStorageCredentialId());
         // Resolve virtual path
         String expVP = Utils.replaceMacro(Util.fixNull(virtualPath), envVars);
 
@@ -454,9 +455,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 AzureBlobAction existAction = run.getAction(AzureBlobAction.class);
                 if (existAction != null) {
                     List<AzureBlob> existActionIndividualBlobs = existAction.getIndividualBlobs();
-                    synchronized (existActionIndividualBlobs) {
-                        existActionIndividualBlobs.addAll(individualBlobs);
-                    }
+                    existActionIndividualBlobs.addAll(individualBlobs);
                 } else {
                     run.addAction(new AzureBlobAction(expContainerName, expShareName, getStorageType(),
                             individualBlobs, zipArchiveBlob, allowAnonymousAccess,

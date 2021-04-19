@@ -28,13 +28,13 @@ import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.EnvVars;
 import hudson.matrix.MatrixBuild;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.plugins.copyartifact.BuildFilter;
+import jenkins.model.Jenkins;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -56,7 +56,7 @@ public class DownloadFromBuildService extends DownloadService {
         int filesDownloaded = 0;
 
         try {
-            Job<?, ?> job = Utils.getJenkinsInstance().getItemByFullName(serviceData.getProjectName(), Job.class);
+            Job<?, ?> job = Jenkins.get().getItemByFullName(serviceData.getProjectName(), Job.class);
             if (job != null) {
                 // Resolve download location
                 final EnvVars envVars = serviceData.getRun().getEnvironment(serviceData.getTaskListener());

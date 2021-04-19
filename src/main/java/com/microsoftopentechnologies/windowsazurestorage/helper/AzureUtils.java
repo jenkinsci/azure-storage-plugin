@@ -251,7 +251,7 @@ public final class AzureUtils {
      * Set default proxy for Azure Storage SDK if Jenkins has proxy setting.
      */
     public static void updateDefaultProxy() {
-        Jenkins jenkinsInstance = Utils.getJenkinsInstance();
+        Jenkins jenkinsInstance = Jenkins.get();
         ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
         if (proxyConfig != null) {
             Proxy proxy = proxyConfig.createProxy(null);
