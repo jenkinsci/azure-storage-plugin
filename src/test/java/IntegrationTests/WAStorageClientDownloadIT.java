@@ -1,9 +1,9 @@
 package IntegrationTests;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.specialized.BlockBlobClient;
+import com.azure.storage.common.StorageSharedKeyCredential;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromContainerService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.FilePath;
@@ -18,6 +18,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -35,32 +37,33 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
     private static final Logger LOGGER = Logger.getLogger(WAStorageClientDownloadIT.class.getName());
 
     @Before
-    public void setUp() throws IOException {
-        try {
-            disableAI();
-
-            String containerName = "testdownload" + TestEnvironment.GenerateRandomString(15);
-            testEnv = new TestEnvironment(containerName);
-            testEnv.account = new CloudStorageAccount(new StorageCredentialsAccountAndKey(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1));
-            testEnv.blobClient = testEnv.account.createCloudBlobClient();
-            File directory = new File(containerName);
-            if (!directory.exists())
-                directory.mkdir();
-            testEnv.container = testEnv.blobClient.getContainerReference(containerName);
-            testEnv.container.createIfNotExists();
-            for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
-                String content = TestEnvironment.GenerateRandomString(15);
-                File file = new File(directory, "download" + UUID.randomUUID().toString() + ".txt");
-                FileUtils.writeStringToFile(file, content);
-                testEnv.downloadFileList.put(content, file);
-
-                LOGGER.log(Level.INFO, file.getAbsolutePath());
-                CloudBlockBlob blob = testEnv.container.getBlockBlobReference(file.getName());
-                blob.uploadFromFile(file.getAbsolutePath());
+    public void setUp() throws IOException, URISyntaxException {
+        String containerName = "testdownload" + TestEnvironment.GenerateRandomString(15);
+        testEnv = new TestEnvironment(containerName);
+        testEnv.blobClient = new BlobServiceClientBuilder()
+                .credential(new StorageSharedKeyCredential(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1))
+                .endpoint("https://" + testEnv.azureStorageAccountName + ".blob.core.windows.net")
+                .buildClient();
+        File directory = new File(containerName);
+        if (!directory.exists()) {
+            boolean mkdir = directory.mkdir();
+            if (!mkdir) {
+                throw new IllegalStateException("directory " + containerName + " failed to create");
             }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, null, e);
-            Assert.assertTrue(e.getMessage(), false);
+        }
+        testEnv.container = testEnv.blobClient.getBlobContainerClient(containerName);
+        if (!testEnv.container.exists()) {
+            testEnv.container.create();
+        }
+        for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
+            String content = TestEnvironment.GenerateRandomString(15);
+            File file = new File(directory, "download" + UUID.randomUUID().toString() + ".txt");
+            FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
+            testEnv.downloadFileList.put(content, file);
+
+            LOGGER.log(Level.INFO, file.getAbsolutePath());
+            BlobClient blob = testEnv.container.getBlobClient(file.getName());
+            blob.uploadFromFile(file.getAbsolutePath());
         }
     }
 
@@ -69,7 +72,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
         System.out.print("download without zip and flatten directory");
         try {
             //try to download the same file  
-            LOGGER.log(Level.INFO, "container Namne for testDownloadfromContainer: " + testEnv.containerName);
+            LOGGER.log(Level.INFO, "container Name for testDownloadfromContainer: " + testEnv.containerName);
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
 
@@ -98,7 +101,9 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
                 each.delete();
 
             }
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
             FileUtils.deleteDirectory(downloaded);
 
         } catch (Exception e) {
@@ -140,7 +145,9 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
                 each.delete();
 
             }
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
             FileUtils.deleteDirectory(downloaded);
 
         } catch (Exception e) {
@@ -186,7 +193,9 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
 
             }
             FileUtils.deleteDirectory(downloaded);
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, null, e);
@@ -195,7 +204,7 @@ public class WAStorageClientDownloadIT extends IntegrationTest {
     }
 
     @After
-    public void tearDown() throws StorageException {
+    public void tearDown() {
         System.gc();
         Iterator it = testEnv.downloadFileList.entrySet().iterator();
         if (it.hasNext()) {

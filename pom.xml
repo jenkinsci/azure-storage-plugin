@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
@@ -18,10 +18,9 @@
         <gitHubRepo>jenkinsci/azure-storage-plugin</gitHubRepo>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jenkins.version>2.277.1</jenkins.version>
+        <jenkins.version>2.277.2</jenkins.version>
         <java.level>8</java.level>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <azure-commons.version>1.1.2</azure-commons.version>
     </properties>
 
     <licenses>
@@ -45,22 +44,25 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>apache-httpcomponents-client-4-api</artifactId>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>azure-sdk</artifactId>
+            <version>4.vcb202d9010c1</version>
         </dependency>
         <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>jackson2-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-storage</artifactId>
-            <version>6.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-file-share</artifactId>
+            <version>12.8.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+                <!-- we take the version from the azure-sdk -->
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-storage-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -80,6 +82,12 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>1.26</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -95,23 +103,17 @@
             <artifactId>plain-credentials</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>azure-commons</artifactId>
-            <version>${azure-commons.version}</version>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
+            <artifactId>credentials-binding</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>credentials-binding</artifactId>
+            <artifactId>jackson2-api</artifactId>
         </dependency>
         <dependency>
             <groupId>io.jenkins.blueocean</groupId>
@@ -136,19 +138,9 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-2.277.x</artifactId>
-                <version>27</version>
+                <version>29</version>
                 <scope>import</scope>
                 <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>joda-time</groupId>
-                <artifactId>joda-time</artifactId>
-                <version>2.10.2</version>
-            </dependency>
-            <dependency>
-                <groupId>io.reactivex</groupId>
-                <artifactId>rxjava</artifactId>
-                <version>1.3.8</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -176,16 +168,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <minimumJavaVersion>1.8</minimumJavaVersion>
-                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
-                    <compatibleSinceVersion>0.3.6</compatibleSinceVersion>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>

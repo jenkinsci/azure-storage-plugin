@@ -15,34 +15,30 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobProperties;
-import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlobDirectory;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
-import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
-import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
-import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.specialized.BlockBlobClient;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.PartialBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.util.DirScanner;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service to upload files to Azure Blob Storage.
@@ -59,7 +55,7 @@ public class UploadToBlobService extends UploadService {
             throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
-            final CloudBlobContainer container = getCloudBlobContainer();
+            final BlobContainerClient container = getCloudBlobContainer();
             if (serviceData.getUploadType() == UploadType.ZIP) {
                 cleanupContainer(container);
             }
@@ -79,41 +75,38 @@ public class UploadToBlobService extends UploadService {
                 blobURI = serviceData.getVirtualPath() + blobURI;
             }
 
-            final CloudBlockBlob blob = container.getBlockBlobReference(blobURI);
+            final BlockBlobClient blob = container.getBlobClient(blobURI).getBlockBlobClient();
 
             List<UploadObject> uploadObjects = new ArrayList<>();
+            PartialBlobProperties blobProperties = new PartialBlobProperties(
+                    "UTF-8", null, null, null);
             UploadObject uploadObject = generateUploadObject(zipPath, serviceData.getStorageAccountInfo(),
-                    blob, container.getName());
+                    blob, container.getBlobContainerName(), blobProperties, updateMetadata(new HashMap<>()));
             uploadObjects.add(uploadObject);
 
-            UploadOnSlave uploadOnSlave = new UploadOnSlave(uploadObjects);
+            UploadOnSlave uploadOnSlave = new UploadOnSlave(Jenkins.get().proxy, uploadObjects);
             List<UploadResult> results = workspacePath.act(uploadOnSlave);
 
             updateAzureBlobs(results, serviceData.getArchiveBlobs());
 
             tempDir.deleteRecursive();
         } catch (Exception e) {
-            String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
-                    "StorageAccount", storageAcc,
-                    "Message", e.getMessage());
             throw new WAStorageException("Fail to upload archive to blob", e);
         }
     }
 
+    @SuppressWarnings("HttpUrlsUsage")
     private UploadObject generateUploadObject(FilePath path, StorageAccountInfo accountInfo,
-                                              CloudBlockBlob blob, String containerName) throws Exception {
-        String sas = generateWriteSASURL(accountInfo, blob.getName(),
+                                              BlockBlobClient blob, String containerName,
+                                              PartialBlobProperties blobProperties,
+                                              Map<String, String> metadata) throws Exception {
+        String sas = generateWriteSASURL(accountInfo, blob.getBlobName(),
                 Constants.BLOB_STORAGE, containerName);
-        String blobURL = blob.getUri().toString().replace("http://", "https://");
-        return new UploadObject(blob.getName(), path, blobURL, sas, Constants.BLOB_STORAGE,
-                blob.getServiceClient().getCredentials().getAccountName(),
-                convertBlobProperties(blob.getProperties()), blob.getMetadata());
-    }
+        String blobURL = blob.getBlobUrl().replace("http://", "https://");
 
-    private PartialBlobProperties convertBlobProperties(BlobProperties properties) {
-        return new PartialBlobProperties(properties.getContentEncoding(), properties.getContentLanguage(),
-                properties.getCacheControl(), properties.getContentType());
+        return new UploadObject(blob.getBlobName(), path, blobURL, sas, Constants.BLOB_STORAGE,
+                blob.getAccountName(), blobProperties,
+                metadata);
     }
 
     @Override
@@ -121,7 +114,7 @@ public class UploadToBlobService extends UploadService {
             throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
-            final CloudBlobContainer container = getCloudBlobContainer();
+            final BlobContainerClient container = getCloudBlobContainer();
             UploadType uploadType = serviceData.getUploadType();
             if (uploadType == UploadType.INDIVIDUAL || uploadType == UploadType.BOTH) {
                 cleanupContainer(container);
@@ -130,24 +123,20 @@ public class UploadToBlobService extends UploadService {
             List<UploadObject> uploadObjects = new ArrayList<>();
             for (FilePath src : paths) {
                 final String blobPath = getItemPath(src, embeddedVP);
-                final CloudBlockBlob blob = container.getBlockBlobReference(blobPath);
-                configureBlobPropertiesAndMetadata(blob, src);
+                final BlockBlobClient blob = container.getBlobClient(blobPath).getBlockBlobClient();
+                PartialBlobProperties blobProperties = configureBlobProperties(src);
 
                 UploadObject uploadObject = generateUploadObject(src, serviceData.getStorageAccountInfo(),
-                        blob, container.getName());
+                        blob, container.getBlobContainerName(), blobProperties, updateMetadata(new HashMap<>()));
                 uploadObjects.add(uploadObject);
             }
 
-            UploadOnSlave uploadOnSlave = new UploadOnSlave(uploadObjects);
+            UploadOnSlave uploadOnSlave = new UploadOnSlave(Jenkins.get().proxy, uploadObjects);
             List<UploadResult> results = workspace.act(uploadOnSlave);
 
             updateAzureBlobs(results, serviceData.getIndividualBlobs());
 
         } catch (Exception e) {
-            String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_BLOB_STORAGE, UPLOAD_FAILED,
-                    "StorageAccount", storageAcc,
-                    "Message", e.getMessage());
             throw new WAStorageException("Fail to upload individual files to blob", e);
         }
     }
@@ -158,26 +147,23 @@ public class UploadToBlobService extends UploadService {
         throw new NotImplementedException();
     }
 
-    private void configureBlobPropertiesAndMetadata(
-            final CloudBlockBlob blob,
+    private PartialBlobProperties configureBlobProperties(
             final FilePath src) throws IOException, InterruptedException {
         final UploadServiceData serviceData = getServiceData();
         final EnvVars env = serviceData.getRun().getEnvironment(serviceData.getTaskListener());
 
         // Set blob properties
         if (serviceData.getBlobProperties() != null) {
-            serviceData.getBlobProperties().configure(blob, src, env);
+            return serviceData.getBlobProperties().configure(src, env);
         }
 
-        // Set blob metadata
-        if (serviceData.getAzureBlobMetadata() != null) {
-            blob.setMetadata(updateMetadata(blob.getMetadata()));
-        }
+        return new PartialBlobProperties("UTF-8", null, null, null);
+
     }
 
-    private CloudBlobContainer getCloudBlobContainer() throws URISyntaxException, StorageException, IOException {
+    private BlobContainerClient getCloudBlobContainer() throws URISyntaxException, IOException {
         final UploadServiceData serviceData = getServiceData();
-        final CloudBlobContainer container = AzureUtils.getBlobContainerReference(
+        final BlobContainerClient container = AzureUtils.getBlobContainerReference(
                 serviceData.getStorageAccountInfo(),
                 serviceData.getContainerName(),
                 true,
@@ -187,36 +173,28 @@ public class UploadToBlobService extends UploadService {
         return container;
     }
 
-    private void cleanupContainer(CloudBlobContainer container) throws
-            StorageException, IOException, URISyntaxException {
+    private void cleanupContainer(BlobContainerClient container) throws
+            IOException, URISyntaxException {
         final UploadServiceData serviceData = getServiceData();
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare()) {
             println("Clean up existing blobs in container " + serviceData.getContainerName());
-            deleteBlobs(container.listBlobs());
+            deleteBlobs(container, container.listBlobs());
         } else if (serviceData.isCleanUpVirtualPath() && StringUtils.isNotBlank(serviceData.getVirtualPath())) {
             println("Clean up existing blobs in container path " + serviceData.getVirtualPath());
-            deleteBlobs(container.getDirectoryReference(serviceData.getVirtualPath()).listBlobs());
+            deleteBlobs(container, container.listBlobsByHierarchy(serviceData.getVirtualPath()));
         }
     }
 
     /**
      * Deletes contents of container.
      *
+     * @param container the blob container client
      * @param blobItems list of blobs to delete
-     * @throws StorageException
-     * @throws URISyntaxException
      */
-    private void deleteBlobs(Iterable<ListBlobItem> blobItems)
-            throws StorageException, URISyntaxException, IOException {
-
-        for (ListBlobItem blobItem : blobItems) {
-            if (blobItem instanceof CloudBlob) {
-                ((CloudBlob) blobItem).uploadProperties(null, null, Utils.updateUserAgent());
-                ((CloudBlob) blobItem).delete();
-            } else if (blobItem instanceof CloudBlobDirectory) {
-                deleteBlobs(((CloudBlobDirectory) blobItem).listBlobs());
-            }
+    private void deleteBlobs(BlobContainerClient container, PagedIterable<BlobItem> blobItems) {
+        for (BlobItem blobItem : blobItems) {
+            container.getBlobClient(blobItem.getName()).delete();
         }
     }
 }

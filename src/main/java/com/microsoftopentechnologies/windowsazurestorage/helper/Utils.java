@@ -15,16 +15,12 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
-import com.microsoft.azure.storage.OperationContext;
-import com.microsoft.azure.storage.core.BaseRequest;
 import hudson.Util;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -180,43 +176,6 @@ public final class Utils {
 
     public static String getPluginVersion() {
         return Utils.class.getPackage().getImplementationVersion();
-    }
-
-    public static OperationContext updateUserAgent() throws IOException {
-        return updateUserAgent(null);
-    }
-
-    public static OperationContext updateUserAgent(final Long contentLength) throws IOException {
-        String version = null;
-        String instanceId = null;
-        try {
-            version = Utils.getPluginVersion();
-            if (version == null) {
-                version = "local";
-            }
-            instanceId = Utils.getPluginInstance();
-        } catch (Exception e) {
-        }
-
-        String pluginUserAgent;
-        if (contentLength == null) {
-            pluginUserAgent = String.format("%s/%s/%s", Constants.PLUGIN_NAME, version, instanceId);
-        } else {
-            pluginUserAgent = String.format("%s/%s/%s/ContentLength/%s",
-                    Constants.PLUGIN_NAME, version, instanceId, contentLength.toString());
-        }
-
-        final String baseUserAgent = BaseRequest.getUserAgent();
-        if (baseUserAgent != null) {
-            pluginUserAgent = pluginUserAgent + "/" + baseUserAgent;
-        }
-
-        OperationContext opContext = new OperationContext();
-        HashMap<String, String> temp = new HashMap<String, String>();
-        temp.put("User-Agent", pluginUserAgent);
-
-        opContext.setUserHeaders(temp);
-        return opContext;
     }
 
     /**

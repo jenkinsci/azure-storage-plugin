@@ -15,80 +15,72 @@
 
 package IntegrationTests;
 
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
-import com.microsoft.azure.storage.file.FileRequestOptions;
+import com.azure.storage.file.share.ShareDirectoryClient;
+import com.azure.storage.file.share.ShareFileClient;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class FileStorageDownloadIT extends IntegrationTest {
-    private static final Logger LOGGER = Logger.getLogger(WAStorageClientDownloadIT.class.getName());
-
     @Before
-    public void setUp() throws IOException {
-        try {
-            disableAI();
+    public void setUp() throws IOException, URISyntaxException, InterruptedException {
+        final String fileShareName = "testshare" + TestEnvironment.GenerateRandomString(15);
+        testEnv = new TestEnvironment(fileShareName);
 
-            final String fileShareName = "testshare" + TestEnvironment.GenerateRandomString(15);
-            testEnv = new TestEnvironment(fileShareName);
-
-            File directory = new File(fileShareName);
-            if (!directory.exists())
-                directory.mkdir();
-
-            testEnv.account = AzureUtils.getCloudStorageAccount(testEnv.sampleStorageAccount);
-            testEnv.fileShare = testEnv.account.createCloudFileClient().getShareReference(fileShareName);
-            testEnv.fileShare.createIfNotExists();
-
-            CloudFileDirectory cloudFileDirectory = testEnv.fileShare.getRootDirectoryReference();
-            final MessageDigest md = DigestUtils.getMd5Digest();
-            for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
-                String tempContent = UUID.randomUUID().toString();
-                File temp = new File(directory.getAbsolutePath(), "download" + tempContent + ".txt");
-                FileUtils.writeStringToFile(temp, tempContent);
-
-                FilePath localPath = new FilePath(temp);
-                CloudFile cloudFile = cloudFileDirectory.getFileReference(temp.getName());
-                try (InputStream inputStream = localPath.read();
-                     DigestInputStream digestInputStream = new DigestInputStream(inputStream, md)) {
-                    cloudFile.upload(
-                            digestInputStream,
-                            localPath.length(),
-                            null,
-                            new FileRequestOptions(),
-                            Utils.updateUserAgent());
-                }
-                testEnv.downloadFileList.put(tempContent, temp);
+        File directory = new File(fileShareName);
+        if (!directory.exists()) {
+            boolean mkdir = directory.mkdir();
+            if (!mkdir) {
+                throw new IllegalStateException("directory " + fileShareName + " failed to create");
             }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, null, e);
-            Assert.assertTrue(e.getMessage(), false);
         }
+
+        testEnv.fileServiceClient = AzureUtils.getShareClient(testEnv.sampleStorageAccount);
+        testEnv.fileShare = testEnv.fileServiceClient.getShareClient(fileShareName);
+        if (!testEnv.fileShare.exists()) {
+            testEnv.fileShare.create();
+        }
+
+        ShareDirectoryClient directoryClient = testEnv.fileShare.getRootDirectoryClient();
+        if (!directoryClient.exists()) {
+            directoryClient.create();
+        }
+        for (int i = 0; i < TestEnvironment.TOTAL_FILES; i++) {
+            String tempContent = UUID.randomUUID().toString();
+            File temp = new File(directory.getAbsolutePath(), "download" + tempContent + ".txt");
+            FileUtils.writeStringToFile(temp, tempContent, StandardCharsets.UTF_8);
+
+            FilePath localPath = new FilePath(temp);
+            File file = new File(localPath.getRemote());
+            ShareFileClient cloudFile = directoryClient.getFileClient(temp.getName());
+            cloudFile.create(localPath.length());
+            try (FileInputStream fis = new FileInputStream(file); BufferedInputStream bis = new BufferedInputStream(fis)) {
+                cloudFile.upload(
+                        bis,
+                        localPath.length());
+            }
+            testEnv.downloadFileList.put(tempContent, temp);
+        }
+
     }
 
     @Test
@@ -103,7 +95,7 @@ public class FileStorageDownloadIT extends IntegrationTest {
         DownloadServiceData serviceData = new DownloadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
         serviceData.setIncludeFilesPattern("*.txt");
         serviceData.setExcludeFilesPattern("archive.zip");
-        serviceData.setFileShare(testEnv.fileShare.getName());
+        serviceData.setFileShare(testEnv.fileShare.getShareName());
         DownloadFromFileService service = new DownloadFromFileService(serviceData);
 
         int totalFiles = service.execute();
@@ -124,7 +116,7 @@ public class FileStorageDownloadIT extends IntegrationTest {
     }
 
     @After
-    public void tearDown() throws StorageException {
+    public void tearDown() {
         for (File file : testEnv.downloadFileList.values()) {
             if (file.getParentFile().exists()) {
                 try {
@@ -136,7 +128,7 @@ public class FileStorageDownloadIT extends IntegrationTest {
         }
 
         if (testEnv.fileShare != null) {
-            testEnv.fileShare.deleteIfExists();
+            testEnv.fileShare.delete();
         }
         testEnv.downloadFileList.clear();
     }

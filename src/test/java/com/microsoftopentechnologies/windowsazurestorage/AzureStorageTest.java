@@ -1,9 +1,5 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromFileService;
@@ -69,20 +65,5 @@ public class AzureStorageTest {
 	@Test
 	public void testGetBlobEPAddsTrailingForwardSlashWhenMissing() {
 		assertEquals("https://blob.core.windows.net/", Utils.getBlobEP("https://blob.core.windows.net"));
-	}
-
-	@Test
-	public void testFileItemPrefix() throws URISyntaxException, StorageException {
-		StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey("test", "ZndhZndlYXJ2ZQ==");
-		URI directoryUri = new URI("https://blob.core.windows.net/share/test");
-		CloudFileDirectory directory = new CloudFileDirectory(directoryUri, credentials);
-		URI fileUri = new URI("https://blob.core.windows.net/share/test/file.txt");
-		CloudFile file = new CloudFile(fileUri, credentials);
-		URI subUri = new URI("https://blob.core.windows.net/share/test/sub/sub.txt");
-		CloudFile subFile = new CloudFile(subUri, credentials);
-		DownloadFromFileService service = new DownloadFromFileService(null);
-		assertEquals("test", service.getPrefix(directory));
-		assertEquals("test/file.txt", service.getPrefix(file));
-		assertEquals("test/sub/sub.txt", service.getPrefix(subFile));
 	}
 }

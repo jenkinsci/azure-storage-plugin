@@ -1,7 +1,7 @@
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
-import com.microsoft.azure.storage.file.SharedAccessFilePermissions;
+import com.azure.storage.blob.sas.BlobSasPermission;
+import com.azure.storage.file.share.sas.ShareFileSasPermission;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -19,7 +19,6 @@ import org.springframework.security.core.Authentication;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.EnumSet;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.net.URLDecoder;
@@ -182,10 +181,10 @@ public class AzureBlobAction implements RunAction2 {
     private String generateReadSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
         if (getStorageType().equalsIgnoreCase(Constants.BLOB_STORAGE)) {
             return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName,
-                    EnumSet.of(SharedAccessBlobPermissions.READ));
+                    new BlobSasPermission().setReadPermission(true));
         } else if (getStorageType().equalsIgnoreCase(Constants.FILE_STORAGE)) {
             return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName,
-                    EnumSet.of(SharedAccessFilePermissions.READ));
+                    new ShareFileSasPermission().setReadPermission(true));
         }
         throw new Exception("Unknown storage type. Please re-configure your job and build again.");
     }

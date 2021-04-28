@@ -15,10 +15,9 @@
 
 package IntegrationTests;
 
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
-import com.microsoft.azure.storage.file.ListFileItem;
+import com.azure.storage.file.share.ShareDirectoryClient;
+import com.azure.storage.file.share.ShareFileClient;
+import com.azure.storage.file.share.models.ShareFileItem;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
@@ -35,8 +34,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,36 +52,34 @@ public class FileStorageUploadIT extends IntegrationTest {
     private String fileShareName;
 
     @Before
-    public void setUp() throws IOException {
-        try {
-            disableAI();
-
-            fileShareName = "testshare-" + TestEnvironment.GenerateRandomString(10);
-            testEnv = new TestEnvironment(fileShareName);
-            File directory = new File(fileShareName);
-            if (!directory.exists())
-                directory.mkdir();
-
-            testEnv.account = AzureUtils.getCloudStorageAccount(testEnv.sampleStorageAccount);
-            testEnv.fileShare = testEnv.account.createCloudFileClient().getShareReference(fileShareName);
-            testEnv.fileShare.createIfNotExists();
-
-            for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
-                String tempContent = UUID.randomUUID().toString();
-                File temp = new File(directory.getAbsolutePath(), "upload" + tempContent + ".txt");
-                FileUtils.writeStringToFile(temp, tempContent);
-                testEnv.uploadFileList.put(tempContent, temp);
+    public void setUp() throws IOException, URISyntaxException {
+        fileShareName = "testshare-" + TestEnvironment.GenerateRandomString(10);
+        testEnv = new TestEnvironment(fileShareName);
+        File directory = new File(fileShareName);
+        if (!directory.exists()) {
+            boolean mkdir = directory.mkdir();
+            if (!mkdir) {
+                throw new IllegalStateException("directory " + fileShareName + " failed to create");
             }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, null, e);
-            assertTrue(e.getMessage(), false);
+        }
+
+        testEnv.fileServiceClient = AzureUtils.getShareClient(testEnv.sampleStorageAccount);
+        testEnv.fileShare = testEnv.fileServiceClient.getShareClient(fileShareName);
+        if (!testEnv.fileShare.exists()) {
+            testEnv.fileShare.create();
+        }
+
+        for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
+            String tempContent = UUID.randomUUID().toString();
+            File temp = new File(directory.getAbsolutePath(), "upload" + tempContent + ".txt");
+            FileUtils.writeStringToFile(temp, tempContent, StandardCharsets.UTF_8);
+            testEnv.uploadFileList.put(tempContent, temp);
         }
     }
 
     @Test
     public void testUploadFile() {
         try {
-            final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
             List<AzureBlobMetadataPair> metadata = new ArrayList<>();
@@ -100,10 +100,12 @@ public class FileStorageUploadIT extends IntegrationTest {
             int uploaded = service.execute();
 
             assertEquals(testEnv.uploadFileList.size(), uploaded);
-            for (ListFileItem item : testEnv.fileShare.getRootDirectoryReference().listFilesAndDirectories()) {
-                if (item instanceof CloudFile) {
-                    CloudFile cloudFile = (CloudFile) item;
-                    String downloadedContent = cloudFile.downloadText();
+            ShareDirectoryClient rootDirectoryClient = testEnv.fileShare.getRootDirectoryClient();
+            for (ShareFileItem item : rootDirectoryClient.listFilesAndDirectories()) {
+                if (!item.isDirectory()) {
+                    ByteArrayOutputStream output = new ByteArrayOutputStream();
+                    rootDirectoryClient.getFileClient(item.getName()).download(output);
+                    String downloadedContent = output.toString(StandardCharsets.UTF_8.name());
                     File temp = testEnv.uploadFileList.get(downloadedContent);
                     String tempContent = FileUtils.readFileToString(temp, "utf-8");
                     //check for filenames
@@ -120,52 +122,8 @@ public class FileStorageUploadIT extends IntegrationTest {
     }
 
     @Test
-    public void testUploadFileWithMetaData() {
-        try {
-            final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
-            Run mockRun = mock(Run.class);
-            Launcher mockLauncher = mock(Launcher.class);
-            List<AzureBlobMetadataPair> metadata = Arrays.asList(
-                    new AzureBlobMetadataPair("k1", "v1"),
-                    new AzureBlobMetadataPair("k2", "v2")
-            );
-
-            Iterator it = testEnv.uploadFileList.entrySet().iterator();
-            Map.Entry firstPair = (Map.Entry) it.next();
-            File firstFile = (File) firstPair.getValue();
-
-            File workspaceDir = new File(fileShareName);
-            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
-
-            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
-            serviceData.setFileShareName(fileShareName);
-            serviceData.setCleanUpContainerOrShare(false);
-            serviceData.setFilePath(firstFile.getName());
-            serviceData.setVirtualPath("");
-            serviceData.setExcludedFilesPath("");
-            serviceData.setUploadType(UploadType.INDIVIDUAL);
-            serviceData.setAzureBlobMetadata(metadata);
-
-            UploadService service = new UploadToFileService(serviceData);
-            int uploaded = service.execute();
-
-            assertEquals(1, uploaded);
-            CloudFile cloudFile = testEnv.fileShare.getRootDirectoryReference().getFileReference(firstFile.getName());
-            cloudFile.downloadAttributes();
-
-            HashMap<String, String> downloadedMeta = cloudFile.getMetadata();
-            for (AzureBlobMetadataPair pair : metadata) {
-                assertEquals(pair.getValue(), downloadedMeta.get(pair.getKey()));
-            }
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
     public void testUploadFileWithEmptyMetaData() {
         try {
-            final CloudFileDirectory rootDir = testEnv.fileShare.getRootDirectoryReference();
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
             List<AzureBlobMetadataPair> metadata = Arrays.asList(
@@ -197,10 +155,8 @@ public class FileStorageUploadIT extends IntegrationTest {
             int uploaded = service.execute();
 
             assertEquals(1, uploaded);
-            CloudFile cloudFile = testEnv.fileShare.getRootDirectoryReference().getFileReference(firstFile.getName());
-            cloudFile.downloadAttributes();
-
-            HashMap<String, String> downloadedMeta = cloudFile.getMetadata();
+            ShareFileClient cloudFile = testEnv.fileShare.getRootDirectoryClient().getFileClient(firstFile.getName());
+            Map<String, String> downloadedMeta = cloudFile.getProperties().getMetadata();
             assertTrue(downloadedMeta.isEmpty());
         } catch (Exception e) {
             Assert.fail(e.getMessage());
@@ -208,7 +164,7 @@ public class FileStorageUploadIT extends IntegrationTest {
     }
 
     @After
-    public void tearDown() throws StorageException {
+    public void tearDown() {
         System.gc();
         Iterator it = testEnv.uploadFileList.entrySet().iterator();
         if (it.hasNext()) {
@@ -222,7 +178,9 @@ public class FileStorageUploadIT extends IntegrationTest {
             }
         }
 
-        testEnv.fileShare.deleteIfExists();
+        if (testEnv.fileShare.exists()) {
+            testEnv.fileShare.delete();
+        }
         testEnv.uploadFileList.clear();
     }
 }

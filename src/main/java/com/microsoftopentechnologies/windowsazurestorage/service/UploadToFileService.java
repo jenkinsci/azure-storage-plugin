@@ -15,16 +15,12 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileClient;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
-import com.microsoft.azure.storage.file.CloudFileShare;
-import com.microsoft.azure.storage.file.ListFileItem;
-import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants;
-import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsUtils;
-import com.microsoftopentechnologies.windowsazurestorage.AzureStoragePlugin;
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.storage.file.share.ShareClient;
+import com.azure.storage.file.share.ShareDirectoryClient;
+import com.azure.storage.file.share.ShareFileClient;
+import com.azure.storage.file.share.ShareServiceClient;
+import com.azure.storage.file.share.models.ShareFileItem;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
@@ -36,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -54,7 +51,7 @@ public class UploadToFileService extends UploadService {
     protected void uploadIndividuals(String embeddedVP, FilePath[] paths) throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
-            final CloudFileShare fileShare = getCloudFileShare();
+            final ShareClient fileShare = getCloudFileShare();
             UploadType uploadType = serviceData.getUploadType();
             if (uploadType == UploadType.INDIVIDUAL || uploadType == UploadType.BOTH) {
                 cleanupFileShare(fileShare);
@@ -62,15 +59,12 @@ public class UploadToFileService extends UploadService {
 
             for (FilePath src : paths) {
                 final String filePath = getItemPath(src, embeddedVP);
-                final CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(filePath);
-                ensureDirExist(cloudFile.getParent());
+                ShareDirectoryClient rootDirectoryClient = fileShare.getRootDirectoryClient();
+                final ShareFileClient cloudFile = rootDirectoryClient.getFileClient(filePath);
+                ensureDirExist(fileShare, filePath);
                 getExecutorService().submit(new FileUploadThread(cloudFile, src, serviceData.getIndividualBlobs()));
             }
-        } catch (URISyntaxException | StorageException | IOException | InterruptedException e) {
-            String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
-                    "StorageAccount", storageAcc,
-                    "Message", e.getMessage());
+        } catch (URISyntaxException | IOException | InterruptedException e) {
             throw new WAStorageException("fail to upload individual files to azure file storage", e);
         }
     }
@@ -79,7 +73,7 @@ public class UploadToFileService extends UploadService {
     protected void uploadArchive(String archiveIncludes) throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
         try {
-            final CloudFileShare fileShare = getCloudFileShare();
+            final ShareClient fileShare = getCloudFileShare();
             if (serviceData.getUploadType() == UploadType.ZIP) {
                 cleanupFileShare(fileShare);
             }
@@ -99,66 +93,78 @@ public class UploadToFileService extends UploadService {
                 azureFileName = serviceData.getVirtualPath() + azureFileName;
             }
 
-            final CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(azureFileName);
+            final ShareFileClient cloudFile = fileShare.getRootDirectoryClient().getFileClient(azureFileName);
             Future<?> archiveUploadFuture = getExecutorService().submit(new FileUploadThread(cloudFile,
                     zipPath, serviceData.getArchiveBlobs()));
             archiveUploadFuture.get();
             tempDir.deleteRecursive();
-        } catch (IOException | InterruptedException | URISyntaxException | StorageException | ExecutionException e) {
-            String storageAcc = AppInsightsUtils.hash(serviceData.getStorageAccountInfo().getStorageAccName());
-            AzureStoragePlugin.sendEvent(AppInsightsConstants.AZURE_FILE_STORAGE, UPLOAD_FAILED,
-                    "StorageAccount", storageAcc,
-                    "Message", e.getMessage());
+        } catch (IOException | InterruptedException | URISyntaxException | ExecutionException e) {
             throw new WAStorageException("Fail to upload individual files to blob", e);
         }
     }
 
-    private CloudFileShare getCloudFileShare() throws URISyntaxException, StorageException, MalformedURLException {
+    private ShareClient getCloudFileShare() throws URISyntaxException, MalformedURLException {
         final UploadServiceData serviceData = getServiceData();
-        final CloudStorageAccount cloudStorageAccount =
-                AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
-        final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
-        final CloudFileShare fileShare = cloudFileClient.getShareReference(serviceData.getFileShareName());
-        fileShare.createIfNotExists();
+        final ShareServiceClient cloudStorageAccount =
+                AzureUtils.getShareClient(serviceData.getStorageAccountInfo());
+        final ShareClient fileShare = cloudStorageAccount.getShareClient(serviceData.getFileShareName());
+        if (!fileShare.exists()) {
+            fileShare.create();
+        }
         return fileShare;
     }
 
-    private void cleanupFileShare(CloudFileShare fileShare) throws URISyntaxException, StorageException {
+    private void cleanupFileShare(ShareClient fileShare) throws URISyntaxException {
         final UploadServiceData serviceData = getServiceData();
         // Delete previous contents if cleanup is needed
         if (serviceData.isCleanUpContainerOrShare() && fileShare.exists()) {
             println("Clean up existing files in file share " + serviceData.getFileShareName());
-            deleteFiles(fileShare.getRootDirectoryReference().listFilesAndDirectories());
+            deleteFiles(fileShare, fileShare.getRootDirectoryClient().listFilesAndDirectories());
         } else if (serviceData.isCleanUpVirtualPath()
                 && StringUtils.isNotBlank(serviceData.getVirtualPath()) && fileShare.exists()) {
-            CloudFileDirectory directory = fileShare.getRootDirectoryReference()
-                    .getDirectoryReference(serviceData.getVirtualPath());
+            ShareDirectoryClient directory = fileShare.getDirectoryClient(serviceData.getVirtualPath());
             if (directory.exists()) {
                 println("Clean up existing files in file share directory " + serviceData.getVirtualPath());
-                deleteFiles(directory.listFilesAndDirectories());
+                deleteFiles(fileShare, directory.listFilesAndDirectories());
             }
         }
     }
 
-    private void ensureDirExist(CloudFileDirectory directory)
-            throws WAStorageException {
-        try {
-            if (!directory.exists()) {
-                ensureDirExist(directory.getParent());
-                directory.create();
+    private void ensureDirExist(ShareClient shareClient, String filePath) {
+        ShareDirectoryClient rootDirectoryClient = shareClient.getRootDirectoryClient();
+        if (!rootDirectoryClient.exists()) {
+            rootDirectoryClient.create();
+        }
+
+        String[] directories = filePath.split("/");
+        if (directories.length > 1) {
+            // remove filename
+            if (!filePath.endsWith("/")) {
+                directories = Arrays.copyOf(directories, directories.length - 1);
             }
-        } catch (StorageException | URISyntaxException e) {
-            throw new WAStorageException("fail to create directory.", e);
+
+            for (int i = 0; i < directories.length; i++) {
+                String path = getPath(directories, i);
+                ShareDirectoryClient directoryClient = shareClient.getDirectoryClient(path);
+                if (!directoryClient.exists()) {
+                    directoryClient.create();
+                }
+            }
         }
     }
 
-    private void deleteFiles(Iterable<ListFileItem> fileItems) throws StorageException, URISyntaxException {
-        for (final ListFileItem fileItem : fileItems) {
-            if (fileItem instanceof CloudFileDirectory) {
-                final CloudFileDirectory directory = (CloudFileDirectory) fileItem;
-                deleteFiles(directory.listFilesAndDirectories());
-            } else if (fileItem instanceof CloudFile) {
-                ((CloudFile) fileItem).delete();
+    private String getPath(String[] directories, int i) {
+        String[] partialDirPath = Arrays.copyOfRange(directories, 0, i + 1);
+        return String.join("/", partialDirPath);
+    }
+
+    private void deleteFiles(ShareClient fileShare, PagedIterable<ShareFileItem> fileItems)  {
+        for (final ShareFileItem fileItem : fileItems) {
+            if (fileItem.isDirectory()) {
+                final ShareDirectoryClient directory = fileShare.getDirectoryClient(fileItem.getName());
+                deleteFiles(fileShare, directory.listFilesAndDirectories());
+            } else {
+                fileShare.getFileClient(fileItem.getName()).delete();
             }
         }
     }

@@ -4,11 +4,10 @@ package IntegrationTests;
  *
  * @author arroyc
  */
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.file.CloudFileShare;
-import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsGlobalConfig;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.file.share.ShareClient;
+import com.azure.storage.file.share.ShareServiceClient;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
@@ -39,10 +38,10 @@ public class IntegrationTest {
         public HashMap<String, File> uploadFileList = new HashMap<>();
         public String containerName;
         public String shareName;
-        public CloudBlobContainer container;
-        public CloudStorageAccount account;
-        public CloudBlobClient blobClient;
-        public CloudFileShare fileShare;
+        public BlobContainerClient container;
+        public BlobServiceClient blobClient;
+        public ShareClient fileShare;
+        public ShareServiceClient fileServiceClient;
 
         TestEnvironment(String name) throws URISyntaxException {
             azureStorageAccountName = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_NAME");
@@ -54,9 +53,6 @@ public class IntegrationTest {
             sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL);
             containerName = name;
             shareName = name;
-
-            // disable AI in testing
-            AppInsightsGlobalConfig.get().setAppInsightsEnabled(false);
         }
         private static String loadFromEnv(final String name) {
             return TestEnvironment.loadFromEnv(name, "");
@@ -77,10 +73,4 @@ public class IntegrationTest {
     }
 
     protected TestEnvironment testEnv = null;
-
-    protected void disableAI()
-    {
-        // disable AI in testing
-        AppInsightsGlobalConfig.get().setAppInsightsEnabled(false);
-    }
 }

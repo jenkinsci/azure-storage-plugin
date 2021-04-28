@@ -9,3 +9,5 @@
 *.iml
 index.html
 *.dylib
+.env
+testshare*
