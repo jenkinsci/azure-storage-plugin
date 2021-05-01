@@ -30,6 +30,7 @@ import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobSer
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -64,7 +65,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,8 +72,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
+    private static final Logger LOGGER = Logger.getLogger(WAStoragePublisher.class.getName());
+
     private final String storageType;
     private String containerName;
     private String fileShareName;
@@ -109,7 +113,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     @DataBoundSetter
     public void setContainerName(String containerName) {
-        this.containerName = containerName;
+        this.containerName = Util.fixEmpty(containerName);
     }
 
     @DataBoundSetter
@@ -388,12 +392,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public synchronized void perform(
-            @Nonnull Run<?, ?> run,
-            @Nonnull FilePath ws,
-            @Nonnull Launcher launcher,
-            @Nonnull TaskListener listener) throws InterruptedException, IOException {
-        AzureUtils.updateDefaultProxy();
+    public void perform(
+            @NonNull Run<?, ?> run,
+            @NonNull FilePath ws,
+            @NonNull EnvVars env,
+            @NonNull Launcher launcher,
+            @NonNull TaskListener listener
+    ) throws InterruptedException, IOException {
         final EnvVars envVars = run.getEnvironment(listener);
 
         AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredentials(run.getParent());
@@ -418,7 +423,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setFileShareName(expShareName);
         serviceData.setFilePath(Utils.replaceMacro(Util.fixNull(filesPath), envVars));
         serviceData.setExcludedFilesPath(Utils.replaceMacro(Util.fixNull(excludeFilesPath), envVars));
-        serviceData.setBlobProperties(blobProperties);
+        serviceData.setBlobProperties(blobProperties == null ? new AzureBlobProperties() : blobProperties);
         serviceData.setPubAccessible(pubAccessible);
         serviceData.setCleanUpContainerOrShare(cleanUpContainerOrShare);
         serviceData.setCleanUpVirtualPath(cleanUpVirtualPath);
@@ -465,7 +470,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         } catch (Exception e) {
             e.printStackTrace(listener.error(Messages
                     .WAStoragePublisher_uploaded_err(storageAccountInfo.getStorageAccName())));
-            throw new IOException(Messages.WAStoragePublisher_uploaded_err(storageAccountInfo.getStorageAccName()));
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            throw new IOException(Messages.WAStoragePublisher_uploaded_err(storageAccountInfo.getStorageAccName()), e);
         }
     }
 
@@ -532,6 +538,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         try {
             AzureUtils.validateStorageAccount(storageAccount);
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
             listener.getLogger().println(Messages.Client_SA_val_fail());
             listener.getLogger().println(
                     "Storage Account name --->"
@@ -630,7 +637,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                         was_storageAccName, was_storageAccountKey, blobEndPointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
             } catch (Exception e) {
-                return FormValidation.error("Error : " + e.getMessage());
+                return FormValidation.error(e, "Error : " + e.getMessage());
             }
             return FormValidation.ok(Messages.WAStoragePublisher_SA_val());
         }

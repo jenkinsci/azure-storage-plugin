@@ -1,11 +1,9 @@
 package IntegrationTests;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobProperties;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.models.BlobProperties;
+import com.azure.storage.common.StorageSharedKeyCredential;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobProperties;
@@ -26,8 +24,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,22 +49,28 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Before
     public void setUp() throws IOException {
         try {
-            disableAI();
-
             containerName = "testupload" + TestEnvironment.GenerateRandomString(15);
             testEnv = new TestEnvironment(containerName);
             File directory = new File(containerName);
-            if (!directory.exists())
-                directory.mkdir();
+            if (!directory.exists()) {
+                boolean mkdir = directory.mkdir();
+                if (!mkdir) {
+                    throw new IllegalStateException("directory " + containerName + " failed to create");
+                }
+            }
 
-            testEnv.account = new CloudStorageAccount(new StorageCredentialsAccountAndKey(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1));
-            testEnv.blobClient = testEnv.account.createCloudBlobClient();
-            testEnv.container = testEnv.blobClient.getContainerReference(containerName);
-            testEnv.container.createIfNotExists();
+            testEnv.blobClient = new BlobServiceClientBuilder()
+                    .credential(new StorageSharedKeyCredential(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1))
+                    .endpoint("https://" + testEnv.azureStorageAccountName + ".blob.core.windows.net")
+                    .buildClient();;
+            testEnv.container = testEnv.blobClient.getBlobContainerClient(containerName);
+            if (!testEnv.container.exists()) {
+                testEnv.container.create();
+            }
             for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
                 String tempContent = UUID.randomUUID().toString();
                 File temp = new File(directory.getAbsolutePath(), "upload" + tempContent + ".txt");
-                FileUtils.writeStringToFile(temp, tempContent);
+                FileUtils.writeStringToFile(temp, tempContent, StandardCharsets.UTF_8);
                 testEnv.uploadFileList.put(tempContent, temp);
             }
         } catch (Exception e) {
@@ -82,8 +88,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         StorageAccountInfo storageAccount = testEnv.sampleStorageAccount;
         boolean result = AzureUtils.validateStorageAccount(storageAccount);
         assertEquals(true, result);
-        assertEquals(true, AzureUtils.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, testEnv.azureStorageAccountKey1, "")));
-        testEnv.container.deleteIfExists();
+        if (testEnv.container.exists()) {
+            testEnv.container.delete();
+        }
     }
 
     /**
@@ -93,7 +100,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     public void testInvalidateStorageAccount1() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
         AzureUtils.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, "asdhasdh@asdas!@234=", testEnv.blobURL));
-        testEnv.container.deleteIfExists();
+        if (testEnv.container.exists()) {
+            testEnv.container.delete();
+        }
     }
 
     /**
@@ -103,7 +112,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     public void testInvalidateStorageAccount2() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
         AzureUtils.validateStorageAccount(new StorageAccountInfo("rfguthio123", testEnv.azureStorageAccountKey2, testEnv.blobURL));
-        testEnv.container.deleteIfExists();
+        if (testEnv.container.exists()) {
+            testEnv.container.delete();
+        }
     }
 
     /**
@@ -113,7 +124,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     public void testInvalidateStorageAccount3() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
         AzureUtils.validateStorageAccount(new StorageAccountInfo(null, null, null));
-        testEnv.container.deleteIfExists();
+        if (testEnv.container.exists()) {
+            testEnv.container.delete();
+        }
     }
 
     /**
@@ -124,7 +137,6 @@ public class WAStorageClientUploadIT extends IntegrationTest {
         try {
             Run mockRun = mock(Run.class);
             Launcher mockLauncher = mock(Launcher.class);
-            AzureBlobProperties blobProperties = mock(AzureBlobProperties.class);
             List<AzureBlobMetadataPair> metadata = new ArrayList<>();
 
             File workspaceDir = new File(containerName);
@@ -132,7 +144,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
 
             UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
             serviceData.setContainerName(testEnv.containerName);
-            serviceData.setBlobProperties(blobProperties);
+            serviceData.setBlobProperties(new AzureBlobProperties());
             serviceData.setPubAccessible(false);
             serviceData.setCleanUpContainerOrShare(false);
             serviceData.setFilePath("*.txt");
@@ -144,20 +156,21 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
-            for (ListBlobItem blobItem : testEnv.container.listBlobs()) {
-                if (blobItem instanceof CloudBlockBlob) {
-                    CloudBlockBlob downloadedBlob = (CloudBlockBlob) blobItem;
-                    String downloadedContent = downloadedBlob.downloadText("utf-8", null, null, null);
-                    File temp = testEnv.uploadFileList.get(downloadedContent);
-                    String tempContent = FileUtils.readFileToString(temp, "utf-8");
-                    //check for filenames
-                    assertEquals(tempContent, downloadedContent);
-                    //check for file contents
-                    assertEquals("upload" + downloadedContent + ".txt", temp.getName());
-                    temp.delete();
-                }
+            for (BlobItem blobItem : testEnv.container.listBlobs()) {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                testEnv.container.getBlobClient(blobItem.getName()).download(os);
+                String downloadedContent = os.toString(StandardCharsets.UTF_8.name());
+                File temp = testEnv.uploadFileList.get(downloadedContent);
+                String tempContent = FileUtils.readFileToString(temp, "utf-8");
+                //check for filenames
+                assertEquals(tempContent, downloadedContent);
+                //check for file contents
+                assertEquals("upload" + downloadedContent + ".txt", temp.getName());
+                temp.delete();
             }
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, null, e);
@@ -204,21 +217,21 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
-            CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
-            downloadedBlob.downloadAttributes();
+            BlobProperties downloadedProps = testEnv.container.getBlobClient(firstFile.getName()).getBlockBlobClient().getProperties();
 
-            BlobProperties downloadedProps = downloadedBlob.getProperties();
             assertEquals(blobProperties.getCacheControl(), downloadedProps.getCacheControl());
             assertEquals(blobProperties.getContentEncoding(), downloadedProps.getContentEncoding());
             assertEquals(blobProperties.getContentLanguage(), downloadedProps.getContentLanguage());
             assertEquals(blobProperties.getContentType(), downloadedProps.getContentType());
 
-            HashMap<String, String> downloadedMeta = downloadedBlob.getMetadata();
+            Map<String, String> downloadedMeta = downloadedProps.getMetadata();
             for (AzureBlobMetadataPair pair : metadata) {
                 assertEquals(pair.getValue(), downloadedMeta.get(pair.getKey()));
             }
 
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
 
         } catch (Exception e) {
             Assert.fail(e.getMessage());
@@ -262,13 +275,14 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             UploadToBlobService service = new UploadToBlobService(serviceData);
             service.execute();
 
-            CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
-            downloadedBlob.downloadAttributes();
+            BlobProperties downloadedBlob = testEnv.container.getBlobClient(firstFile.getName()).getBlockBlobClient().getProperties();
 
-            HashMap<String, String> downloadedMeta = downloadedBlob.getMetadata();
+            Map<String, String> downloadedMeta = downloadedBlob.getMetadata();
             assertTrue(downloadedMeta.isEmpty());
 
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
 
         } catch (Exception e) {
             Assert.fail(e.getMessage());
@@ -276,67 +290,60 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     }
 
     @Test
-    public void testEnvVarResolve() {
-        try {
-            EnvVars mockEnv = new EnvVars(
-                    "MY_CONTENT_TYPE", "text/plain",
-                    "MY_META_KEY", "foo",
-                    "MY_META_VALUE", "bar"
-            );
-            Run mockRun = mock(Run.class);
-            when(mockRun.getEnvironment(any(TaskListener.class))).thenReturn(mockEnv);
-            Launcher mockLauncher = mock(Launcher.class);
-            List<AzureBlob> individualBlobs = new ArrayList<>();
-            List<AzureBlob> archiveBlobs = new ArrayList<>();
-            AzureBlobProperties blobProperties = new AzureBlobProperties(
-                    null,
-                    null,
-                    null,
-                    "${MY_CONTENT_TYPE}",
-                    false
-            );
-            List<AzureBlobMetadataPair> metadata = Arrays.asList(
-                    new AzureBlobMetadataPair("${MY_META_KEY}", "${MY_META_VALUE}")
-            );
+    public void testEnvVarResolve() throws IOException, InterruptedException, WAStorageException {
+        EnvVars mockEnv = new EnvVars(
+                "MY_CONTENT_TYPE", "text/plain",
+                "MY_META_KEY", "foo",
+                "MY_META_VALUE", "bar"
+        );
+        Run mockRun = mock(Run.class);
+        when(mockRun.getEnvironment(any(TaskListener.class))).thenReturn(mockEnv);
+        Launcher mockLauncher = mock(Launcher.class);
+        AzureBlobProperties blobProperties = new AzureBlobProperties(
+                null,
+                null,
+                null,
+                "${MY_CONTENT_TYPE}",
+                false
+        );
+        List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                new AzureBlobMetadataPair("${MY_META_KEY}", "${MY_META_VALUE}")
+        );
 
-            Iterator it = testEnv.uploadFileList.entrySet().iterator();
-            Map.Entry firstPair = (Map.Entry) it.next();
-            File firstFile = (File) firstPair.getValue();
-            File workspaceDir = new File(containerName);
-            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+        Iterator it = testEnv.uploadFileList.entrySet().iterator();
+        Map.Entry firstPair = (Map.Entry) it.next();
+        File firstFile = (File) firstPair.getValue();
+        File workspaceDir = new File(containerName);
+        FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
-            serviceData.setContainerName(testEnv.containerName);
-            serviceData.setBlobProperties(blobProperties);
-            serviceData.setPubAccessible(false);
-            serviceData.setCleanUpContainerOrShare(false);
-            serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
-            serviceData.setVirtualPath("");
-            serviceData.setExcludedFilesPath("");
-            serviceData.setUploadType(UploadType.INDIVIDUAL);
-            serviceData.setAzureBlobMetadata(metadata);
+        UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+        serviceData.setContainerName(testEnv.containerName);
+        serviceData.setBlobProperties(blobProperties);
+        serviceData.setPubAccessible(false);
+        serviceData.setCleanUpContainerOrShare(false);
+        serviceData.setFilePath(firstFile.getName()); // Upload the first file only for efficiency
+        serviceData.setVirtualPath("");
+        serviceData.setExcludedFilesPath("");
+        serviceData.setUploadType(UploadType.INDIVIDUAL);
+        serviceData.setAzureBlobMetadata(metadata);
 
-            UploadToBlobService service = new UploadToBlobService(serviceData);
-            service.execute();
+        UploadToBlobService service = new UploadToBlobService(serviceData);
+        service.execute();
 
-            CloudBlockBlob downloadedBlob = testEnv.container.getBlockBlobReference(firstFile.getName());
-            downloadedBlob.downloadAttributes();
+        BlobProperties downloadedProps = testEnv.container.getBlobClient(firstFile.getName()).getBlockBlobClient().getProperties();
 
-            BlobProperties downloadedProps = downloadedBlob.getProperties();
-            assertEquals("text/plain", downloadedProps.getContentType());
+        assertEquals("text/plain", downloadedProps.getContentType());
 
-            HashMap<String, String> downloadedMeta = downloadedBlob.getMetadata();
-            assertEquals("bar", downloadedMeta.get("foo"));
+        Map<String, String> downloadedMeta = downloadedProps.getMetadata();
+        assertEquals("bar", downloadedMeta.get("foo"));
 
-            testEnv.container.deleteIfExists();
-
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
+        if (testEnv.container.exists()) {
+            testEnv.container.delete();
         }
     }
 
     @After
-    public void tearDown() throws StorageException {
+    public void tearDown() {
         System.gc();
         Iterator it = testEnv.uploadFileList.entrySet().iterator();
         if (it.hasNext()) {
@@ -356,7 +363,9 @@ public class WAStorageClientUploadIT extends IntegrationTest {
             containerList.getResults().get(--totalContainers).deleteIfExists();
         }*/
         if(testEnv.container!=null) {
-            testEnv.container.deleteIfExists();
+            if (testEnv.container.exists()) {
+                testEnv.container.delete();
+            }
         }
         testEnv.uploadFileList.clear();
     }

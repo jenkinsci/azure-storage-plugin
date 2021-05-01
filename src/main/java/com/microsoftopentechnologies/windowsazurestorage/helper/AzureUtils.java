@@ -16,46 +16,43 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.OperationContext;
-import com.microsoft.azure.storage.RetryNoRetry;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobContainerPermissions;
-import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
-import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.SharedAccessBlobPermissions;
-import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileClient;
-import com.microsoft.azure.storage.file.CloudFileShare;
-import com.microsoft.azure.storage.file.SharedAccessFilePermissions;
-import com.microsoft.azure.storage.file.SharedAccessFilePolicy;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.models.BlobAccessPolicy;
+import com.azure.storage.blob.models.BlobSignedIdentifier;
+import com.azure.storage.blob.models.PublicAccessType;
+import com.azure.storage.blob.sas.BlobSasPermission;
+import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
+import com.azure.storage.common.StorageSharedKeyCredential;
+import com.azure.storage.common.policy.RequestRetryOptions;
+import com.azure.storage.common.policy.RetryPolicyType;
+import com.azure.storage.file.share.ShareClient;
+import com.azure.storage.file.share.ShareFileClient;
+import com.azure.storage.file.share.ShareServiceClient;
+import com.azure.storage.file.share.ShareServiceClientBuilder;
+import com.azure.storage.file.share.sas.ShareFileSasPermission;
+import com.azure.storage.file.share.sas.ShareServiceSasSignatureValues;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
-import hudson.ProxyConfiguration;
-import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.Proxy;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.Collections;
 
 public final class AzureUtils {
     private static final String TEST_CNT_NAME = "testcheckfromjenkins";
     private static final String BLOB = "blob";
     private static final String QUEUE = "queue";
     private static final String TABLE = "table";
+
+    private static final int ONE_WEEK = 7;
 
     /**
      * This method validates Storage Account credentials by checking for a dummy
@@ -69,103 +66,100 @@ public final class AzureUtils {
             final StorageAccountInfo storageAccount) throws WAStorageException {
         try {
             // Get container reference
-            final CloudBlobContainer container = getBlobContainerReference(
+            final BlobContainerClient container = getBlobContainerReference(
                     storageAccount, TEST_CNT_NAME, false, false, null);
             container.exists();
 
         } catch (Exception e) {
-            throw new WAStorageException(Messages.Client_SA_val_fail());
+            throw new WAStorageException(Messages.Client_SA_val_fail(), e);
         }
         return true;
     }
 
-    public static CloudStorageAccount getCloudStorageAccount(
-            final StorageAccountInfo storageAccount) throws URISyntaxException, MalformedURLException {
-        CloudStorageAccount cloudStorageAccount;
-        final String accName = storageAccount.getStorageAccName();
-        final String blobURLStr = storageAccount.getBlobEndPointURL();
-        final StorageCredentialsAccountAndKey credentials = new StorageCredentialsAccountAndKey(accName,
-                storageAccount.getStorageAccountKey());
-
-        if (StringUtils.isBlank(blobURLStr) || blobURLStr.equalsIgnoreCase(Constants.DEF_BLOB_URL)) {
-            cloudStorageAccount = new CloudStorageAccount(credentials, true, null);
-        } else {
-            final URL blobURL = new URL(blobURLStr);
-            boolean useHttps = blobURL.getProtocol().equalsIgnoreCase("https");
-
-            cloudStorageAccount = new CloudStorageAccount(credentials, useHttps, getEndpointSuffix(blobURLStr));
-        }
-
-        return cloudStorageAccount;
+    public static BlobServiceClient getCloudStorageAccount(final StorageAccountInfo storageAccount)
+            throws MalformedURLException, URISyntaxException {
+        return getCloudStorageAccount(storageAccount, new RequestRetryOptions());
     }
 
-    public static CloudBlobContainer getBlobContainerReference(StorageAccountInfo storageAccount,
-                                                               String containerName,
-                                                               boolean createIfNotExist,
-                                                               boolean allowRetry,
-                                                               Boolean cntPubAccess)
-            throws URISyntaxException, StorageException, IOException {
+    public static ShareServiceClient getShareClient(final StorageAccountInfo storageAccount)
+            throws MalformedURLException, URISyntaxException {
+        return new ShareServiceClientBuilder()
+                .credential(new StorageSharedKeyCredential(storageAccount.getStorageAccName(),
+                        storageAccount.getStorageAccountKey()))
+                .httpClient(HttpClientRetriever.get())
+                .endpoint(joinAccountNameAndEndpoint(storageAccount.getStorageAccName(),
+                        storageAccount.getBlobEndPointURL().replace("blob", "file")))
+                .buildClient();
+    }
 
-        final CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
-        final CloudBlobClient serviceClient = cloudStorageAccount.createCloudBlobClient();
-
-        if (!allowRetry) {
-            // Setting no retry policy
-            final RetryNoRetry rnr = new RetryNoRetry();
-            serviceClient.getDefaultRequestOptions().setRetryPolicyFactory(rnr);
-        }
-
-        final CloudBlobContainer container = serviceClient.getContainerReference(containerName);
-
-        boolean cntExists = container.exists();
-        if (createIfNotExist && !cntExists) {
-            container.createIfNotExists(null, Utils.updateUserAgent());
-        }
-
-        // Apply permissions only if container is created newly
-        setContainerPermission(container, cntExists, cntPubAccess);
-
-        return container;
+    public static BlobServiceClient getCloudStorageAccount(
+            final StorageAccountInfo storageAccount, RequestRetryOptions retryOptions) {
+        return new BlobServiceClientBuilder()
+                .credential(new StorageSharedKeyCredential(storageAccount.getStorageAccName(),
+                        storageAccount.getStorageAccountKey()))
+                .httpClient(HttpClientRetriever.get())
+                .endpoint(joinAccountNameAndEndpoint(storageAccount.getStorageAccName(),
+                        storageAccount.getBlobEndPointURL()))
+                .retryOptions(retryOptions)
+                .buildClient();
     }
 
     /**
-     * Generates SAS URL for blob in Azure storage account.
+     * The old SDK worked with 'endpoint suffixes' in the form http(s)://blob.core.windows.net.
+     * New SDK uses endpoints: https://my-account-name.blob.core.windows.net.
      *
-     * @param storageAccount
-     * @param blobName
-     * @param containerName  container name
-     * @return SAS URL
-     * @throws Exception
+     * UI still stores the suffix so we need to join them
      */
-    @Deprecated
-    public static String generateBlobSASURL(
-            StorageAccountInfo storageAccount,
-            String containerName,
-            String blobName) throws Exception {
-        return generateBlobSASURL(storageAccount, containerName, blobName,
-                EnumSet.of(SharedAccessBlobPermissions.READ));
+    @SuppressWarnings("HttpUrlsUsage")
+    private static String joinAccountNameAndEndpoint(String accountName, String urlSuffix) {
+        return urlSuffix
+                .replace("http://", "https://")
+                .replace("https://", String.format("https://%s.", accountName));
     }
 
-    @Deprecated
-    public static SharedAccessBlobPolicy generateBlobPolicy() {
-        SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
-        policy.setSharedAccessExpiryTime(generateExpiryDate());
-        policy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ));
+    public static BlobContainerClient getBlobContainerReference(StorageAccountInfo storageAccount,
+                                                                String containerName,
+                                                                boolean createIfNotExist,
+                                                                boolean allowRetry,
+                                                                Boolean cntPubAccess)
+            throws URISyntaxException, IOException {
 
-        return policy;
+        RequestRetryOptions retryOptions = new RequestRetryOptions();
+        if (!allowRetry) {
+            retryOptions = new RequestRetryOptions(
+                    RetryPolicyType.FIXED,
+                    1,
+                    Duration.ofSeconds(Integer.MAX_VALUE),
+                    Duration.ofMillis(1),
+                    Duration.ofSeconds(1),
+                    null
+            );
+        }
+
+        final BlobServiceClient cloudStorageAccount = getCloudStorageAccount(storageAccount, retryOptions);
+        final BlobContainerClient containerClient = cloudStorageAccount.getBlobContainerClient(containerName);
+
+        boolean cntExists = containerClient.exists();
+        if (createIfNotExist && !cntExists) {
+            containerClient.create();
+        }
+
+        // Apply permissions only if container is created newly
+        setContainerPermission(containerClient, cntExists, cntPubAccess);
+
+        return containerClient;
     }
 
     public static String generateBlobSASURL(
             StorageAccountInfo storageAccount,
             String containerName,
             String blobName,
-            EnumSet<SharedAccessBlobPermissions> permissions) throws Exception {
+            BlobSasPermission permissions) throws Exception {
 
-        CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+        BlobServiceClient cloudStorageAccount = getCloudStorageAccount(storageAccount);
 
         // Create the blob client.
-        CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-        CloudBlobContainer container = blobClient.getContainerReference(containerName);
+        BlobContainerClient container = cloudStorageAccount.getBlobContainerClient(containerName);
 
         // At this point need to throw an error back since container itself did not exist.
         if (!container.exists()) {
@@ -173,44 +167,11 @@ public final class AzureUtils {
                     + " does not exist in storage account " + storageAccount.getStorageAccName());
         }
 
-        CloudBlob blob = container.getBlockBlobReference(blobName);
-        String sas = blob.generateSharedAccessSignature(generateBlobPolicy(permissions), null);
+        BlobClient blob = container.getBlobClient(blobName);
 
-        return sas;
-    }
-
-    public static SharedAccessBlobPolicy generateBlobPolicy(EnumSet<SharedAccessBlobPermissions> permissions) {
-        SharedAccessBlobPolicy policy = new SharedAccessBlobPolicy();
-        policy.setSharedAccessExpiryTime(generateExpiryDate());
-        policy.setPermissions(permissions);
-        return policy;
-    }
-
-    /**
-     * Generates SAS URL for file item in Azure storage File Share.
-     *
-     * @param storageAccount
-     * @param fileName
-     * @param shareName      container name
-     * @return SAS URL
-     * @throws Exception
-     */
-    @Deprecated
-    public static String generateFileSASURL(
-            StorageAccountInfo storageAccount,
-            String shareName,
-            String fileName) throws Exception {
-        return generateFileSASURL(storageAccount, shareName, fileName,
-                EnumSet.of(SharedAccessFilePermissions.READ));
-    }
-
-    @Deprecated
-    public static SharedAccessFilePolicy generateFilePolicy() {
-        SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
-        policy.setSharedAccessExpiryTime(generateExpiryDate());
-        policy.setPermissions(EnumSet.of(SharedAccessFilePermissions.READ));
-
-        return policy;
+        BlobServiceSasSignatureValues sasSignatureValues =
+                new BlobServiceSasSignatureValues(generateExpiryDate(), permissions);
+        return blob.generateSas(sasSignatureValues);
     }
 
     /**
@@ -226,59 +187,41 @@ public final class AzureUtils {
             StorageAccountInfo storageAccount,
             String shareName,
             String fileName,
-            EnumSet<SharedAccessFilePermissions> permissions) throws Exception {
-        CloudStorageAccount cloudStorageAccount = getCloudStorageAccount(storageAccount);
+            ShareFileSasPermission permissions) throws Exception {
+        ShareServiceClient shareServiceClient = getShareClient(storageAccount);
 
-        CloudFileClient fileClient = cloudStorageAccount.createCloudFileClient();
-        CloudFileShare fileShare = fileClient.getShareReference((shareName));
+        ShareClient fileShare = shareServiceClient.getShareClient((shareName));
         if (!fileShare.exists()) {
             throw new Exception("WAStorageClient: generateFileSASURL: Share " + shareName
                     + " does not exist in storage account " + storageAccount.getStorageAccName());
         }
 
-        CloudFile cloudFile = fileShare.getRootDirectoryReference().getFileReference(fileName);
-        return cloudFile.generateSharedAccessSignature(generateFilePolicy(permissions), null);
+        ShareFileClient cloudFile = fileShare.getRootDirectoryClient().getFileClient(fileName);
+        ShareServiceSasSignatureValues sasSignatureValues =
+                new ShareServiceSasSignatureValues(generateExpiryDate(), permissions);
+        return cloudFile.generateSas(sasSignatureValues);
     }
 
-    public static SharedAccessFilePolicy generateFilePolicy(EnumSet<SharedAccessFilePermissions> permissions) {
-        SharedAccessFilePolicy policy = new SharedAccessFilePolicy();
-        policy.setSharedAccessExpiryTime(generateExpiryDate());
-        policy.setPermissions(permissions);
-        return policy;
-    }
-
-    /**
-     * Set default proxy for Azure Storage SDK if Jenkins has proxy setting.
-     */
-    public static void updateDefaultProxy() {
-        Jenkins jenkinsInstance = Jenkins.get();
-        ProxyConfiguration proxyConfig = jenkinsInstance.proxy;
-        if (proxyConfig != null) {
-            Proxy proxy = proxyConfig.createProxy(null);
-            OperationContext.setDefaultProxy(proxy);
-        }
-    }
-
-    private static Date generateExpiryDate() {
-        GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        calendar.setTime(new Date());
-        calendar.add(Calendar.HOUR, 1);
-        return calendar.getTime();
+    private static OffsetDateTime generateExpiryDate() {
+        return OffsetDateTime.now().plusHours(1);
     }
 
     private static void setContainerPermission(
-            CloudBlobContainer container,
+            BlobContainerClient container,
             boolean cntExists,
-            Boolean cntPubAccess) throws StorageException {
+            Boolean cntPubAccess) {
         if (!cntExists && cntPubAccess != null) {
             // Set access permissions on container.
-            final BlobContainerPermissions cntPerm = new BlobContainerPermissions();
             if (cntPubAccess) {
-                cntPerm.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
-            } else {
-                cntPerm.setPublicAccess(BlobContainerPublicAccessType.OFF);
+                BlobSignedIdentifier identifier = new BlobSignedIdentifier()
+                        .setId("name")
+                        .setAccessPolicy(new BlobAccessPolicy()
+                                .setStartsOn(OffsetDateTime.now())
+                                .setExpiresOn(OffsetDateTime.now().plusDays(ONE_WEEK))
+                                .setPermissions("r"));
+
+                container.setAccessPolicy(PublicAccessType.CONTAINER, Collections.singletonList(identifier));
             }
-            container.uploadPermissions(cntPerm);
         }
     }
 

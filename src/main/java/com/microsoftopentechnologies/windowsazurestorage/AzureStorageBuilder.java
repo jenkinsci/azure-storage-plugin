@@ -28,6 +28,7 @@ import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromCon
 import com.microsoftopentechnologies.windowsazurestorage.service.DownloadFromFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.StoragePluginService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadServiceData;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.EnvVars;
@@ -59,7 +60,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Locale;
@@ -235,12 +235,13 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
      * @param listener  logging
      */
     @Override
-    public synchronized void perform(
-            @Nonnull Run<?, ?> run,
-            @Nonnull FilePath workspace,
-            @Nonnull Launcher launcher,
-            @Nonnull TaskListener listener) throws IOException {
-        AzureUtils.updateDefaultProxy();
+    public void perform(
+            @NonNull Run<?, ?> run,
+            @NonNull FilePath workspace,
+            @NonNull EnvVars env,
+            @NonNull Launcher launcher,
+            @NonNull TaskListener listener
+    ) throws IOException {
         // Get storage account
         AzureStorageAccount.StorageAccountCredential credential = getStorageAccountCredential(run.getParent());
         if (credential == null) {

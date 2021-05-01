@@ -15,7 +15,6 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
-import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.ServiceData;
 import hudson.model.Result;
@@ -54,19 +53,6 @@ public abstract class StoragePluginService<T extends ServiceData> {
     protected String getTime(long timeInMills) {
         return DurationFormatUtils.formatDuration(timeInMills, "HH:mm:ss.S")
                 + " (HH:mm:ss.S)";
-    }
-
-    /**
-     * Returns Blob requests options - primarily sets concurrentRequestCount to
-     * number of available cores.
-     *
-     * @return
-     */
-    protected BlobRequestOptions getBlobRequestOptions() {
-        BlobRequestOptions options = new BlobRequestOptions();
-        options.setConcurrentRequestCount(Runtime.getRuntime().availableProcessors());
-
-        return options;
     }
 
     public T getServiceData() {

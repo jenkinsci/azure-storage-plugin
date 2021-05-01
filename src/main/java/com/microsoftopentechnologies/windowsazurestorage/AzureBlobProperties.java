@@ -14,8 +14,7 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage;
 
-import com.microsoft.azure.storage.blob.BlobProperties;
-import com.microsoft.azure.storage.blob.CloudBlob;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.PartialBlobProperties;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -102,18 +101,18 @@ public class AzureBlobProperties implements Describable<AzureBlobProperties> {
         this.detectContentType = detectContentType;
     }
 
-    public void configure(CloudBlob blob, FilePath src, EnvVars env) throws InterruptedException, IOException {
-        BlobProperties props = blob.getProperties();
-        props.setCacheControl(Util.replaceMacro(cacheControl, env));
-        props.setContentEncoding(Util.replaceMacro(contentEncoding, env));
-        props.setContentLanguage(Util.replaceMacro(contentLanguage, env));
-
-        final String resolvedContentType = Util.replaceMacro(contentType, env);
-        if (StringUtils.isNotBlank(resolvedContentType)) {
-            props.setContentType(resolvedContentType);
-        } else if (detectContentType) {
-            props.setContentType(detectContentType(src));
+    public PartialBlobProperties configure(FilePath src, EnvVars env) throws InterruptedException, IOException {
+        String resolvedContentType = Util.replaceMacro(contentType, env);
+        if (StringUtils.isBlank(resolvedContentType) && detectContentType) {
+            resolvedContentType = detectContentType(src);
         }
+
+        return new PartialBlobProperties(
+                Util.replaceMacro(contentEncoding, env),
+                Util.replaceMacro(contentLanguage, env),
+                Util.replaceMacro(cacheControl, env),
+                resolvedContentType
+        );
     }
 
     private String detectContentType(FilePath file) throws InterruptedException, IOException {

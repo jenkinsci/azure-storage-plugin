@@ -15,13 +15,11 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileClient;
-import com.microsoft.azure.storage.file.CloudFileShare;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.specialized.BlockBlobClient;
+import com.azure.storage.file.share.ShareClient;
+import com.azure.storage.file.share.ShareFileClient;
+import com.azure.storage.file.share.ShareServiceClient;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobAction;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
@@ -43,8 +41,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DownloadFromBuildService extends DownloadService {
-    private CloudBlobContainer cloudBlobContainer;
-    private CloudFileShare cloudFileShare;
+    private BlobContainerClient cloudBlobContainer;
+    private ShareClient cloudFileShare;
 
     public DownloadFromBuildService(DownloadServiceData data) {
         super(data);
@@ -130,25 +128,26 @@ public class DownloadFromBuildService extends DownloadService {
                                     true,
                                     null);
                         }
-                        final CloudBlockBlob cbb = cloudBlobContainer.getBlockBlobReference(blob.getBlobName());
+                        final BlockBlobClient cbb = cloudBlobContainer.getBlobClient(blob.getBlobName())
+                                .getBlockBlobClient();
                         getExecutorService().submit(new DownloadThread(cbb));
                         filesNeedDownload++;
                     } else if (Constants.FILE_STORAGE.equalsIgnoreCase(blob.getStorageType())) {
                         if (cloudFileShare == null) {
-                            final CloudStorageAccount cloudStorageAccount =
-                                    AzureUtils.getCloudStorageAccount(serviceData.getStorageAccountInfo());
-                            final CloudFileClient cloudFileClient = cloudStorageAccount.createCloudFileClient();
-                            cloudFileShare = cloudFileClient.getShareReference(filePath.split("/")[1]);
+                            final ShareServiceClient cloudStorageAccount =
+                                    AzureUtils.getShareClient(serviceData.getStorageAccountInfo());
+                            cloudFileShare = cloudStorageAccount.getShareClient(filePath.split("/")[1]);
                         }
                         final String cloudFileName = filePath.substring(
-                                filePath.indexOf(cloudFileShare.getName()) + cloudFileShare.getName().length() + 1);
-                        final CloudFile cloudFile =
-                                cloudFileShare.getRootDirectoryReference().getFileReference(cloudFileName);
+                                filePath.indexOf(cloudFileShare.getShareName())
+                                        + cloudFileShare.getShareName().length() + 1);
+                        final ShareFileClient cloudFile =
+                                cloudFileShare.getRootDirectoryClient().getFileClient(cloudFileName);
                         getExecutorService().submit(new DownloadThread(cloudFile));
                         filesNeedDownload++;
                     }
                 }
-            } catch (StorageException | URISyntaxException | IOException e) {
+            } catch (URISyntaxException | IOException e) {
                 throw new WAStorageException(e.getMessage(), e);
             }
         }

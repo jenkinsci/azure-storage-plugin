@@ -5,8 +5,6 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage.helper;
 
-import com.microsoft.azure.storage.OperationContext;
-import com.microsoft.azure.storage.core.BaseRequest;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.ClassRule;
@@ -134,42 +132,12 @@ public class UtilsTest {
     }
 
     /**
-     * Test of updateUserAgent method, of class Utils.
-     */
-    @Test
-    public void testUpdateUserAgent() throws Exception {
-        System.out.println("updateUserAgent");
-        String version = Utils.getPluginVersion() == null ? "local" : Utils.getPluginVersion();
-
-        String expResult = Constants.PLUGIN_NAME + "/" + version + "/" + Utils.getPluginInstance() + "/" + BaseRequest.getUserAgent();
-        OperationContext result = Utils.updateUserAgent();
-        String actualResult = result.getUserHeaders().get("User-Agent");
-
-        assertEquals(expResult, actualResult);
-    }
-
-    /**
-     * Test of updateUserAgent method, of class Utils.
-     */
-    @Test
-    public void testUpdateUserAgentWithContentLength() throws Exception {
-        System.out.println("updateUserAgentWithContentLength");
-        String version = Utils.getPluginVersion() == null ? "local" : Utils.getPluginVersion();
-        final long contentLength = 65535L;
-        String expResult = Constants.PLUGIN_NAME + "/" + version + "/" + Utils.getPluginInstance() + "/ContentLength/" + contentLength + "/" + BaseRequest.getUserAgent();
-        OperationContext result = Utils.updateUserAgent(contentLength);
-        String actualResult = result.getUserHeaders().get("User-Agent");
-
-        assertEquals(expResult, actualResult);
-    }
-
-    /**
      * Test of getPluginInstance method, of class Utils.
      */
     @Test
     public void testGetPluginInstance() {
         System.out.println("getPluginInstance");
-        String expResult = Jenkins.getInstance().getLegacyInstanceId();
+        String expResult = Jenkins.get().getLegacyInstanceId();
         String result = Utils.getPluginInstance();
         assertEquals(expResult, result);
     }

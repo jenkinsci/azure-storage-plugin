@@ -216,12 +216,11 @@ public class AzureStorageAccount extends BaseStandardCredentials {
                 @QueryParameter String blobEndpointURL) {
 
             try {
-                AzureUtils.updateDefaultProxy();
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
             } catch (Exception e) {
-                return FormValidation.error(e.getMessage());
+                return FormValidation.error(e, e.getMessage());
             }
 
             return FormValidation.ok(Messages.WAStoragePublisher_SA_val());

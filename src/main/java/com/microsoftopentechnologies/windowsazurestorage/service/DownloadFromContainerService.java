@@ -15,11 +15,9 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlobDirectory;
-import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobItem;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -27,8 +25,12 @@ import com.microsoftopentechnologies.windowsazurestorage.service.model.DownloadS
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DownloadFromContainerService extends DownloadService {
+
+    private static final Logger LOGGER = Logger.getLogger(DownloadFromContainerService.class.getName());
     public DownloadFromContainerService(DownloadServiceData data) {
         super(data);
     }
@@ -39,16 +41,17 @@ public class DownloadFromContainerService extends DownloadService {
         int filesNeedDownload;
         try {
             println(Messages.AzureStorageBuilder_downloading());
-            final CloudBlobContainer container = AzureUtils.getBlobContainerReference(
+            final BlobContainerClient container = AzureUtils.getBlobContainerReference(
                     serviceData.getStorageAccountInfo(),
                     serviceData.getContainerName(),
                     false,
                     true,
                     null);
-            filesNeedDownload = scanBlobs(container.listBlobs());
+            filesNeedDownload = scanBlobs(container, container.listBlobs());
             println(Messages.AzureStorageBuilder_files_need_download_count(filesNeedDownload));
             waitForDownloadEnd();
-        } catch (StorageException | URISyntaxException | IOException | WAStorageException e) {
+        } catch (URISyntaxException | IOException | WAStorageException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
             e.printStackTrace(error(Messages.AzureStorageBuilder_download_err(
                     serviceData.getStorageAccountInfo().getStorageAccName())));
             setRunUnstable();
@@ -56,34 +59,18 @@ public class DownloadFromContainerService extends DownloadService {
         return getFilesDownloaded();
     }
 
-    protected int scanBlobs(Iterable<ListBlobItem> blobItems)
-            throws URISyntaxException, StorageException, WAStorageException {
+    protected int scanBlobs(BlobContainerClient container, PagedIterable<BlobItem> blobItems)
+            throws URISyntaxException, WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         int filesNeedDownload = 0;
-        for (final ListBlobItem blobItem : blobItems) {
-            // If the item is a blob, not a virtual directory
-            if (blobItem instanceof CloudBlob) {
-                // Download the item and save it to a file with the same
-                final CloudBlob blob = (CloudBlob) blobItem;
-
-                // Check whether we should download it.
-                if (shouldDownload(
-                        serviceData.getIncludeFilesPattern(),
-                        serviceData.getExcludeFilesPattern(),
-                        blob.getName(),
-                        true)) {
-                    getExecutorService().submit(new DownloadThread(blob));
-                    filesNeedDownload++;
-                }
-            } else if (blobItem instanceof CloudBlobDirectory) {
-                final CloudBlobDirectory blobDirectory = (CloudBlobDirectory) blobItem;
-                if (shouldDownload(
-                        serviceData.getIncludeFilesPattern(),
-                        serviceData.getExcludeFilesPattern(),
-                        blobDirectory.getPrefix(),
-                        false)) {
-                    filesNeedDownload += scanBlobs(blobDirectory.listBlobs());
-                }
+        for (final BlobItem blobItem : blobItems) {
+            if (shouldDownload(
+                    serviceData.getIncludeFilesPattern(),
+                    serviceData.getExcludeFilesPattern(),
+                    blobItem.getName(),
+                    true)) {
+                getExecutorService().submit(new DownloadThread(container.getBlobClient(blobItem.getName())));
+                filesNeedDownload++;
             }
         }
         return filesNeedDownload;
