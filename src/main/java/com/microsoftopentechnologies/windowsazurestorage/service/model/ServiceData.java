@@ -28,6 +28,7 @@ public abstract class ServiceData {
     private final Launcher launcher;
     private final TaskListener taskListener;
     private final StorageAccountInfo storageAccountInfo;
+    private boolean verbose;
 
     protected ServiceData(Run<?, ?> run,
                           FilePath workspace,
@@ -39,6 +40,14 @@ public abstract class ServiceData {
         this.launcher = launcher;
         this.taskListener = taskListener;
         this.storageAccountInfo = storageAccountInfo;
+    }
+
+    public boolean isVerbose() {
+        return verbose;
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 
     public StorageAccountInfo getStorageAccountInfo() {

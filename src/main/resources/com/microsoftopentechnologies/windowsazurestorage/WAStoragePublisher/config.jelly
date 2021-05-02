@@ -112,23 +112,20 @@
 
             <f:entry field="doNotUploadIndividualFiles"
                      help="/plugin/windows-azure-storage/help-doNotUploadIndividualFiles.html">
-                <div align="left">
-                    <f:checkbox title="${%doNotUploadIndividualFiles_title}"/>
-                </div>
+                <f:checkbox title="${%doNotUploadIndividualFiles_title}"/>
             </f:entry>
 
             <f:entry field="doNotWaitForPreviousBuild"
                      help="/plugin/windows-azure-storage/help-doNotWaitForPreviousBuild.html">
-                <div align="left">
-                    <f:checkbox title="${%doNotWaitForPreviousBuild_title}"/>
-                </div>
+                <f:checkbox title="${%doNotWaitForPreviousBuild_title}"/>
             </f:entry>
 
             <f:entry field="onlyUploadModifiedArtifacts"
                      help="/plugin/windows-azure-storage/help-onlyUploadModifiedArtifacts.html">
-                <div align="left">
-                    <f:checkbox title="${%onlyUploadModifiedArtifacts_title}"/>
-                </div>
+                <f:checkbox title="${%onlyUploadModifiedArtifacts_title}"/>
+            </f:entry>
+            <f:entry field="verbose">
+                <f:checkbox title="${%Verbose logging}"/>
             </f:entry>
         </f:advanced>
     </f:section>

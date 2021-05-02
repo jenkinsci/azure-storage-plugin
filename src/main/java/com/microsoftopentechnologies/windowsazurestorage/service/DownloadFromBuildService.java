@@ -107,7 +107,9 @@ public class DownloadFromBuildService extends DownloadService {
     private int scanBlobs(List<AzureBlob> azureBlobs) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         int filesNeedDownload = 0;
-        println(Messages.AzureStorageBuilder_downloading());
+        if (serviceData.isVerbose()) {
+            println(Messages.AzureStorageBuilder_downloading());
+        }
 
         for (final AzureBlob blob : azureBlobs) {
             try {

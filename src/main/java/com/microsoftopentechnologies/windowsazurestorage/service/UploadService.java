@@ -340,19 +340,23 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                                     List<AzureBlob> azureBlobs) throws WAStorageException {
         for (UploadResult result : results) {
             if (result.getStatusCode() == HttpStatus.SC_CREATED) {
+                UploadServiceData serviceData = getServiceData();
                 AzureBlob azureBlob = new AzureBlob(
                         result.getName(),
                         result.getUrl(),
                         result.getFileHash(),
                         result.getByteSize(),
                         result.getStorageType(),
-                        getServiceData().getCredentialsId());
+                        serviceData.getCredentialsId());
 
                 filesUploaded.addAndGet(1);
                 azureBlobs.add(azureBlob);
 
                 long interval = result.getEndTime() - result.getStartTime();
-                println(Messages.UploadService_https_uploaded(result.getUrl(), getTime(interval)));
+
+                if (serviceData.isVerbose()) {
+                    println(Messages.UploadService_https_uploaded(result.getUrl(), getTime(interval)));
+                }
             }
         }
     }
@@ -456,16 +460,20 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             return 0;
         }
 
-        println(Messages.WAStoragePublisher_container_name(serviceData.getContainerName()));
-        println(Messages.WAStoragePublisher_share_name(serviceData.getFileShareName()));
-        println(Messages.WAStoragePublisher_filepath(serviceData.getFilePath()));
-        println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
-        println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
+        if (serviceData.isVerbose()) {
+            println(Messages.WAStoragePublisher_container_name(serviceData.getContainerName()));
+            println(Messages.WAStoragePublisher_share_name(serviceData.getFileShareName()));
+            println(Messages.WAStoragePublisher_filepath(serviceData.getFilePath()));
+            println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
+            println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
+        }
         int filesNeedUpload = 0; // Counter to track no. of files that are need uploaded
         int filesCount = 0;
         try {
             final FilePath workspacePath = serviceData.getRemoteWorkspace();
-            println(Messages.WAStoragePublisher_uploading());
+            if (serviceData.isVerbose()) {
+                println(Messages.WAStoragePublisher_uploading());
+            }
 
             final StringBuilder archiveIncludes = new StringBuilder();
 
@@ -520,7 +528,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 // archive file should not be included in downloaded file count
                 filesUploaded.decrementAndGet();
             }
-            println(Messages.WAStoragePublisher_files_need_upload_count(filesNeedUpload));
+            if (serviceData.isVerbose()) {
+                println(Messages.WAStoragePublisher_files_need_upload_count(filesNeedUpload));
+            }
             waitForUploadEnd();
         } catch (IOException | InterruptedException e) {
             throw new WAStorageException(e.getMessage(), e);
@@ -553,7 +563,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                     null, null);
 
             long endTime = System.currentTimeMillis();
-            println("Uploaded blob with uri " + fileClient.getFileUrl() + " in " + getTime(endTime - startTime));
+            if (getServiceData().isVerbose()) {
+                println("Uploaded file with uri " + fileClient.getFileUrl() + " in " + getTime(endTime - startTime));
+            }
             return DatatypeConverter.printHexBinary(response.getValue().getContentMd5());
         } catch (Exception e) {
             throw new WAStorageException("Failed uploading file", e);

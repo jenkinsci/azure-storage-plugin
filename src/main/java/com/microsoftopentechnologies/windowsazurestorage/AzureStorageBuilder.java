@@ -73,7 +73,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     private final String downloadType;
     private boolean deleteFromAzureAfterDownload;
-    private String storageCredentialId;
+    private final String storageCredentialId;
     private String containerName = "";
     private String fileShare;
     private String includeFilesPattern = "";
@@ -83,6 +83,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
     private boolean includeArchiveZips;
     private BuildSelector buildSelector;
     private String projectName = "";
+    private boolean verbose;
 
     private transient AzureStorageAccount.StorageAccountCredential storageCreds;
 
@@ -156,6 +157,15 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
     public BuildSelector getBuildSelector() {
         return buildSelector;
+    }
+
+    public boolean isVerbose() {
+        return verbose;
+    }
+
+    @DataBoundSetter
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 
     /**
@@ -293,8 +303,9 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             builderServiceData.setDownloadType(getDownloadType());
             builderServiceData.setProjectName(Util.replaceMacro(projectName, envVars));
             builderServiceData.setBuildSelector(buildSelector);
+            builderServiceData.setVerbose(isVerbose());
 
-            final StoragePluginService downloadService = getDownloadService(builderServiceData);
+            final StoragePluginService<DownloadServiceData> downloadService = getDownloadService(builderServiceData);
             int filesDownloaded = downloadService.execute();
 
             if (filesDownloaded == 0) {
@@ -309,7 +320,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         }
     }
 
-    private StoragePluginService getDownloadService(DownloadServiceData data) {
+    private StoragePluginService<DownloadServiceData> getDownloadService(DownloadServiceData data) {
         switch (getDownloadType()) {
             case DOWNLOAD_TYPE_FILE_SHARE:
                 return new DownloadFromFileService(data);
