@@ -47,21 +47,19 @@
             </f:entry>
 
             <f:entry field="flattenDirectories">
-                <div align="left">
-                    <f:checkbox  title="${%flattenDirectories_title}"/>
-                </div>
+                <f:checkbox  title="${%flattenDirectories_title}"/>
             </f:entry>
 
             <f:entry field="deleteFromAzureAfterDownload">
-                <div align="left">
-                    <f:checkbox  title="${%deleteFromAzureAfterDownload_title}"/>
-                </div>
+                <f:checkbox  title="${%deleteFromAzureAfterDownload_title}"/>
             </f:entry>
 
             <f:entry field="includeArchiveZips">
-                <div align="left">
-                    <f:checkbox  title="${%includeArchiveZips_title}"/>
-                </div>
+                <f:checkbox  title="${%includeArchiveZips_title}"/>
+            </f:entry>
+
+            <f:entry field="verbose">
+                <f:checkbox title="${%Verbose logging}"/>
             </f:entry>
 
         </f:advanced>

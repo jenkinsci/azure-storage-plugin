@@ -37,7 +37,9 @@ public class DownloadFromFileService extends DownloadService {
     public int execute() {
         int filesNeedDownload;
         try {
-            println(Messages.AzureStorageBuilder_downloading());
+            if (getServiceData().isVerbose()) {
+                println(Messages.AzureStorageBuilder_downloading());
+            }
             final ShareClient cloudFileShare = getCloudFileShare();
             final ShareDirectoryClient cloudFileDirectory = cloudFileShare.getRootDirectoryClient();
             filesNeedDownload = scanFileItems(cloudFileShare, cloudFileDirectory,

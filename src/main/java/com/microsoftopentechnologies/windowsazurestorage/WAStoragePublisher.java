@@ -100,6 +100,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private boolean doNotWaitForPreviousBuild;
     private final String storageCredentialId;
     private boolean onlyUploadModifiedArtifacts;
+    private boolean verbose;
 
     private transient AzureStorageAccount.StorageAccountCredential storageCreds;
 
@@ -189,6 +190,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     @DataBoundSetter
     public void setMetadata(List<AzureBlobMetadataPair> metadata) {
         this.metadata = metadata;
+    }
+
+    public boolean isVerbose() {
+        return verbose;
+    }
+
+    @DataBoundSetter
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 
     /**
@@ -431,6 +441,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         serviceData.setAzureBlobMetadata(metadata);
         serviceData.setOnlyUploadModifiedArtifacts(onlyUploadModifiedArtifacts);
         serviceData.setCredentialsId(getStorageCredentialId());
+        serviceData.setVerbose(isVerbose());
         // Resolve virtual path
         String expVP = Utils.replaceMacro(Util.fixNull(virtualPath), envVars);
 

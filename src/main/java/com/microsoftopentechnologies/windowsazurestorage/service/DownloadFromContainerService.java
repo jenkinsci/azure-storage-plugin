@@ -40,7 +40,9 @@ public class DownloadFromContainerService extends DownloadService {
         final DownloadServiceData serviceData = getServiceData();
         int filesNeedDownload;
         try {
-            println(Messages.AzureStorageBuilder_downloading());
+            if (serviceData.isVerbose()) {
+                println(Messages.AzureStorageBuilder_downloading());
+            }
             final BlobContainerClient container = AzureUtils.getBlobContainerReference(
                     serviceData.getStorageAccountInfo(),
                     serviceData.getContainerName(),

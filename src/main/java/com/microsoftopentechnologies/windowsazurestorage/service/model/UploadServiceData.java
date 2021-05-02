@@ -31,7 +31,7 @@ import java.util.List;
 public class UploadServiceData extends ServiceData {
     private String containerName;
     private String fileShareName;
-    private AzureBlobProperties blobProperties;
+    private AzureBlobProperties blobProperties = new AzureBlobProperties();
     private boolean pubAccessible;
     private boolean cleanUpContainerOrShare;
     private boolean cleanUpVirtualPath;
@@ -40,8 +40,8 @@ public class UploadServiceData extends ServiceData {
     private String excludedFilesPath;
     private UploadType uploadType;
     private boolean onlyUploadModifiedArtifacts;
-    private List<AzureBlob> individualBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
-    private List<AzureBlob> archiveBlobs = Collections.synchronizedList(new ArrayList<AzureBlob>());
+    private final List<AzureBlob> individualBlobs = Collections.synchronizedList(new ArrayList<>());
+    private final List<AzureBlob> archiveBlobs = Collections.synchronizedList(new ArrayList<>());
     private List<AzureBlobMetadataPair> azureBlobMetadata;
     private String credentialsId;
 

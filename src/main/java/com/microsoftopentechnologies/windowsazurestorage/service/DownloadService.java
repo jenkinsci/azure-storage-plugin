@@ -88,7 +88,9 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
     protected void downloadSingleFile(ShareFileClient cloudFile) throws WAStorageException {
         final DownloadServiceData serviceData = getServiceData();
         try {
-            println("Downloading file:" + cloudFile.getFileUrl());
+            if (serviceData.isVerbose()) {
+                println("Downloading file:" + cloudFile.getFileUrl());
+            }
             final FilePath destFile = destinationFilePath(cloudFile.getFilePath());
 
             final long startTime = System.currentTimeMillis();
@@ -113,7 +115,9 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
 
     protected void downloadBlob(BlobClient blob) throws WAStorageException {
         try {
-            println("Downloading file:" + blob.getBlobUrl());
+            if (getServiceData().isVerbose()) {
+                println("Downloading file:" + blob.getBlobUrl());
+            }
 
             final FilePath destFile = destinationFilePath(blob.getBlobName());
             final long startTime = System.currentTimeMillis();
