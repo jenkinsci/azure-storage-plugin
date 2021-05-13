@@ -102,9 +102,8 @@ public class UploadToBlobService extends UploadService {
                                               Map<String, String> metadata) throws Exception {
         String sas = generateWriteSASURL(accountInfo, blob.getBlobName(),
                 Constants.BLOB_STORAGE, containerName);
-        String blobURL = blob.getBlobUrl().replace("http://", "https://");
 
-        return new UploadObject(blob.getBlobName(), path, blobURL, sas, Constants.BLOB_STORAGE,
+        return new UploadObject(blob.getBlobName(), path, blob.getBlobUrl(), sas, Constants.BLOB_STORAGE,
                 blob.getAccountName(), blobProperties,
                 metadata);
     }

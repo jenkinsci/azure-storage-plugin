@@ -31,7 +31,8 @@ public class CredentialRenameTest {
 
         assertEquals(1, s.getCredentials(Domain.global()).size());
 
-        AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL);
+        AzureStorageAccount.StorageAccountCredential expected = new AzureStorageAccount.StorageAccountCredential(
+                storageAccount, storageAccountKey, storageBlobURL);
 
         List<AzureStorageAccount> azureStorageAccounts = CredentialsProvider.lookupCredentials(
                 AzureStorageAccount.class,
@@ -42,8 +43,8 @@ public class CredentialRenameTest {
         assertEquals(1, azureStorageAccounts.size());
         AzureStorageAccount storageCred = azureStorageAccounts.get(0);
 
-        assertEquals(u.getStorageAccountName(), storageCred.getStorageAccountName());
-        assertEquals(u.getEndpointURL(), storageCred.getBlobEndpointURL());
-        assertEquals(u.getSecureKey().getPlainText(), storageCred.getPlainStorageKey());
+        assertEquals(expected.getStorageAccountName(), storageCred.getStorageAccountName());
+        assertEquals(expected.getEndpointURL(), storageCred.getBlobEndpointURL());
+        assertEquals(expected.getSecureKey().getPlainText(), storageCred.getPlainStorageKey());
     }
 }

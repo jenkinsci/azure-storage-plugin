@@ -33,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +41,9 @@ import java.util.List;
  * @author arroyc
  */
 public class AzureStorageAccount extends BaseStandardCredentials {
+
+    // used to detect the emulator
+    private static final List<String> LOCAL_ADDRESSES = Arrays.asList("127.0.0.1", "localhost", "::1", "0.0.0.0");
 
     public static class StorageAccountCredential implements java.io.Serializable {
 
@@ -57,7 +61,24 @@ public class AzureStorageAccount extends BaseStandardCredentials {
             if (StringUtils.isBlank(endpointURL)) {
                 url = Constants.DEF_BLOB_URL;
             }
-            this.blobEndpointURL = url;
+            this.blobEndpointURL = joinAccountNameAndEndpoint(storageAccountName, url);
+        }
+
+        /**
+         * The old SDK worked with 'endpoint suffixes' in the form http(s)://blob.core.windows.net.
+         * New SDK uses endpoints: https://my-account-name.blob.core.windows.net.
+         *
+         * UI still stores the suffix so we need to join them, unless it's already added or the emulator is in use
+         */
+        @SuppressWarnings("HttpUrlsUsage")
+        private static String joinAccountNameAndEndpoint(String accountName, String urlSuffix) {
+            if (urlSuffix.contains(accountName) || LOCAL_ADDRESSES.stream().anyMatch(urlSuffix::contains)) {
+                return urlSuffix;
+            }
+
+            return urlSuffix
+                    .replace("http://", "https://")
+                    .replace("https://", String.format("https://%s.", accountName));
         }
 
         public StorageAccountCredential() {
@@ -95,7 +116,8 @@ public class AzureStorageAccount extends BaseStandardCredentials {
         }
 
         public String getEndpointURL() {
-            return blobEndpointURL;
+            // joined in getter as constructor isn't called when reading saved configuration
+            return joinAccountNameAndEndpoint(storageAccountName, blobEndpointURL);
         }
 
         public String getId() {
@@ -191,7 +213,7 @@ public class AzureStorageAccount extends BaseStandardCredentials {
     }
 
     public String getBlobEndpointURL() {
-        return storageData.blobEndpointURL;
+        return storageData.getEndpointURL();
     }
 
     public StorageAccountCredential getStorageCred() {

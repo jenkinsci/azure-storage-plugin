@@ -87,8 +87,8 @@ public final class AzureUtils {
                 .credential(new StorageSharedKeyCredential(storageAccount.getStorageAccName(),
                         storageAccount.getStorageAccountKey()))
                 .httpClient(HttpClientRetriever.get())
-                .endpoint(joinAccountNameAndEndpoint(storageAccount.getStorageAccName(),
-                        storageAccount.getBlobEndPointURL().replace("blob", "file")))
+                .endpoint(storageAccount.getBlobEndPointURL()
+                        .replace("blob", "file")) // TODO add file endpoint
                 .buildClient();
     }
 
@@ -98,23 +98,9 @@ public final class AzureUtils {
                 .credential(new StorageSharedKeyCredential(storageAccount.getStorageAccName(),
                         storageAccount.getStorageAccountKey()))
                 .httpClient(HttpClientRetriever.get())
-                .endpoint(joinAccountNameAndEndpoint(storageAccount.getStorageAccName(),
-                        storageAccount.getBlobEndPointURL()))
+                .endpoint(storageAccount.getBlobEndPointURL())
                 .retryOptions(retryOptions)
                 .buildClient();
-    }
-
-    /**
-     * The old SDK worked with 'endpoint suffixes' in the form http(s)://blob.core.windows.net.
-     * New SDK uses endpoints: https://my-account-name.blob.core.windows.net.
-     *
-     * UI still stores the suffix so we need to join them
-     */
-    @SuppressWarnings("HttpUrlsUsage")
-    private static String joinAccountNameAndEndpoint(String accountName, String urlSuffix) {
-        return urlSuffix
-                .replace("http://", "https://")
-                .replace("https://", String.format("https://%s.", accountName));
     }
 
     public static BlobContainerClient getBlobContainerReference(StorageAccountInfo storageAccount,
