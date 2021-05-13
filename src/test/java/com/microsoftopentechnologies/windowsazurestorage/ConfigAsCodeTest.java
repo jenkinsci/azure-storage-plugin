@@ -14,7 +14,8 @@ import io.jenkins.plugins.casc.model.Mapping;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 
 public class ConfigAsCodeTest {
@@ -28,11 +29,11 @@ public class ConfigAsCodeTest {
         AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(0);
 
-        assertEquals(credentials.getScope(), CredentialsScope.GLOBAL);
-        assertEquals(credentials.getDescription(), "Account");
-        assertEquals(credentials.getStorageAccountName(), "a-storage-account");
-        assertEquals(credentials.getBlobEndpointURL(), "https://blob.core.windows.net/");
-        assertEquals(credentials.getId(), "storage-account");
+        assertThat(credentials.getScope(), is(CredentialsScope.GLOBAL));
+        assertThat(credentials.getDescription(), is("Account"));
+        assertThat(credentials.getStorageAccountName(), is("a-storage-account"));
+        assertThat(credentials.getBlobEndpointURL(), is("https://a-storage-account.blob.core.windows.net/"));
+        assertThat(credentials.getId(), is("storage-account"));
         assertNotNull(credentials.getStorageKey());
     }
 
@@ -60,11 +61,11 @@ public class ConfigAsCodeTest {
                 .get("azureStorageAccount")
                 .asMapping();
 
-        assertEquals(mapping.getScalarValue("scope"), "GLOBAL");
-        assertEquals(mapping.getScalarValue("description"), "Account");
-        assertEquals(mapping.getScalarValue("storageAccountName"), "a-storage-account");
-        assertEquals(mapping.getScalarValue("blobEndpointURL"), "https://blob.core.windows.net/");
-        assertEquals(mapping.getScalarValue("id"), "storage-account");
+        assertThat(mapping.getScalarValue("scope"), is("GLOBAL"));
+        assertThat(mapping.getScalarValue("description"), is("Account"));
+        assertThat(mapping.getScalarValue("storageAccountName"), is("a-storage-account"));
+        assertThat(mapping.getScalarValue("blobEndpointURL"), is("https://a-storage-account.blob.core.windows.net/"));
+        assertThat(mapping.getScalarValue("id"), is("storage-account"));
         assertNotNull(mapping.getScalarValue("storageKey"));
     }
 }

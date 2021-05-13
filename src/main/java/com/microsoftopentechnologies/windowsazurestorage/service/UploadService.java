@@ -119,7 +119,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 String uploadedFileHash = uploadCloudFile(uploadItem, filePath);
                 azureBlob = new AzureBlob(
                         uploadItem.getShareName(),
-                        uploadItem.getFileUrl().replace("http://", "https://"),
+                        uploadItem.getFileUrl(),
                         uploadedFileHash,
                         filePath.length(),
                         Constants.FILE_STORAGE,
