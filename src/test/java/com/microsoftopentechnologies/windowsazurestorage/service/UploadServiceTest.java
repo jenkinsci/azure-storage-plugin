@@ -49,67 +49,185 @@ public class UploadServiceTest {
         serviceData.setVirtualPath("virtual/");
     }
 
-    private void testRemovePrefix1(UploadService uploadService) throws IOException, InterruptedException {
+
+    // remove prefix    0
+    // embedded VP      0
+    // virtual path     0
+    private void testThatExistingBehaviorRemainsUnchanged_1(UploadService uploadService) throws IOException, InterruptedException {
+        File testFile = new File("workspace/release/build/test.txt");
+        FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
+        Assert.assertEquals("release/build/test.txt", uploadService.getItemPath(testFilePath, "", uploadService.getServiceData()));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_a_blob() throws IOException, InterruptedException {
+        testThatExistingBehaviorRemainsUnchanged_1(new UploadToBlobService(serviceData));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_b_file() throws IOException, InterruptedException {
+        testThatExistingBehaviorRemainsUnchanged_1(new UploadToFileService(serviceData));
+    }
+
+    // remove prefix    0
+    // embedded VP      0
+    // virtual path     1
+    private void testThatExistingBehaviorRemainsUnchanged_2(UploadService uploadService) throws IOException, InterruptedException {
+        File testFile = new File("workspace/release/build/test.txt");
+        FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
+        Assert.assertEquals("virtual/release/build/test.txt", uploadService.getItemPath(testFilePath, "", uploadService.getServiceData()));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_c_blob() throws IOException, InterruptedException {
+        addVirtualPath();
+
+        testThatExistingBehaviorRemainsUnchanged_2(new UploadToBlobService(serviceData));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_d_file() throws IOException, InterruptedException {
+        addVirtualPath();
+
+        testThatExistingBehaviorRemainsUnchanged_2(new UploadToFileService(serviceData));
+    }
+
+    // remove prefix    0
+    // embedded VP      1
+    // virtual path     0
+    private void testThatExistingBehaviorRemainsUnchanged_4(UploadService uploadService) throws IOException, InterruptedException {
+        File testFile = new File("workspace/release/build/test.txt");
+        FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
+        Assert.assertEquals("embedded/release/build/test.txt", uploadService.getItemPath(testFilePath, "embedded/", uploadService.getServiceData()));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_g_blob() throws IOException, InterruptedException {
+        testThatExistingBehaviorRemainsUnchanged_4(new UploadToBlobService(serviceData));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_h_blob() throws IOException, InterruptedException {
+        testThatExistingBehaviorRemainsUnchanged_4(new UploadToFileService(serviceData));
+    }
+
+    // remove prefix    0
+    // embedded VP      1
+    // virtual path     1
+    private void testThatExistingBehaviorRemainsUnchanged_3(UploadService uploadService) throws IOException, InterruptedException {
+        File testFile = new File("workspace/release/build/test.txt");
+        FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
+        Assert.assertEquals("virtual/embedded/release/build/test.txt", uploadService.getItemPath(testFilePath, "embedded/", uploadService.getServiceData()));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_e_blob() throws IOException, InterruptedException {
+        addVirtualPath();
+
+        testThatExistingBehaviorRemainsUnchanged_3(new UploadToBlobService(serviceData));
+    }
+
+    @Test
+    public void testThatExistingBehaviorRemainsUnchanged_f_blob() throws IOException, InterruptedException {
+        addVirtualPath();
+
+        testThatExistingBehaviorRemainsUnchanged_3(new UploadToFileService(serviceData));
+    }
+
+
+    // remove prefix    1
+    // embedded VP      0
+    // virtual path     0
+    private void testRemovePrefixNoEmbeddedVPNoVirtualPath(UploadService uploadService) throws IOException, InterruptedException {
         File testFile = new File("workspace/release/build/test.txt");
         FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
         Assert.assertEquals("test.txt", uploadService.getItemPath(testFilePath, "", uploadService.getServiceData()));
     }
 
     @Test
-    public void testRemovePrefix1a() throws IOException, InterruptedException {
+    public void testRemovePrefixNoEmbeddedVPNoVirtualPath_blob() throws IOException, InterruptedException {
         addRemovePrefix();
 
-        testRemovePrefix1(new UploadToBlobService(serviceData));
+        testRemovePrefixNoEmbeddedVPNoVirtualPath(new UploadToBlobService(serviceData));
     }
 
     @Test
-    public void testRemovePrefix1b() throws IOException, InterruptedException {
+    public void testRemovePrefixNoEmbeddedVPNoVirtualPath_file() throws IOException, InterruptedException {
         addRemovePrefix();
 
-        testRemovePrefix1(new UploadToFileService(serviceData));
+        testRemovePrefixNoEmbeddedVPNoVirtualPath(new UploadToFileService(serviceData));
     }
 
-    private void testRemovePrefix2(UploadService uploadService) throws IOException, InterruptedException {
+    // remove prefix    1
+    // embedded VP      0
+    // virtual path     1
+    private void testRemovePrefixWithVirtualPath(UploadService uploadService) throws IOException, InterruptedException {
         File testFile = new File("workspace/release/build/test.txt");
         FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
         Assert.assertEquals("virtual/test.txt", uploadService.getItemPath(testFilePath, "", uploadService.getServiceData()));
     }
 
     @Test
-    public void testRemovePrefix2a() throws IOException, InterruptedException {
+    public void testRemovePrefixWithVirtualPath_blob() throws IOException, InterruptedException {
         addRemovePrefix();
         addVirtualPath();
 
-        testRemovePrefix2(new UploadToBlobService(serviceData));
+        testRemovePrefixWithVirtualPath(new UploadToBlobService(serviceData));
     }
 
     @Test
-    public void testRemovePrefix2b() throws IOException, InterruptedException {
+    public void testRemovePrefixWithVirtualPath_file() throws IOException, InterruptedException {
         addRemovePrefix();
         addVirtualPath();
 
-        testRemovePrefix2(new UploadToFileService(serviceData));
+        testRemovePrefixWithVirtualPath(new UploadToFileService(serviceData));
     }
 
-    private void testRemovePrefix3(UploadService uploadService) throws IOException, InterruptedException {
+    // remove prefix    1
+    // embedded VP      1
+    // virtual path     0
+    private void testRemovePrefixWithEmbeddedVP(UploadService uploadService) throws IOException, InterruptedException {
+        File testFile = new File("workspace/release/build/test.txt");
+        FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
+        Assert.assertEquals("embedded/test.txt", uploadService.getItemPath(testFilePath, "embedded/", uploadService.getServiceData()));
+    }
+
+    @Test
+    public void testRemovePrefixWithEmbeddedVP_blob() throws IOException, InterruptedException {
+        addRemovePrefix();
+
+        testRemovePrefixWithEmbeddedVP(new UploadToBlobService(serviceData));
+    }
+
+    @Test
+    public void testRemovePrefixWithEmbeddedVP_file() throws IOException, InterruptedException {
+        addRemovePrefix();
+
+        testRemovePrefixWithEmbeddedVP(new UploadToFileService(serviceData));
+    }
+
+    // remove prefix    1
+    // embedded VP      1
+    // virtual path     1
+    private void testRemovePrefixWithEmbeddedVPAndVirtualPath(UploadService uploadService) throws IOException, InterruptedException {
         File testFile = new File("workspace/release/build/test.txt");
         FilePath testFilePath = new FilePath(launcher.getChannel(), testFile.getAbsolutePath());
         Assert.assertEquals("virtual/embedded/test.txt", uploadService.getItemPath(testFilePath, "embedded/", uploadService.getServiceData()));
     }
 
     @Test
-    public void testRemovePrefix3a() throws IOException, InterruptedException {
+    public void testRemovePrefixWithEmbeddedVPAndVirtualPath_blob() throws IOException, InterruptedException {
         addRemovePrefix();
         addVirtualPath();
 
-        testRemovePrefix3(new UploadToBlobService(serviceData));
+        testRemovePrefixWithEmbeddedVPAndVirtualPath(new UploadToBlobService(serviceData));
     }
 
     @Test
-    public void testRemovePrefix3b() throws IOException, InterruptedException {
+    public void testRemovePrefixWithEmbeddedVPAndVirtualPath_file() throws IOException, InterruptedException {
         addRemovePrefix();
         addVirtualPath();
 
-        testRemovePrefix3(new UploadToFileService(serviceData));
+        testRemovePrefixWithEmbeddedVPAndVirtualPath(new UploadToFileService(serviceData));
     }
 }
