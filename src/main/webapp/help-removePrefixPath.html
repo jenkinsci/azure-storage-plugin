@@ -1,0 +1,31 @@
+<div>
+	The file path prefix that should NOT be created in Azure Storage.
+
+	<ul>
+		<li>Specify this relative to the workspace to match the 'List of Artifacts to upload'</li>
+		<li>Jenkins environment variables can be used in this path</li>
+	</ul>
+
+	<br>For example, given -
+	<table style="border: 1px solid black; border-collapse: collapse">
+		<thead>
+			<tr>
+				<td style="border: 1px solid black; font-weight: bold">Parameter</td>
+				<td style="border: 1px solid black; font-weight: bold">Value</td>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr>
+				<td style="border: 1px solid black">List of Artifacts to upload</td>
+				<td style="border: 1px solid black">target/deployment/binaries/**/</td>
+			</tr>
+			<tr>
+				<td style="border: 1px solid black">Remove prefix</td>
+				<td style="border: 1px solid black">target/deployment/</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<br>the upload would only contain the 'binaries' folder in Azure Storage, not target/deployment/binaries.
+</div>

@@ -121,7 +121,7 @@ public class UploadToBlobService extends UploadService {
 
             List<UploadObject> uploadObjects = new ArrayList<>();
             for (FilePath src : paths) {
-                final String blobPath = getItemPath(src, embeddedVP);
+                final String blobPath = getItemPath(src, embeddedVP, serviceData);
                 final BlockBlobClient blob = container.getBlobClient(blobPath).getBlockBlobClient();
                 PartialBlobProperties blobProperties = configureBlobProperties(src);
 

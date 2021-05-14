@@ -18,11 +18,7 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 import com.azure.core.credential.AzureSasCredential;
 import com.azure.core.http.rest.Response;
 import com.azure.core.util.Context;
-import com.azure.storage.blob.BlobClient;
-import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.blob.BlobUrlParts;
+import com.azure.storage.blob.*;
 import com.azure.storage.blob.models.BlobHttpHeaders;
 import com.azure.storage.blob.models.BlockBlobItem;
 import com.azure.storage.blob.options.BlobUploadFromFileOptions;
@@ -51,11 +47,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 
 import javax.xml.bind.DatatypeConverter;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -63,13 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -466,6 +452,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             println(Messages.WAStoragePublisher_filepath(serviceData.getFilePath()));
             println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
             println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
+            println(Messages.WAStoragePublisher_excludepath(serviceData.getRemovePrefixPath()));
         }
         int filesNeedUpload = 0; // Counter to track no. of files that are need uploaded
         int filesCount = 0;
@@ -582,21 +569,42 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         return excludesWithoutZip;
     }
 
+    protected String removePrefix(URI srcURI, UploadServiceData serviceData) {
+        String tmp = srcURI.getPath();
+        String removePrefixPath = serviceData.getRemovePrefixPath();
+        if (!StringUtils.isBlank(removePrefixPath)) {
+            if (tmp.startsWith(removePrefixPath)) {
+                String tmp1 = tmp.substring(removePrefixPath.length());
+                if (serviceData.isVerbose()) {
+                    println(Messages.UploadService_prefixRemoved(removePrefixPath, tmp, tmp1));
+                }
+                tmp = tmp1;
+            }
+            else if (serviceData.isVerbose()) {
+                println(Messages.UploadService_prefixNotRemoved(removePrefixPath, tmp));
+            }
+        }
+
+        return tmp;
+    }
+
     /**
-     * Convert the path on local file sytem to relative path on azure storage.
+     * Convert the path on local file system to relative path on azure storage.
      *
      * @param path       the local path
      * @param embeddedVP the embedded virtual path
      * @return
      */
-    protected String getItemPath(FilePath path, String embeddedVP)
+    protected String getItemPath(FilePath path, String embeddedVP, UploadServiceData serviceData)
             throws IOException, InterruptedException {
-        final UploadServiceData serviceData = getServiceData();
         final URI workspaceURI = serviceData.getRemoteWorkspace().toURI();
 
         // Remove the workspace bit of this path
         final URI srcURI = workspaceURI.relativize(path.toURI());
-        final String srcURIPath = srcURI.getPath();
+
+        // Remove the prefix if specified
+        final String srcURIPath = removePrefix(srcURI, serviceData);
+
         String prefix;
         if (StringUtils.isBlank(serviceData.getVirtualPath())) {
             prefix = "";

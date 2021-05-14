@@ -19,32 +19,17 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
-import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
-import com.microsoftopentechnologies.windowsazurestorage.helper.CredentialMigration;
-import com.microsoftopentechnologies.windowsazurestorage.helper.CredentialRename;
-import com.microsoftopentechnologies.windowsazurestorage.helper.Utils;
+import com.microsoftopentechnologies.windowsazurestorage.helper.*;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadService;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToBlobService;
 import com.microsoftopentechnologies.windowsazurestorage.service.UploadToFileService;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.AbortException;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Util;
+import hudson.*;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.Item;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -59,19 +44,11 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.*;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -97,6 +74,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final String filesPath;
     private String excludeFilesPath = "";
     private String virtualPath = "";
+    private String removePrefixPath = "";
     private boolean doNotWaitForPreviousBuild;
     private final String storageCredentialId;
     private boolean onlyUploadModifiedArtifacts;
@@ -175,6 +153,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     @DataBoundSetter
     public void setVirtualPath(String virtualPath) {
         this.virtualPath = virtualPath;
+    }
+
+    public String getRemovePrefixPath() {
+        return removePrefixPath;
+    }
+
+    @DataBoundSetter
+    public void setRemovePrefixPath(String removePrefixPath) {
+        this.removePrefixPath = removePrefixPath;
     }
 
     @DataBoundSetter
@@ -449,6 +436,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             expVP += Constants.FWD_SLASH;
         }
         serviceData.setVirtualPath(expVP);
+
+        // Resolve remove prefix path
+        String rmPrefixPath = Utils.replaceMacro(Util.fixNull(removePrefixPath), envVars);
+        if (!(StringUtils.isBlank(rmPrefixPath) || rmPrefixPath.endsWith(Constants.FWD_SLASH))) {
+            rmPrefixPath += Constants.FWD_SLASH;
+        }
+        serviceData.setRemovePrefixPath(rmPrefixPath);
 
         final UploadService service = getUploadService(serviceData);
         try {

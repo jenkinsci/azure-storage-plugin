@@ -58,7 +58,7 @@ public class UploadToFileService extends UploadService {
             }
 
             for (FilePath src : paths) {
-                final String filePath = getItemPath(src, embeddedVP);
+                final String filePath = getItemPath(src, embeddedVP, serviceData);
                 ShareDirectoryClient rootDirectoryClient = fileShare.getRootDirectoryClient();
                 final ShareFileClient cloudFile = rootDirectoryClient.getFileClient(filePath);
                 ensureDirExist(fileShare, filePath);
