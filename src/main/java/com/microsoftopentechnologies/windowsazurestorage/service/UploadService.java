@@ -593,8 +593,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                     println(Messages.UploadService_prefixRemoved(removePrefixPath, tmp, tmp1));
                 }
                 tmp = tmp1;
-            }
-            else if (serviceData.isVerbose()) {
+            }  else if (serviceData.isVerbose()) {
                 println(Messages.UploadService_prefixNotRemoved(removePrefixPath, tmp));
             }
         }
