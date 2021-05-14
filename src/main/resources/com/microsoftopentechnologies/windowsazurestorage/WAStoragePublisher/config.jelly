@@ -62,9 +62,9 @@
             </f:entry>
 
             <f:entry title="${%removePrefixPath_title}" field="removePrefixPath"
-                                 help="/plugin/windows-azure-storage/help-excludeFilesPath.html">
-                            <f:textbox/>
-                        </f:entry>
+                     help="/plugin/windows-azure-storage/help-removePrefixPath.html">
+                <f:textbox/>
+            </f:entry>
 
             <f:entry title="${%virtualPath}" field="virtualPath"
                      help="/plugin/windows-azure-storage/help-virtualPath.html">
