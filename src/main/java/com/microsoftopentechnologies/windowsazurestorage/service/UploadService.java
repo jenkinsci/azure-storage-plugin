@@ -29,6 +29,7 @@ import com.azure.storage.blob.options.BlobUploadFromFileOptions;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.file.share.ShareFileClient;
 import com.azure.storage.file.share.models.ShareFileUploadInfo;
+import com.azure.storage.file.share.models.ShareFileUploadRangeOptions;
 import com.azure.storage.file.share.sas.ShareFileSasPermission;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
@@ -559,14 +560,14 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         try (FileInputStream fis = new FileInputStream(file); BufferedInputStream bis = new BufferedInputStream(fis)) {
             long bytes = Files.size(file.toPath());
             fileClient.create(bytes);
-            Response<ShareFileUploadInfo> response = fileClient.uploadWithResponse(bis, bis.available(), 0L,
-                    null, null);
+
+            ShareFileUploadInfo response = fileClient.upload(bis, bis.available(), null);
 
             long endTime = System.currentTimeMillis();
             if (getServiceData().isVerbose()) {
                 println("Uploaded file with uri " + fileClient.getFileUrl() + " in " + getTime(endTime - startTime));
             }
-            return DatatypeConverter.printHexBinary(response.getValue().getContentMd5());
+            return DatatypeConverter.printHexBinary(response.getContentMd5());
         } catch (Exception e) {
             throw new WAStorageException("Failed uploading file", e);
         }

@@ -46,23 +46,7 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>azure-sdk</artifactId>
-            <version>4.vcb202d9010c1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-storage-file-share</artifactId>
-            <version>12.8.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-core</artifactId>
-                </exclusion>
-                <!-- we take the version from the azure-sdk -->
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-storage-common</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>9999-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
