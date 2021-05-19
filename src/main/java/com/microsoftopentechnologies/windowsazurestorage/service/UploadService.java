@@ -466,6 +466,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             println(Messages.WAStoragePublisher_filepath(serviceData.getFilePath()));
             println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
             println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
+            println(Messages.WAStoragePublisher_excludePrefix(serviceData.getRemovePrefixPath()));
         }
         int filesNeedUpload = 0; // Counter to track no. of files that are need uploaded
         int filesCount = 0;
@@ -582,21 +583,41 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         return excludesWithoutZip;
     }
 
+    protected String removePrefix(URI srcURI, UploadServiceData serviceData) {
+        String tmp = srcURI.getPath();
+        String removePrefixPath = serviceData.getRemovePrefixPath();
+        if (!StringUtils.isBlank(removePrefixPath)) {
+            if (tmp.startsWith(removePrefixPath)) {
+                String tmp1 = tmp.substring(removePrefixPath.length());
+                if (serviceData.isVerbose()) {
+                    println(Messages.UploadService_prefixRemoved(removePrefixPath, tmp, tmp1));
+                }
+                tmp = tmp1;
+            }  else if (serviceData.isVerbose()) {
+                println(Messages.UploadService_prefixNotRemoved(removePrefixPath, tmp));
+            }
+        }
+
+        return tmp;
+    }
+
     /**
-     * Convert the path on local file sytem to relative path on azure storage.
+     * Convert the path on local file system to relative path on azure storage.
      *
      * @param path       the local path
      * @param embeddedVP the embedded virtual path
      * @return
      */
-    protected String getItemPath(FilePath path, String embeddedVP)
+    protected String getItemPath(FilePath path, String embeddedVP, UploadServiceData serviceData)
             throws IOException, InterruptedException {
-        final UploadServiceData serviceData = getServiceData();
         final URI workspaceURI = serviceData.getRemoteWorkspace().toURI();
 
         // Remove the workspace bit of this path
         final URI srcURI = workspaceURI.relativize(path.toURI());
-        final String srcURIPath = srcURI.getPath();
+
+        // Remove the prefix if specified
+        final String srcURIPath = removePrefix(srcURI, serviceData);
+
         String prefix;
         if (StringUtils.isBlank(serviceData.getVirtualPath())) {
             prefix = "";

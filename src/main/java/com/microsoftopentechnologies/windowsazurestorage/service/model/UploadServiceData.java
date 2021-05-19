@@ -38,6 +38,7 @@ public class UploadServiceData extends ServiceData {
     private String filePath;
     private String virtualPath;
     private String excludedFilesPath;
+    private String removePrefixPath;
     private UploadType uploadType;
     private boolean onlyUploadModifiedArtifacts;
     private final List<AzureBlob> individualBlobs = Collections.synchronizedList(new ArrayList<>());
@@ -129,6 +130,14 @@ public class UploadServiceData extends ServiceData {
 
     public void setExcludedFilesPath(String excludedFilesPath) {
         this.excludedFilesPath = excludedFilesPath;
+    }
+
+    public String getRemovePrefixPath() {
+        return removePrefixPath;
+    }
+
+    public void setRemovePrefixPath(String removePrefixPath) {
+        this.removePrefixPath = removePrefixPath;
     }
 
     public UploadType getUploadType() {

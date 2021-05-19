@@ -97,6 +97,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private final String filesPath;
     private String excludeFilesPath = "";
     private String virtualPath = "";
+    private String removePrefixPath = "";
     private boolean doNotWaitForPreviousBuild;
     private final String storageCredentialId;
     private boolean onlyUploadModifiedArtifacts;
@@ -175,6 +176,15 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     @DataBoundSetter
     public void setVirtualPath(String virtualPath) {
         this.virtualPath = virtualPath;
+    }
+
+    public String getRemovePrefixPath() {
+        return removePrefixPath;
+    }
+
+    @DataBoundSetter
+    public void setRemovePrefixPath(String removePrefixPath) {
+        this.removePrefixPath = removePrefixPath;
     }
 
     @DataBoundSetter
@@ -449,6 +459,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             expVP += Constants.FWD_SLASH;
         }
         serviceData.setVirtualPath(expVP);
+
+        // Resolve remove prefix path
+        String rmPrefixPath = Utils.replaceMacro(Util.fixNull(removePrefixPath), envVars);
+        if (!(StringUtils.isBlank(rmPrefixPath) || rmPrefixPath.endsWith(Constants.FWD_SLASH))) {
+            rmPrefixPath += Constants.FWD_SLASH;
+        }
+        serviceData.setRemovePrefixPath(rmPrefixPath);
 
         final UploadService service = getUploadService(serviceData);
         try {
