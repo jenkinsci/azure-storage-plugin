@@ -466,7 +466,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             println(Messages.WAStoragePublisher_filepath(serviceData.getFilePath()));
             println(Messages.WAStoragePublisher_virtualpath(serviceData.getVirtualPath()));
             println(Messages.WAStoragePublisher_excludepath(serviceData.getExcludedFilesPath()));
-            println(Messages.WAStoragePublisher_excludepath(serviceData.getRemovePrefixPath()));
+            println(Messages.WAStoragePublisher_excludePrefix(serviceData.getRemovePrefixPath()));
         }
         int filesNeedUpload = 0; // Counter to track no. of files that are need uploaded
         int filesCount = 0;
