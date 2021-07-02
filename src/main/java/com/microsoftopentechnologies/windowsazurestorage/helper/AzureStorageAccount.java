@@ -237,12 +237,17 @@ public class AzureStorageAccount extends BaseStandardCredentials {
                 @QueryParameter Secret storageKey,
                 @QueryParameter String blobEndpointURL) {
 
+            Thread t = Thread.currentThread();
+            ClassLoader orig = t.getContextClassLoader();
+            t.setContextClassLoader(AzureStorageAccount.class.getClassLoader());
             try {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount);
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
+            } finally {
+                t.setContextClassLoader(orig);
             }
 
             return FormValidation.ok(Messages.WAStoragePublisher_SA_val());
