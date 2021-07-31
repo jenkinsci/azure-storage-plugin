@@ -46,7 +46,7 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>azure-sdk</artifactId>
-            <version>12.vc102aedd3c66</version>
+            <version>30.vf3165534d6e8</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -122,7 +122,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-2.277.x</artifactId>
-                <version>29</version>
+                <version>909.vf028101f1bfa</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
