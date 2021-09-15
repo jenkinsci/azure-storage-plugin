@@ -424,8 +424,15 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             byte[] md5 = block.getValue().getContentMd5();
             long endTime = System.currentTimeMillis();
 
+            String fileHash = null;
+            // seen to occur when uploading large files, (768mb in this case)
+            // 201 response code with no hash in response
+            if (md5 != null) {
+                fileHash = new String(md5, StandardCharsets.UTF_8);
+            }
+
             return new UploadResult(block.getStatusCode(), null,
-                    new String(md5, StandardCharsets.UTF_8),
+                    fileHash,
                     uploadObject.getName(),
                     uploadObject.getUrl(), length, uploadObject.getStorageType(),
                     startTime, endTime);
