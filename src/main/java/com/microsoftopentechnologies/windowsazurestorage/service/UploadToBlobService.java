@@ -95,7 +95,6 @@ public class UploadToBlobService extends UploadService {
         }
     }
 
-    @SuppressWarnings("HttpUrlsUsage")
     private UploadObject generateUploadObject(FilePath path, StorageAccountInfo accountInfo,
                                               BlockBlobClient blob, String containerName,
                                               PartialBlobProperties blobProperties,
