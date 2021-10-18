@@ -15,26 +15,52 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
+import com.azure.core.credential.AzureSasCredential;
 import com.azure.core.http.rest.PagedIterable;
+import com.azure.core.http.rest.Response;
 import com.azure.storage.file.share.ShareClient;
 import com.azure.storage.file.share.ShareDirectoryClient;
 import com.azure.storage.file.share.ShareFileClient;
 import com.azure.storage.file.share.ShareServiceClient;
+import com.azure.storage.file.share.ShareServiceClientBuilder;
 import com.azure.storage.file.share.models.ShareFileItem;
+import com.azure.storage.file.share.models.ShareFileUploadInfo;
+import com.azure.storage.file.share.models.ShareFileUploadOptions;
+import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
+import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
+import com.microsoftopentechnologies.windowsazurestorage.service.model.PartialBlobProperties;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadServiceData;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.UploadType;
 import hudson.FilePath;
+import hudson.ProxyConfiguration;
+import hudson.remoting.VirtualChannel;
 import hudson.util.DirScanner;
+import io.jenkins.plugins.azuresdk.HttpClientRetriever;
+import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class UploadToFileService extends UploadService {
     public UploadToFileService(UploadServiceData serviceData) {
@@ -50,6 +76,7 @@ public class UploadToFileService extends UploadService {
     @Override
     protected void uploadIndividuals(String embeddedVP, FilePath[] paths) throws WAStorageException {
         final UploadServiceData serviceData = getServiceData();
+        FilePath workspace = getServiceData().getRemoteWorkspace();
         try {
             final ShareClient fileShare = getCloudFileShare();
             UploadType uploadType = serviceData.getUploadType();
@@ -57,15 +84,109 @@ public class UploadToFileService extends UploadService {
                 cleanupFileShare(fileShare);
             }
 
+            List<UploadObject> uploadObjects = new ArrayList<>();
+
             for (FilePath src : paths) {
                 final String filePath = getItemPath(src, embeddedVP, serviceData);
                 ShareDirectoryClient rootDirectoryClient = fileShare.getRootDirectoryClient();
                 final ShareFileClient cloudFile = rootDirectoryClient.getFileClient(filePath);
                 ensureDirExist(fileShare, filePath);
-                getExecutorService().submit(new FileUploadThread(cloudFile, src, serviceData.getIndividualBlobs()));
+
+                UploadObject uploadObject = generateUploadObject(src, serviceData.getStorageAccountInfo(),
+                        cloudFile, fileShare.getShareName(), null, updateMetadata(new HashMap<>()));
+                uploadObjects.add(uploadObject);
             }
+
+            List<UploadResult> results = workspace
+                    .act(new UploadOnAgent(Jenkins.get().getProxy(), uploadObjects));
+
+            updateAzureBlobs(results, serviceData.getIndividualBlobs());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             throw new WAStorageException("fail to upload individual files to azure file storage", e);
+        }
+    }
+
+    private UploadObject generateUploadObject(FilePath path, StorageAccountInfo accountInfo,
+                                              ShareFileClient client, String shareName,
+                                              PartialBlobProperties properties,
+                                              Map<String, String> metadata)
+            throws MalformedURLException, URISyntaxException {
+        String sas = generateWriteSASURL(accountInfo, client.getFilePath(), Constants.FILE_STORAGE, shareName);
+
+        return new UploadObject(client.getFilePath(), path, client.getFileUrl(), sas, Constants.BLOB_STORAGE,
+                client.getAccountName(), shareName, properties, metadata);
+    }
+
+    static final class UploadOnAgent extends MasterToSlaveFileCallable<List<UploadResult>> {
+        private static final Logger LOGGER = Logger.getLogger(UploadOnAgent.class.getName());
+        private static final int TIMEOUT = 30;
+        private static final int ERROR_ON_UPLOAD = 500;
+
+        private final ProxyConfiguration proxy;
+        private final List<UploadObject> uploadObjects;
+
+        UploadOnAgent(ProxyConfiguration proxy, List<UploadObject> uploadObjects) {
+            this.proxy = proxy;
+            this.uploadObjects = uploadObjects;
+        }
+
+        private ShareServiceClient getFileShareClient(UploadObject uploadObject) {
+            return new ShareServiceClientBuilder()
+                    .credential(new AzureSasCredential(uploadObject.getSas()))
+                    .httpClient(HttpClientRetriever.get(proxy))
+                    .endpoint(uploadObject.getUrl())
+                    .buildClient();
+        }
+
+        @Override
+        public List<UploadResult> invoke(File f, VirtualChannel channel) {
+            return uploadObjects.parallelStream()
+                    .map(uploadObject -> {
+                        ShareServiceClient fileShareClient = getFileShareClient(uploadObject);
+
+                        ShareClient shareClient = fileShareClient
+                                .getShareClient(uploadObject.getContainerOrShareName());
+                        ShareFileClient fileClient = shareClient.getFileClient(uploadObject.getName());
+                        return uploadCloudFile(fileClient, uploadObject);
+
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        private UploadResult uploadCloudFile(ShareFileClient fileClient, UploadObject uploadObject) {
+            long startTime = System.currentTimeMillis();
+            File file = new File(uploadObject.getSrc().getRemote());
+            try (FileInputStream fis = new FileInputStream(file);
+                 BufferedInputStream bis = new BufferedInputStream(fis)) {
+                long bytes = Files.size(file.toPath());
+                fileClient.create(bytes);
+
+
+                ShareFileUploadOptions fileUploadOptions = new ShareFileUploadOptions(bis);
+                Response<ShareFileUploadInfo> response = fileClient
+                        .uploadWithResponse(fileUploadOptions, Duration.ofSeconds(TIMEOUT), null);
+
+                long endTime = System.currentTimeMillis();
+
+                String fileHash = null;
+                byte[] md5 = response.getValue().getContentMd5();
+                if (md5 != null) {
+                    fileHash = new String(md5, StandardCharsets.UTF_8);
+                }
+
+                return new UploadResult(response.getStatusCode(), null,
+                        fileHash,
+                        file.getName(),
+                        uploadObject.getUrl(), file.length(), uploadObject.getStorageType(),
+                        startTime, endTime);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Failed uploading file", e);
+                return new UploadResult(ERROR_ON_UPLOAD, null,
+                        null,
+                        file.getName(),
+                        uploadObject.getUrl(), file.length(), uploadObject.getStorageType(),
+                        startTime, 0);
+            }
         }
     }
 

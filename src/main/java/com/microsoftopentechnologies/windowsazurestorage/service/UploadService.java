@@ -56,7 +56,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -149,6 +151,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         private String sas;
         private String storageType;
         private String storageAccount;
+        private String containerOrShareName;
         private PartialBlobProperties blobProperties;
         private Map<String, String> metadata;
 
@@ -164,14 +167,26 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
          */
         public UploadObject(String name, FilePath src, String url, String sas, String storageType,
                             String storageAccount, PartialBlobProperties blobProperties, Map<String, String> metadata) {
+            this(name, src, url, sas, storageType, storageAccount, null, blobProperties, metadata);
+        }
+
+        public UploadObject(String name, FilePath src, String url, String sas, String storageType,
+                            String storageAccount, String containerOrShareName,
+                            PartialBlobProperties blobProperties, Map<String, String> metadata
+        ) {
             this.name = name;
             this.src = src;
             this.url = url;
             this.sas = sas;
             this.storageType = storageType;
             this.storageAccount = storageAccount;
+            this.containerOrShareName = containerOrShareName;
             this.blobProperties = blobProperties;
             this.metadata = metadata;
+        }
+
+        public String getContainerOrShareName() {
+            return containerOrShareName;
         }
 
         public String getName() {
@@ -362,7 +377,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
     }
 
     protected String generateWriteSASURL(StorageAccountInfo storageAccountInfo, String fileName,
-                                         String storageType, String name) throws Exception {
+                                         String storageType, String name)
+            throws MalformedURLException, URISyntaxException {
         if (storageType.equalsIgnoreCase(Constants.BLOB_STORAGE)) {
 
             return AzureUtils.generateBlobSASURL(storageAccountInfo, name, fileName,
@@ -371,7 +387,7 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             return AzureUtils.generateFileSASURL(storageAccountInfo, name, fileName,
                     new ShareFileSasPermission().setWritePermission(true));
         }
-        throw new Exception("Unknown storage type. Please re-configure your job and build again.");
+        throw new IllegalStateException("Unknown storage type. Please re-configure your job and build again.");
     }
 
     /**

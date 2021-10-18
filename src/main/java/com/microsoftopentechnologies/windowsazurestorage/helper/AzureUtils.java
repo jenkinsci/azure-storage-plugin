@@ -76,8 +76,7 @@ public final class AzureUtils {
         return true;
     }
 
-    public static BlobServiceClient getCloudStorageAccount(final StorageAccountInfo storageAccount)
-            throws MalformedURLException, URISyntaxException {
+    public static BlobServiceClient getCloudStorageAccount(final StorageAccountInfo storageAccount) {
         return getCloudStorageAccount(storageAccount, new RequestRetryOptions());
     }
 
@@ -140,7 +139,7 @@ public final class AzureUtils {
             StorageAccountInfo storageAccount,
             String containerName,
             String blobName,
-            BlobSasPermission permissions) throws Exception {
+            BlobSasPermission permissions) {
 
         BlobServiceClient cloudStorageAccount = getCloudStorageAccount(storageAccount);
 
@@ -149,7 +148,7 @@ public final class AzureUtils {
 
         // At this point need to throw an error back since container itself did not exist.
         if (!container.exists()) {
-            throw new Exception("WAStorageClient: generateBlobSASURL: Container " + containerName
+            throw new IllegalStateException("WAStorageClient: generateBlobSASURL: Container " + containerName
                     + " does not exist in storage account " + storageAccount.getStorageAccName());
         }
 
@@ -173,12 +172,12 @@ public final class AzureUtils {
             StorageAccountInfo storageAccount,
             String shareName,
             String fileName,
-            ShareFileSasPermission permissions) throws Exception {
+            ShareFileSasPermission permissions) throws MalformedURLException, URISyntaxException {
         ShareServiceClient shareServiceClient = getShareClient(storageAccount);
 
         ShareClient fileShare = shareServiceClient.getShareClient((shareName));
         if (!fileShare.exists()) {
-            throw new Exception("WAStorageClient: generateFileSASURL: Share " + shareName
+            throw new IllegalStateException("WAStorageClient: generateFileSASURL: Share " + shareName
                     + " does not exist in storage account " + storageAccount.getStorageAccName());
         }
 
