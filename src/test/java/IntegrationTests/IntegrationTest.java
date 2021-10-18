@@ -48,7 +48,8 @@ public class IntegrationTest {
             azureStorageAccountKey1 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY1");
             azureStorageAccountKey2 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY2");
             
-            blobURL = Utils.DEF_BLOB_URL;
+            blobURL = Utils.DEF_BLOB_URL.replace("https://",
+                    String.format("https://%s.", azureStorageAccountName));
             AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL);
             sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL);
             containerName = name;
