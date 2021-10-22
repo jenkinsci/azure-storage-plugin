@@ -349,7 +349,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
 
         // Check if storage account credentials are valid
         try {
-            AzureUtils.validateStorageAccount(storageAccountInfo);
+            AzureUtils.validateStorageAccount(storageAccountInfo, true);
         } catch (Exception e) {
             listener.getLogger().println(Messages.Client_SA_val_fail());
             listener.getLogger().println(storageAccountInfo.getStorageAccName());

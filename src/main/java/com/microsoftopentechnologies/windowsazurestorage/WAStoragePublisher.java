@@ -564,7 +564,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         // Check if storage account credentials are valid
         try {
-            AzureUtils.validateStorageAccount(storageAccount);
+            AzureUtils.validateStorageAccount(storageAccount, true);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             listener.getLogger().println(Messages.Client_SA_val_fail());
@@ -663,7 +663,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 blobEndPointURL = Utils.getBlobEP(blobEndPointURL);
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         was_storageAccName, was_storageAccountKey, blobEndPointURL);
-                AzureUtils.validateStorageAccount(storageAccount);
+                AzureUtils.validateStorageAccount(storageAccount, false);
             } catch (Exception e) {
                 return FormValidation.error(e, "Error : " + e.getMessage());
             }

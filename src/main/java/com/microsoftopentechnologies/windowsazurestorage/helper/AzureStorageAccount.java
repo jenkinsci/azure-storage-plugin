@@ -240,7 +240,7 @@ public class AzureStorageAccount extends BaseStandardCredentials {
             try {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
                         storageAccountName, storageKey.getPlainText(), blobEndpointURL);
-                AzureUtils.validateStorageAccount(storageAccount);
+                AzureUtils.validateStorageAccount(storageAccount, false);
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }

@@ -63,11 +63,11 @@ public final class AzureUtils {
      * @throws WAStorageException
      */
     public static boolean validateStorageAccount(
-            final StorageAccountInfo storageAccount) throws WAStorageException {
+            final StorageAccountInfo storageAccount, final boolean allowRetry) throws WAStorageException {
         try {
             // Get container reference
             final BlobContainerClient container = getBlobContainerReference(
-                    storageAccount, TEST_CNT_NAME, false, false, null);
+                    storageAccount, TEST_CNT_NAME, false, allowRetry, null);
             container.exists();
 
         } catch (Exception e) {
