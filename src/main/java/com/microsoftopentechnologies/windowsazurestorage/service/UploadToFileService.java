@@ -50,7 +50,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -119,7 +118,6 @@ public class UploadToFileService extends UploadService {
 
     static final class UploadOnAgent extends MasterToSlaveFileCallable<List<UploadResult>> {
         private static final Logger LOGGER = Logger.getLogger(UploadOnAgent.class.getName());
-        private static final int TIMEOUT = 30;
         private static final int ERROR_ON_UPLOAD = 500;
 
         private final ProxyConfiguration proxy;
@@ -164,7 +162,7 @@ public class UploadToFileService extends UploadService {
 
                 ShareFileUploadOptions fileUploadOptions = new ShareFileUploadOptions(bis);
                 Response<ShareFileUploadInfo> response = fileClient
-                        .uploadWithResponse(fileUploadOptions, Duration.ofSeconds(TIMEOUT), null);
+                        .uploadWithResponse(fileUploadOptions, null, null);
 
                 long endTime = System.currentTimeMillis();
 
