@@ -13,8 +13,8 @@ import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,10 +78,10 @@ public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
     }
 
     @Override
-    public MultiEnvironment bind(@Nonnull Run<?, ?> build,
+    public MultiEnvironment bind(@NonNull Run<?, ?> build,
                                  @Nullable FilePath workspace,
                                  @Nullable Launcher launcher,
-                                 @Nonnull TaskListener listener)
+                                 @NonNull TaskListener listener)
             throws IOException {
         AzureStorageAccount credentials = getCredentials(build);
         Map<String, String> variableMap = new HashMap<>();
