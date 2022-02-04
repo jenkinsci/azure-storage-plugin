@@ -38,9 +38,9 @@
 
     <f:section title="${%blobPropertiesMetadata_title}">
         <f:advanced title="${%edit_title}">
-            <f:property field="blobProperties">
+            <f:optionalProperty title="${%blobPropertiesMetadata_title}" field="blobProperties">
                 <st:include page="config.jelly" class="${descriptor.clazz}"/>
-            </f:property>
+            </f:optionalProperty>
 
             <f:entry title="${%blobMetadata_title}">
                 <f:repeatableProperty field="metadata">
