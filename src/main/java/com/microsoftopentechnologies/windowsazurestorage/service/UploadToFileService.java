@@ -60,8 +60,12 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.apache.http.HttpStatus;
 
 public class UploadToFileService extends UploadService {
+
+    private static final String EMPTY_STRING_MD5 = "68b329da9893e34099c7d8ad5cb9c940";
+
     public UploadToFileService(UploadServiceData serviceData) {
         super(serviceData);
     }
@@ -158,6 +162,20 @@ public class UploadToFileService extends UploadService {
                  BufferedInputStream bis = new BufferedInputStream(fis)) {
                 long bytes = Files.size(file.toPath());
                 fileClient.create(bytes);
+
+                // https://github.com/Azure/azure-sdk-for-java/issues/26867
+                if (bytes == 0L) {
+                    long endTime = System.currentTimeMillis();
+                    return new UploadResult(HttpStatus.SC_CREATED, null,
+                            EMPTY_STRING_MD5,
+                            file.getName(),
+                            uploadObject.getUrl(),
+                            bytes,
+                            uploadObject.getStorageType(),
+                            startTime,
+                            endTime
+                    );
+                }
 
 
                 ShareFileUploadOptions fileUploadOptions = new ShareFileUploadOptions(bis);
