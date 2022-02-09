@@ -223,7 +223,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         private static final long serialVersionUID = -3112548564900823521L;
         private int statusCode;
         private String responseBody;
-        private String fileHash;
         private String name;
         private String url;
         private long byteSize;
