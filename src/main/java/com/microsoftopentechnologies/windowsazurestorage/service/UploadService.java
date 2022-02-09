@@ -28,7 +28,6 @@ import com.azure.storage.blob.models.BlockBlobItem;
 import com.azure.storage.blob.options.BlobUploadFromFileOptions;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.file.share.ShareFileClient;
-import com.azure.storage.file.share.models.ShareFileUploadInfo;
 import com.azure.storage.file.share.sas.ShareFileSasPermission;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlob;
 import com.microsoftopentechnologies.windowsazurestorage.AzureBlobMetadataPair;
@@ -50,16 +49,12 @@ import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 
-import javax.xml.bind.DatatypeConverter;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,11 +113,10 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         public void run() {
             try {
                 AzureBlob azureBlob;
-                String uploadedFileHash = uploadCloudFile(uploadItem, filePath);
+                uploadCloudFile(uploadItem, filePath);
                 azureBlob = new AzureBlob(
                         uploadItem.getShareName(),
                         uploadItem.getFileUrl(),
-                        uploadedFileHash,
                         filePath.length(),
                         Constants.FILE_STORAGE,
                         getServiceData().getCredentialsId()
@@ -242,8 +236,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
          *
          * @param statusCode   Status code for uploading task, the same as the http response code.
          * @param responseBody Response from the server side. Provide detailed information when the task fails.
-         * @param fileHash     The hash code for the uploaded object, calculate on the agent
-         *                     to save resources on master.
          * @param name         The name of the uploaded object.
          * @param url          The target url of the uploaded object.
          * @param byteSize     The byte size of the uploaded object.
@@ -251,11 +243,10 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
          * @param startTime    Start time of the uploading task.
          * @param endTime      End time of the uploading task.
          */
-        public UploadResult(int statusCode, String responseBody, String fileHash, String name,
+        public UploadResult(int statusCode, String responseBody, String name,
                             String url, long byteSize, String storageType, long startTime, long endTime) {
             this.statusCode = statusCode;
             this.responseBody = responseBody;
-            this.fileHash = fileHash;
             this.name = name;
             this.url = url;
             this.byteSize = byteSize;
@@ -359,7 +350,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                 AzureBlob azureBlob = new AzureBlob(
                         result.getName(),
                         result.getUrl(),
-                        result.getFileHash(),
                         result.getByteSize(),
                         result.getStorageType(),
                         serviceData.getCredentialsId());
@@ -437,18 +427,9 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             if (!uploadObject.getMetadata().isEmpty()) {
                 blockBlobClient.setMetadata(uploadObject.getMetadata());
             }
-            byte[] md5 = block.getValue().getContentMd5();
             long endTime = System.currentTimeMillis();
 
-            String fileHash = null;
-            // seen to occur when uploading large files, (768mb in this case)
-            // 201 response code with no hash in response
-            if (md5 != null) {
-                fileHash = new String(md5, StandardCharsets.UTF_8);
-            }
-
             return new UploadResult(block.getStatusCode(), null,
-                    fileHash,
                     uploadObject.getName(),
                     uploadObject.getUrl(), length, uploadObject.getStorageType(),
                     startTime, endTime);
@@ -576,21 +557,20 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         }
     }
 
-    protected String uploadCloudFile(ShareFileClient fileClient, FilePath localPath)
+    protected void uploadCloudFile(ShareFileClient fileClient, FilePath localPath)
             throws WAStorageException {
         long startTime = System.currentTimeMillis();
         File file = new File(localPath.getRemote());
-        try (FileInputStream fis = new FileInputStream(file); BufferedInputStream bis = new BufferedInputStream(fis)) {
+        try {
             long bytes = Files.size(file.toPath());
             fileClient.create(bytes);
 
-            ShareFileUploadInfo response = fileClient.upload(bis, bis.available(), null);
+            fileClient.uploadFromFile(file.getAbsolutePath());
 
             long endTime = System.currentTimeMillis();
             if (getServiceData().isVerbose()) {
                 println("Uploaded file with uri " + fileClient.getFileUrl() + " in " + getTime(endTime - startTime));
             }
-            return DatatypeConverter.printHexBinary(response.getContentMd5());
         } catch (Exception e) {
             throw new WAStorageException("Failed uploading file", e);
         }
