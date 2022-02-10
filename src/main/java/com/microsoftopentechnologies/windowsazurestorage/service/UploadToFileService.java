@@ -159,7 +159,7 @@ public class UploadToFileService extends UploadService {
                 long endTime = System.currentTimeMillis();
 
                 return new UploadResult(HttpStatus.SC_CREATED, null,
-                        file.getName(),
+                        uploadObject.getName(),
                         uploadObject.getUrl(), file.length(), uploadObject.getStorageType(),
                         startTime, endTime);
             } catch (Exception e) {
