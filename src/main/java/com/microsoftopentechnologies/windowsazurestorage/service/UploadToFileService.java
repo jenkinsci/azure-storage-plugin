@@ -17,15 +17,12 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 
 import com.azure.core.credential.AzureSasCredential;
 import com.azure.core.http.rest.PagedIterable;
-import com.azure.core.http.rest.Response;
 import com.azure.storage.file.share.ShareClient;
 import com.azure.storage.file.share.ShareDirectoryClient;
 import com.azure.storage.file.share.ShareFileClient;
 import com.azure.storage.file.share.ShareServiceClient;
 import com.azure.storage.file.share.ShareServiceClientBuilder;
 import com.azure.storage.file.share.models.ShareFileItem;
-import com.azure.storage.file.share.models.ShareFileUploadInfo;
-import com.azure.storage.file.share.models.ShareFileUploadOptions;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -42,13 +39,10 @@ import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,8 +57,6 @@ import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
 
 public class UploadToFileService extends UploadService {
-
-    private static final String EMPTY_STRING_MD5 = "68b329da9893e34099c7d8ad5cb9c940";
 
     public UploadToFileService(UploadServiceData serviceData) {
         super(serviceData);
@@ -158,50 +150,29 @@ public class UploadToFileService extends UploadService {
         private UploadResult uploadCloudFile(ShareFileClient fileClient, UploadObject uploadObject) {
             long startTime = System.currentTimeMillis();
             File file = new File(uploadObject.getSrc().getRemote());
-            try (FileInputStream fis = new FileInputStream(file);
-                 BufferedInputStream bis = new BufferedInputStream(fis)) {
+            try {
                 long bytes = Files.size(file.toPath());
                 fileClient.create(bytes);
 
-                // https://github.com/Azure/azure-sdk-for-java/issues/26867
-                if (bytes == 0L) {
-                    long endTime = System.currentTimeMillis();
-                    return new UploadResult(HttpStatus.SC_CREATED, null,
-                            EMPTY_STRING_MD5,
-                            file.getName(),
-                            uploadObject.getUrl(),
-                            bytes,
-                            uploadObject.getStorageType(),
-                            startTime,
-                            endTime
-                    );
-                }
-
-
-                ShareFileUploadOptions fileUploadOptions = new ShareFileUploadOptions(bis);
-                Response<ShareFileUploadInfo> response = fileClient
-                        .uploadWithResponse(fileUploadOptions, null, null);
+                fileClient.uploadFromFile(file.getAbsolutePath());
 
                 long endTime = System.currentTimeMillis();
 
-                String fileHash = null;
-                byte[] md5 = response.getValue().getContentMd5();
-                if (md5 != null) {
-                    fileHash = new String(md5, StandardCharsets.UTF_8);
-                }
-
-                return new UploadResult(response.getStatusCode(), null,
-                        fileHash,
+                return new UploadResult(HttpStatus.SC_CREATED, null,
                         file.getName(),
                         uploadObject.getUrl(), file.length(), uploadObject.getStorageType(),
                         startTime, endTime);
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed uploading file", e);
-                return new UploadResult(ERROR_ON_UPLOAD, null,
+                return new UploadResult(ERROR_ON_UPLOAD,
                         null,
                         file.getName(),
-                        uploadObject.getUrl(), file.length(), uploadObject.getStorageType(),
-                        startTime, 0);
+                        uploadObject.getUrl(),
+                        file.length(),
+                        uploadObject.getStorageType(),
+                        startTime,
+                        0
+                );
             }
         }
     }

@@ -12,31 +12,18 @@ public class AzureBlob implements Serializable {
 
     private final String blobName;
     private final String blobURL;
-    private final String md5;
     private final long byteSize;
     private final String storageType;
     private final String credentialsId;
 
-    @Deprecated
     public AzureBlob(
             String blobName,
             String blobURL,
-            String md5,
-            long byteSize,
-            String storageType) {
-        this(blobName, blobURL, md5, byteSize, storageType, null);
-    }
-
-    public AzureBlob(
-            String blobName,
-            String blobURL,
-            String md5,
             long byteSize,
             String storageType,
             String credentialsId) {
         this.blobName = blobName;
         this.blobURL = blobURL;
-        this.md5 = md5;
         this.byteSize = byteSize;
         this.storageType = storageType;
         this.credentialsId = credentialsId;
@@ -54,11 +41,6 @@ public class AzureBlob implements Serializable {
     @Exported
     public String getBlobURL() {
         return blobURL;
-    }
-
-    @Exported
-    public String getMd5() {
-        return md5;
     }
 
     @Exported
