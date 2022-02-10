@@ -262,10 +262,6 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
             return responseBody;
         }
 
-        public String getFileHash() {
-            return fileHash;
-        }
-
         public String getName() {
             return name;
         }
