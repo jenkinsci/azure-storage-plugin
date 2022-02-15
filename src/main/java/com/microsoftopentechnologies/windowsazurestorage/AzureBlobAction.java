@@ -9,6 +9,8 @@ import com.microsoftopentechnologies.windowsazurestorage.helper.Constants;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.Api;
 import hudson.model.Run;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.model.RunAction2;
 import org.kohsuke.stapler.StaplerRequest;
@@ -26,26 +28,18 @@ import java.net.URLDecoder;
 @ExportedBean
 public class AzureBlobAction implements RunAction2 {
 
+    private static final Logger LOGGER = Logger.getLogger(AzureBlobAction.class.getName());
     private transient Run<?, ?> build;
-    private final String containerName;
-    private final String fileShareName;
-    private final String storageType;
     private final boolean allowAnonymousAccess;
     private final AzureBlob zipArchiveBlob;
     private final List<AzureBlob> individualBlobs;
     private final String storageCredentialId;
 
     public AzureBlobAction(
-            String containerName,
-            String shareName,
-            String storageType,
             List<AzureBlob> individualBlobs,
             AzureBlob zipArchiveBlob,
             boolean allowAnonymousAccess,
             String storageCredentialId) {
-        this.containerName = containerName;
-        this.fileShareName = shareName;
-        this.storageType = storageType;
         this.individualBlobs = individualBlobs;
         this.allowAnonymousAccess = allowAnonymousAccess;
         this.zipArchiveBlob = zipArchiveBlob;
@@ -79,14 +73,6 @@ public class AzureBlobAction implements RunAction2 {
     @Override
     public void onAttached(Run<?, ?> r) {
         build = r;
-    }
-
-    public String getContainerName() {
-        return containerName;
-    }
-
-    public String getFileShareName() {
-        return fileShareName;
     }
 
     @Override
@@ -134,8 +120,9 @@ public class AzureBlobAction implements RunAction2 {
 
             try {
                 response.sendRedirect2(zipArchiveBlob.getBlobURL() + "?"
-                        + generateReadSASURL(accountInfo, zipArchiveBlob.getBlobName()));
+                        + generateReadSASURL(accountInfo, zipArchiveBlob));
             } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error downloading artifact", e);
                 response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                         "Error occurred while downloading artifact " + e.getMessage());
             }
@@ -154,8 +141,9 @@ public class AzureBlobAction implements RunAction2 {
 
                 try {
                     response.sendRedirect2(blob.getBlobURL() + "?"
-                            + generateReadSASURL(accountInfo, blob.getBlobName()));
+                            + generateReadSASURL(accountInfo, blob));
                 } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error downloading artifact", e);
                     response.sendError(Constants.HTTP_INTERNAL_SERVER_ERROR,
                             "Error occurred while downloading artifact " + e.getMessage());
                 }
@@ -178,12 +166,13 @@ public class AzureBlobAction implements RunAction2 {
         return AzureStorageAccount.convertToStorageAccountInfo(accountCredentials);
     }
 
-    private String generateReadSASURL(StorageAccountInfo storageAccountInfo, String fileName) throws Exception {
-        if (getStorageType().equalsIgnoreCase(Constants.BLOB_STORAGE)) {
-            return AzureUtils.generateBlobSASURL(storageAccountInfo, containerName, fileName,
+    private String generateReadSASURL(StorageAccountInfo storageAccountInfo, AzureBlob blob)
+            throws Exception {
+        if (blob.getStorageType().equalsIgnoreCase(Constants.BLOB_STORAGE)) {
+            return AzureUtils.generateBlobSASURL(storageAccountInfo, blob.getContainerOrFileShare(), blob.getBlobName(),
                     new BlobSasPermission().setReadPermission(true));
-        } else if (getStorageType().equalsIgnoreCase(Constants.FILE_STORAGE)) {
-            return AzureUtils.generateFileSASURL(storageAccountInfo, fileShareName, fileName,
+        } else if (blob.getStorageType().equalsIgnoreCase(Constants.FILE_STORAGE)) {
+            return AzureUtils.generateFileSASURL(storageAccountInfo, blob.getContainerOrFileShare(), blob.getBlobName(),
                     new ShareFileSasPermission().setReadPermission(true));
         }
         throw new Exception("Unknown storage type. Please re-configure your job and build again.");
@@ -195,12 +184,5 @@ public class AzureBlobAction implements RunAction2 {
 
     public Api getApi() {
         return new Api(this);
-    }
-
-    public String getStorageType() {
-        if (Constants.FILE_STORAGE.equals(storageType)) {
-            return storageType;
-        }
-        return Constants.BLOB_STORAGE;
     }
 }

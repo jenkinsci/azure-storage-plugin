@@ -119,7 +119,8 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
                         uploadItem.getFileUrl(),
                         filePath.length(),
                         Constants.FILE_STORAGE,
-                        getServiceData().getCredentialsId()
+                        getServiceData().getCredentialsId(),
+                        uploadItem.getShareName()
                         );
                 filesUploaded.addAndGet(1);
                 azureBlobs.add(azureBlob);
@@ -342,12 +343,17 @@ public abstract class UploadService extends StoragePluginService<UploadServiceDa
         for (UploadResult result : results) {
             if (result.getStatusCode() == HttpStatus.SC_CREATED) {
                 UploadServiceData serviceData = getServiceData();
+
+                String containerOrFileShareName = result.getStorageType().equals(Constants.FILE_STORAGE)
+                        ? serviceData.getFileShareName() : serviceData.getContainerName();
+
                 AzureBlob azureBlob = new AzureBlob(
                         result.getName(),
                         result.getUrl(),
                         result.getByteSize(),
                         result.getStorageType(),
-                        serviceData.getCredentialsId());
+                        serviceData.getCredentialsId(),
+                        containerOrFileShareName);
 
                 filesUploaded.addAndGet(1);
                 azureBlobs.add(azureBlob);
