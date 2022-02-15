@@ -108,7 +108,7 @@ public class UploadToFileService extends UploadService {
             throws MalformedURLException, URISyntaxException {
         String sas = generateWriteSASURL(accountInfo, client.getFilePath(), Constants.FILE_STORAGE, shareName);
 
-        return new UploadObject(client.getFilePath(), path, client.getFileUrl(), sas, Constants.BLOB_STORAGE,
+        return new UploadObject(client.getFilePath(), path, client.getFileUrl(), sas, Constants.FILE_STORAGE,
                 client.getAccountName(), shareName, properties, metadata);
     }
 

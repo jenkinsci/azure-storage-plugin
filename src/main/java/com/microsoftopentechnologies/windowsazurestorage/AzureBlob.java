@@ -10,6 +10,7 @@ public class AzureBlob implements Serializable {
 
     private static final long serialVersionUID = -1873484056669542679L;
 
+    private final String containerOrFileShare;
     private final String blobName;
     private final String blobURL;
     private final long byteSize;
@@ -21,12 +22,15 @@ public class AzureBlob implements Serializable {
             String blobURL,
             long byteSize,
             String storageType,
-            String credentialsId) {
+            String credentialsId,
+            String containerOrFileShare
+    ) {
         this.blobName = blobName;
         this.blobURL = blobURL;
         this.byteSize = byteSize;
         this.storageType = storageType;
         this.credentialsId = credentialsId;
+        this.containerOrFileShare = containerOrFileShare;
     }
 
     @Exported
@@ -51,6 +55,10 @@ public class AzureBlob implements Serializable {
     @Exported
     public String getStorageType() {
         return storageType;
+    }
+
+    public String getContainerOrFileShare() {
+        return containerOrFileShare;
     }
 
     @Override
