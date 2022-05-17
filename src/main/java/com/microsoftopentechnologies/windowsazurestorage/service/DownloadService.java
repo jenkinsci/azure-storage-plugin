@@ -15,7 +15,7 @@
 
 package com.microsoftopentechnologies.windowsazurestorage.service;
 
-import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.specialized.BlobClientBase;
 import com.azure.storage.file.share.ShareFileClient;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
@@ -57,8 +57,8 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         @Override
         public void run() {
             try {
-                if (downloadItem instanceof BlobClient) {
-                    downloadBlob((BlobClient) downloadItem);
+                if (downloadItem instanceof BlobClientBase) {
+                    downloadBlob((BlobClientBase) downloadItem);
                 } else {
                     downloadSingleFile((ShareFileClient) downloadItem);
                 }
@@ -113,7 +113,7 @@ public abstract class DownloadService extends StoragePluginService<DownloadServi
         }
     }
 
-    protected void downloadBlob(BlobClient blob) throws WAStorageException {
+    protected void downloadBlob(BlobClientBase blob) throws WAStorageException {
         try {
             if (getServiceData().isVerbose()) {
                 println("Downloading file:" + blob.getBlobUrl());
