@@ -80,7 +80,9 @@ public class DownloadFromFileService extends DownloadService {
                     ShareDirectoryClient subdirectoryClient = shareClient.getDirectoryClient(
                             prependDirectoryPathIfRequired(cloudFileDirectory.getDirectoryPath(), fileItem.getName())
                     );
-                    return scanFileItems(shareClient, subdirectoryClient, subdirectoryClient.listFilesAndDirectories());
+                    // Do not exit here and break the recursion (removed return statement)
+                    // https://github.com/jenkinsci/azure-storage-plugin/issues/232
+                    scanFileItems(shareClient, subdirectoryClient, subdirectoryClient.listFilesAndDirectories());
                 }
             }
 
