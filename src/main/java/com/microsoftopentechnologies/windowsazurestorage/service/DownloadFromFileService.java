@@ -61,10 +61,16 @@ public class DownloadFromFileService extends DownloadService {
     private int scanFileItems(ShareClient shareClient,
                               ShareDirectoryClient cloudFileDirectory,
                               PagedIterable<ShareFileItem> fileItems
-    )
-            throws URISyntaxException {
+    ) {
+        return scanFileItems(shareClient, cloudFileDirectory, fileItems, 0);
+    }
+
+    private int scanFileItems(ShareClient shareClient,
+                              ShareDirectoryClient cloudFileDirectory,
+                              PagedIterable<ShareFileItem> fileItems,
+                              int filesNeedDownload
+    ) {
         final DownloadServiceData data = getServiceData();
-        int filesNeedDownload = 0;
         for (final ShareFileItem fileItem : fileItems) {
             if (fileItem.isDirectory()) {
 
@@ -80,7 +86,9 @@ public class DownloadFromFileService extends DownloadService {
                     ShareDirectoryClient subdirectoryClient = shareClient.getDirectoryClient(
                             prependDirectoryPathIfRequired(cloudFileDirectory.getDirectoryPath(), fileItem.getName())
                     );
-                    return scanFileItems(shareClient, subdirectoryClient, subdirectoryClient.listFilesAndDirectories());
+                    filesNeedDownload = scanFileItems(shareClient, subdirectoryClient,
+                            subdirectoryClient.listFilesAndDirectories(),
+                            filesNeedDownload);
                 }
             }
 
