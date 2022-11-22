@@ -166,7 +166,6 @@ public final class AzureUtils {
      * @param fileName
      * @param shareName      container name
      * @return SAS URL
-     * @throws Exception
      */
     public static String generateFileSASURL(
             StorageAccountInfo storageAccount,
