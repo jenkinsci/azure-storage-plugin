@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.18</version>
+        <version>4.51</version>
     </parent>
 
     <artifactId>windows-azure-storage</artifactId>
@@ -16,11 +16,7 @@
     <properties>
         <changelist>9999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/azure-storage-plugin</gitHubRepo>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jenkins.version>2.277.2</jenkins.version>
-        <java.level>8</java.level>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
     <licenses>
@@ -118,7 +114,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-2.277.x</artifactId>
-                <version>909.vf028101f1bfa</version>
+                <version>984.vb5eaac999a7e</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
