@@ -175,6 +175,15 @@
                     <excludes>com/microsoftopentechnologies/windowsazurestorage/Messages.java</excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <forkCount>1C</forkCount>
+                    <parallel>all</parallel>
+                    <useUnlimitedThreads>true</useUnlimitedThreads>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
