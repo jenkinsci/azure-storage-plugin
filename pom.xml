@@ -10,7 +10,6 @@
     <version>${changelist}</version>
     <packaging>hpi</packaging>
     <name>Azure Storage plugin</name>
-    <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
     <url>https://github.com/jenkinsci/azure-storage-plugin</url>
 
     <properties>
