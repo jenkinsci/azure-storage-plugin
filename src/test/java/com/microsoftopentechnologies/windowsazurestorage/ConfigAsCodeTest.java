@@ -24,7 +24,7 @@ public class ConfigAsCodeTest {
     public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
 
     @Test
-    @ConfiguredWithCode("configuration-as-code.yml")
+    @ConfiguredWithCode("com/microsoftopentechnologies/windowsazurestorage/configuration-as-code.yml")
     public void should_support_configuration_as_code() {
         AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(0);
@@ -38,7 +38,7 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    @ConfiguredWithCode("configuration-as-code.yml")
+    @ConfiguredWithCode("com/microsoftopentechnologies/windowsazurestorage/configuration-as-code.yml")
     public void export_configuration() throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
