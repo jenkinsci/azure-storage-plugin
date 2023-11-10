@@ -4,6 +4,7 @@ credentials:
       - credentials:
           - azureStorageAccount:
               blobEndpointURL: "https://blob.core.windows.net/"
+              cdnEndpointURL: "https://cdn-resource-name.azureedge.net/"
               description: "Account"
               id: "storage-account"
               scope: GLOBAL

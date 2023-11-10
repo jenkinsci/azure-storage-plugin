@@ -23,15 +23,16 @@ import java.util.UUID;
 To execute the integration tests you need to set the credentials env variables (the ones that don't have a default) and run mvn failsafe:integration-test
 */
 public class IntegrationTest {
-    @ClassRule 
+    @ClassRule
     public static JenkinsRule j = new JenkinsRule();
-    
+
     protected static class TestEnvironment {
         public final String azureStorageAccountName;
         public final String azureStorageAccountKey1;
         public final String azureStorageAccountKey2;
-        
+
         public final String blobURL;
+        public final String cdnURL;
         public final StorageAccountInfo sampleStorageAccount;
         public static final int TOTAL_FILES = 50;
         public HashMap<String, File> downloadFileList = new HashMap<>();
@@ -47,17 +48,20 @@ public class IntegrationTest {
             azureStorageAccountName = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_NAME");
             azureStorageAccountKey1 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY1");
             azureStorageAccountKey2 = TestEnvironment.loadFromEnv("AZURE_STORAGE_TEST_STORAGE_ACCOUNT_KEY2");
-            
+
             blobURL = Utils.DEF_BLOB_URL.replace("https://",
                     String.format("https://%s.", azureStorageAccountName));
-            AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL);
-            sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL);
+            cdnURL = "";
+            AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(azureStorageAccountName, azureStorageAccountKey1, blobURL, cdnURL);
+            sampleStorageAccount = new StorageAccountInfo(azureStorageAccountName,azureStorageAccountKey1, blobURL, cdnURL);
             containerName = name;
             shareName = name;
         }
+
         private static String loadFromEnv(final String name) {
             return TestEnvironment.loadFromEnv(name, "");
         }
+
         private static String loadFromEnv(final String name, final String defaultValue) {
             final String value = System.getenv(name);
             if (value == null || value.isEmpty()) {

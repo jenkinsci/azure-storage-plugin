@@ -18,11 +18,12 @@ public class StorageAccountInfoTest {
     private StorageAccountInfo st;
     private String stName = "test1";
     private String stKey = "123";
-    private String stURL = "http://test1";
-    
+    private String stBlobURL = "http://test1";
+    private String stCdnURL = "http://cdn-test1";
+
     @Before
     public void setUp() {
-        st = new StorageAccountInfo(stName, stKey, stURL);
+        st = new StorageAccountInfo(stName, stKey, stBlobURL, stCdnURL);
     }
 
     /**
@@ -77,7 +78,7 @@ public class StorageAccountInfoTest {
     public void testGetBlobEndPointURL() {
         System.out.println("getBlobEndPointURL");
         StorageAccountInfo instance = st;
-        assertEquals(stURL, instance.getBlobEndPointURL());
+        assertEquals(stBlobURL, instance.getBlobEndPointURL());
     }
 
     /**
@@ -87,9 +88,30 @@ public class StorageAccountInfoTest {
     public void testSetBlobEndPointURL() {
         System.out.println("setBlobEndPointURL");
         StorageAccountInfo instance = st;
-        assertEquals(stURL, instance.getBlobEndPointURL());
+        assertEquals(stBlobURL, instance.getBlobEndPointURL());
         instance.setBlobEndPointURL("abcd");
         assertEquals("abcd", instance.getBlobEndPointURL());
     }
-    
+
+    /**
+     * Test of getCdnEndPointURL method, of class StorageAccountInfo.
+     */
+    @Test
+    public void testGetCdnEndPointURL() {
+        System.out.println("getCdnEndPointURL");
+        StorageAccountInfo instance = st;
+        assertEquals(stCdnURL, instance.getCdnEndPointURL());
+    }
+
+    /**
+     * Test of setCdnEndPointURL method, of class StorageAccountInfo.
+     */
+    @Test
+    public void testSetCdnEndPointURL() {
+        System.out.println("setCdnEndPointURL");
+        StorageAccountInfo instance = st;
+        assertEquals(stCdnURL, instance.getCdnEndPointURL());
+        instance.setCdnEndPointURL("cdn-123");
+        assertEquals("cdn-123", instance.getCdnEndPointURL());
+    }
 }

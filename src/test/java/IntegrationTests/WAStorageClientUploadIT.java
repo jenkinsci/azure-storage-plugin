@@ -99,7 +99,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Test(expected = WAStorageException.class)
     public void testInvalidateStorageAccount1() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
-        AzureUtils.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, "asdhasdh@asdas!@234=", testEnv.blobURL), false);
+        AzureUtils.validateStorageAccount(new StorageAccountInfo(testEnv.azureStorageAccountName, "asdhasdh@asdas!@234=", testEnv.blobURL, testEnv.cdnURL), false);
         if (testEnv.container.exists()) {
             testEnv.container.delete();
         }
@@ -111,7 +111,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Test(expected = WAStorageException.class)
     public void testInvalidateStorageAccount2() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
-        AzureUtils.validateStorageAccount(new StorageAccountInfo("rfguthio123", testEnv.azureStorageAccountKey2, testEnv.blobURL), false);
+        AzureUtils.validateStorageAccount(new StorageAccountInfo("rfguthio123", testEnv.azureStorageAccountKey2, testEnv.blobURL, testEnv.cdnURL), false);
         if (testEnv.container.exists()) {
             testEnv.container.delete();
         }
@@ -123,7 +123,7 @@ public class WAStorageClientUploadIT extends IntegrationTest {
     @Test(expected = WAStorageException.class)
     public void testInvalidateStorageAccount3() throws Exception {
         System.out.println("Testing Invalid StorageAccount");
-        AzureUtils.validateStorageAccount(new StorageAccountInfo(null, null, null), false);
+        AzureUtils.validateStorageAccount(new StorageAccountInfo(null, null, null, null), false);
         if (testEnv.container.exists()) {
             testEnv.container.delete();
         }

@@ -33,6 +33,7 @@ public class ConfigAsCodeTest {
         assertThat(credentials.getDescription(), is("Account"));
         assertThat(credentials.getStorageAccountName(), is("a-storage-account"));
         assertThat(credentials.getBlobEndpointURL(), is("https://a-storage-account.blob.core.windows.net/"));
+        assertThat(credentials.getCdnEndpointURL(), is("https://cdn-resource-name.azureedge.net/"));
         assertThat(credentials.getId(), is("storage-account"));
         assertNotNull(credentials.getStorageKey());
     }
@@ -65,6 +66,7 @@ public class ConfigAsCodeTest {
         assertThat(mapping.getScalarValue("description"), is("Account"));
         assertThat(mapping.getScalarValue("storageAccountName"), is("a-storage-account"));
         assertThat(mapping.getScalarValue("blobEndpointURL"), is("https://a-storage-account.blob.core.windows.net/"));
+        assertThat(mapping.getScalarValue("cdnEndpointURL"), is("https://cdn-resource-name.azureedge.net/"));
         assertThat(mapping.getScalarValue("id"), is("storage-account"));
         assertNotNull(mapping.getScalarValue("storageKey"));
     }
