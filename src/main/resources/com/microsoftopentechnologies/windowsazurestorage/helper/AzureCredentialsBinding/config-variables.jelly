@@ -14,4 +14,7 @@
     <f:entry title="${%BlobEndpointUrlVariable}" field="blobEndpointUrlVariable" help="/plugin/windows-azure-storage/help-blobEndPointURL.html">
         <f:textbox default="${descriptor.getDefaultBlobEndpointUrlVariable()}"/>
     </f:entry>
+    <f:entry title="${%CdnEndpointUrlVariable}" field="cdnEndpointUrlVariable" help="/plugin/windows-azure-storage/help-cdnEndPointURL.html">
+        <f:textbox default="${descriptor.getDefaultBlobEndpointUrlVariable()}"/>
+    </f:entry>
 </j:jelly>

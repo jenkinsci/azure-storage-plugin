@@ -26,10 +26,12 @@ public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
     public static final String DEFAULT_STORAGE_ACCOUNT_NAME = "AZURE_STORAGE_ACCOUNT_NAME";
     public static final String DEFAULT_STORAGE_ACCOUNT_KEY = "AZURE_STORAGE_ACCOUNT_KEY";
     public static final String DEFAULT_BLOB_ENDPOINT_URL = "AZURE_BLOB_ENDPOINT_URL";
+    public static final String DEFAULT_CDN_ENDPOINT_URL = "AZURE_CDN_ENDPOINT_URL";
 
     private String storageAccountNameVariable;
     private String storageAccountKeyVariable;
     private String blobEndpointUrlVariable;
+    private String cdnEndpointUrlVariable;
 
     @DataBoundConstructor
     public AzureCredentialsBinding(String credentialsId) {
@@ -49,6 +51,11 @@ public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
     @DataBoundSetter
     public void setBlobEndpointUrlVariable(String blobEndpointUrlVariable) {
         this.blobEndpointUrlVariable = blobEndpointUrlVariable;
+    }
+
+    @DataBoundSetter
+    public void setCdnEndpointUrlVariable(String cdnEndpointUrlVariable) {
+        this.cdnEndpointUrlVariable = cdnEndpointUrlVariable;
     }
 
     public String getStorageAccountNameVariable() {
@@ -72,6 +79,13 @@ public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
         return DEFAULT_BLOB_ENDPOINT_URL;
     }
 
+    public String getCdnEndpointUrlVariable() {
+        if (!StringUtils.isBlank(cdnEndpointUrlVariable)) {
+            return cdnEndpointUrlVariable;
+        }
+        return DEFAULT_CDN_ENDPOINT_URL;
+    }
+
     @Override
     protected Class<AzureStorageAccount> type() {
         return AzureStorageAccount.class;
@@ -88,6 +102,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
         variableMap.put(getStorageAccountNameVariable(), credentials.getStorageAccountName());
         variableMap.put(getStorageAccountKeyVariable(), credentials.getPlainStorageKey());
         variableMap.put(getBlobEndpointUrlVariable(), credentials.getBlobEndpointURL());
+        variableMap.put(getCdnEndpointUrlVariable(), credentials.getCdnEndpointURL());
         return new MultiEnvironment(variableMap);
     }
 
@@ -128,6 +143,10 @@ public class AzureCredentialsBinding extends MultiBinding<AzureStorageAccount> {
 
         public static String getDefaultBlobEndpointUrlVariable() {
             return DEFAULT_BLOB_ENDPOINT_URL;
+        }
+
+        public static String getDefaultCdnEndpointUrlVariable() {
+            return DEFAULT_CDN_ENDPOINT_URL;
         }
     }
 }

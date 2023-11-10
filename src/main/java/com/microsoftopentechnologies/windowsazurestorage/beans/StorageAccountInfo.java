@@ -30,16 +30,22 @@ public class StorageAccountInfo {
     private String storageAccountKey;
 
     /**
-     * Azure stoarge blob end point url.
+     * Azure storage blob endpoint URL.
      */
     private String blobEndPointURL;
 
+    /**
+     * Azure storage CDN endpoint URL.
+     */
+    private String cdnEndPointURL;
+
     @DataBoundConstructor
     public StorageAccountInfo(String storageAccName, String storageAccountKey,
-                              String blobEndPointURL) {
+                              String blobEndPointURL, String cdnEndPointURL) {
         this.storageAccName = storageAccName;
         this.blobEndPointURL = blobEndPointURL;
         this.storageAccountKey = storageAccountKey;
+        this.cdnEndPointURL = cdnEndPointURL;
     }
 
     public String getStorageAccName() {
@@ -64,5 +70,13 @@ public class StorageAccountInfo {
 
     public void setBlobEndPointURL(String blobEndPointURL) {
         this.blobEndPointURL = blobEndPointURL;
+    }
+
+    public String getCdnEndPointURL() {
+        return cdnEndPointURL;
+    }
+
+    public void setCdnEndPointURL(String cdnEndPointURL) {
+        this.cdnEndPointURL = cdnEndPointURL;
     }
 }
