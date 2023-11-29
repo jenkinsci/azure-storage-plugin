@@ -10,7 +10,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.google.gson.Gson;
+
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -44,13 +44,11 @@ public class CredentialMigrationTest {
     "<storageAccName>abcdef</storageAccName>\n" +
     "<storageAccountKey>12345</storageAccountKey>\n" +
     "<blobEndPointURL>http://test1/</blobEndPointURL>\n" +
-    "<cdnEndPointURL>http://cdn-test1/</cdnEndPointURL>\n" +
     "</com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>\n" +
     "<com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>\n" +
     "<storageAccName>12345</storageAccName>\n" +
     "<storageAccountKey>abcdef</storageAccountKey>\n" +
     "<blobEndPointURL>http://test2/</blobEndPointURL>\n" +
-    "<cdnEndPointURL>http://cdn-test2/</cdnEndPointURL>\n" +
     "</com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>\n" +
     "</storageAccounts>\n" +
     "</com.microsoftopentechnologies.windowsazurestorage.AzureStoragePublisher_-WAStorageDescriptor>";
@@ -96,17 +94,12 @@ public class CredentialMigrationTest {
 
         assertEquals(2, s.getCredentials(Domain.global()).size());
 
-        AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL, storageCdnURL);
+        AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL, "");
         AzureStorageAccount storageCred = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(AzureStorageAccount.class, jenkinsInstance, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(u.getId()));
 
-        System.out.println("BELOW THIS LINE");
-        System.out.println(new Gson().toJson(u));
-        System.out.println(new Gson().toJson(storageCred));
-        System.out.println("ABOVE THIS LINE");
         assertEquals(u.getStorageAccountName(), storageCred.getStorageAccountName());
         assertEquals(u.getBlobEndpointURL(), storageCred.getBlobEndpointURL());
-        assertEquals(u.getCdnEndpointURL(), storageCred.getCdnEndpointURL());
         assertEquals(u.getSecureKey().getPlainText(), storageCred.getPlainStorageKey());
 
     }
@@ -119,8 +112,8 @@ public class CredentialMigrationTest {
         System.out.println("getOldStorageConfig");
 
         List<StorageAccountInfo> expResult = new ArrayList<StorageAccountInfo>();
-        expResult.add(new StorageAccountInfo("abcdef", "12345", "http://test1/", "http://cdn-test1/"));
-        expResult.add(new StorageAccountInfo("12345", "abcdef", "http://test2/", "http://cdn-test2/"));
+        expResult.add(new StorageAccountInfo("abcdef", "12345", "http://test1/", ""));
+        expResult.add(new StorageAccountInfo("12345", "abcdef", "http://test2/", ""));
 
         File configFile = testFolder.newFile("test.xml");
         FileUtils.writeStringToFile(configFile, correctConfigContent);
