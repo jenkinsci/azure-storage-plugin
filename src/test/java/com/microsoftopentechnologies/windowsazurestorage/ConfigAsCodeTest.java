@@ -11,7 +11,7 @@ import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
 import io.jenkins.plugins.casc.model.CNode;
 import io.jenkins.plugins.casc.model.Mapping;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,11 +20,11 @@ import static org.junit.Assert.assertNotNull;
 
 public class ConfigAsCodeTest {
 
-    @Rule
-    public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
+    @ClassRule
+    @ConfiguredWithCode("configuration-as-code.yml")
+    public static JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
 
     @Test
-    @ConfiguredWithCode("com/microsoftopentechnologies/windowsazurestorage/configuration-as-code.yml")
     public void should_support_configuration_as_code() {
         AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(0);
@@ -38,7 +38,6 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    @ConfiguredWithCode("com/microsoftopentechnologies/windowsazurestorage/configuration-as-code.yml")
     public void should_support_configuration_as_code_with_cdn() {
         AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(1);
@@ -53,7 +52,6 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    @ConfiguredWithCode("com/microsoftopentechnologies/windowsazurestorage/configuration-as-code.yml")
     public void export_configuration() throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
@@ -85,7 +83,6 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    @ConfiguredWithCode("com/microsoftopentechnologies/windowsazurestorage/configuration-as-code.yml")
     public void export_configuration_with_cdn() throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
