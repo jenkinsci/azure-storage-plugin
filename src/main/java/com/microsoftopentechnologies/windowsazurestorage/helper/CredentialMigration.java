@@ -68,7 +68,7 @@ public final class CredentialMigration {
                 String blobURL = elem.getElementsByTagName("blobEndPointURL").item(0)
                         .getChildNodes().item(0).getNodeValue();
 
-                storages.add(new StorageAccountInfo(accName, accKey, blobURL));
+                storages.add(new StorageAccountInfo(accName, accKey, blobURL, ""));
             }
         }
 
@@ -119,7 +119,7 @@ public final class CredentialMigration {
 
                 AzureStorageAccount.StorageAccountCredential u =
                         new AzureStorageAccount.StorageAccountCredential(
-                                storageAccount, storageAccountKey, storageBlobURL);
+                                storageAccount, storageAccountKey, storageBlobURL, "");
                 AzureStorageAccount cred = CredentialsMatchers.firstOrNull(
                         CredentialsProvider.lookupCredentials(
                                 AzureStorageAccount.class,
@@ -142,7 +142,7 @@ public final class CredentialMigration {
                         "credential for " + storageAccount,
                         storageAccount,
                         storageAccountKey,
-                        storageBlobURL);
+                        storageBlobURL, "");
                 final SecurityContext securityContext = ACL.impersonate(ACL.SYSTEM);
 
                 try {

@@ -354,6 +354,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             listener.getLogger().println(Messages.Client_SA_val_fail());
             listener.getLogger().println(storageAccountInfo.getStorageAccName());
             listener.getLogger().println(storageAccountInfo.getBlobEndPointURL());
+            listener.getLogger().println(storageAccountInfo.getCdnEndPointURL());
             run.setResult(Result.UNSTABLE);
         }
     }

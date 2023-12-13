@@ -635,6 +635,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          * @param was_storageAccName
          * @param was_storageAccountKey
          * @param was_blobEndPointURL
+         * @param was_cdnEndPointURL
          * @return
          * @throws IOException
          * @throws ServletException
@@ -643,7 +644,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
                 //CHECKSTYLE:OFF
                 @QueryParameter String was_storageAccName,
                 @QueryParameter String was_storageAccountKey,
-                @QueryParameter String was_blobEndPointURL) throws IOException, ServletException {
+                @QueryParameter String was_blobEndPointURL,
+                @QueryParameter String was_cdnEndPointURL) throws IOException, ServletException {
             //CHECKSTYLE:ON
 
             if (StringUtils.isBlank(was_storageAccName)) {
@@ -657,11 +659,12 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
 
             String blobEndPointURL = was_blobEndPointURL;
+            String cdnEndPointURL = was_cdnEndPointURL;
             try {
-                // Get formatted blob end point URL.
+                // Get formatted blob endpoint URL.
                 blobEndPointURL = Utils.getBlobEP(blobEndPointURL);
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
-                        was_storageAccName, was_storageAccountKey, blobEndPointURL);
+                        was_storageAccName, was_storageAccountKey, blobEndPointURL, cdnEndPointURL);
                 AzureUtils.validateStorageAccount(storageAccount, false);
             } catch (Exception e) {
                 return FormValidation.error(e, "Error : " + e.getMessage());

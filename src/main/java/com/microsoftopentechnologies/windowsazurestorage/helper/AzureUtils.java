@@ -40,11 +40,15 @@ import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageExc
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Collections;
+
+import org.apache.commons.lang.StringUtils;
 
 public final class AzureUtils {
     private static final String TEST_CNT_NAME = "testcheckfromjenkins";
@@ -70,9 +74,18 @@ public final class AzureUtils {
                     storageAccount, TEST_CNT_NAME, false, allowRetry, null);
             container.exists();
 
+            // Check if the CDN endpoint exists
+            if (!StringUtils.isBlank(storageAccount.getCdnEndPointURL())) {
+                URL cdnEndpointURL = new URL(storageAccount.getCdnEndPointURL());
+                HttpURLConnection huc = (HttpURLConnection) cdnEndpointURL.openConnection();
+                huc.setRequestMethod("HEAD");
+
+                huc.getResponseCode(); // Throws exception if no response received
+            }
         } catch (Exception e) {
             throw new WAStorageException(Messages.Client_SA_val_fail(), e);
         }
+
         return true;
     }
 

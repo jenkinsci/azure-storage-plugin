@@ -9,3 +9,11 @@ credentials:
               scope: GLOBAL
               storageAccountName: "a-storage-account"
               storageKey: "Password12"
+          - azureStorageAccount:
+              blobEndpointURL: "https://blob.core.windows.net/"
+              cdnEndpointURL: "https://cdn-resource-name.azureedge.net/"
+              description: "CDN Enabled Account"
+              id: "cdn-enabled-storage-account"
+              scope: GLOBAL
+              storageAccountName: "b-storage-account"
+              storageKey: "Password13"

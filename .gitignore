@@ -11,3 +11,4 @@ index.html
 *.dylib
 .env
 testshare*
+.vscode/

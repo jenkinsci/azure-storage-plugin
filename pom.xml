@@ -10,13 +10,12 @@
     <version>${changelist}</version>
     <packaging>hpi</packaging>
     <name>Azure Storage plugin</name>
-    <description>Uploads build artifacts or downloads build dependencies using Azure storage</description>
     <url>https://github.com/jenkinsci/azure-storage-plugin</url>
 
     <properties>
         <changelist>9999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/azure-storage-plugin</gitHubRepo>
-        <jenkins.version>2.361.4</jenkins.version>
+        <jenkins.version>2.387.3</jenkins.version>
     </properties>
 
     <licenses>
@@ -25,6 +24,18 @@
             <comments>Licensed under the Apache License, Version 2.0 (the "License").</comments>
         </license>
     </licenses>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.387.x</artifactId>
+                <version>2543.vfb_1a_5fb_9496d</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -35,7 +46,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>copyartifact</artifactId>
-            <version>1.46</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -82,7 +92,6 @@
         <dependency>
             <groupId>io.jenkins.blueocean</groupId>
             <artifactId>blueocean-rest</artifactId>
-            <version>1.24.6</version>
         </dependency>
 
         <dependency>
@@ -97,21 +106,9 @@
         </dependency>
     </dependencies>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.277.x</artifactId>
-                <version>984.vb5eaac999a7e</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <scm>
         <connection>scm:git:ssh://github.com/${gitHubRepo}.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/${gitHubRepo}.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
         <url>https://github.com/${gitHubRepo}</url>
         <tag>${scmTag}</tag>
     </scm>
@@ -164,7 +161,6 @@
                 </executions>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
-                    <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <!--
                     Exclude the generated sources.

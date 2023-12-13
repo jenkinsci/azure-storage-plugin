@@ -26,13 +26,14 @@ public class CredentialRenameTest {
         String storageAccount = "name";
         String storageAccountKey = "key";
         String storageBlobURL = "https://blob.core.windows.net/";
+        String storageCdnURL = "https://cdn-resource-name.azureedge.net/";
 
         CredentialsStore s = CredentialsProvider.lookupStores(j.jenkins).iterator().next();
 
         assertEquals(1, s.getCredentials(Domain.global()).size());
 
         AzureStorageAccount.StorageAccountCredential expected = new AzureStorageAccount.StorageAccountCredential(
-                storageAccount, storageAccountKey, storageBlobURL);
+                storageAccount, storageAccountKey, storageBlobURL, storageCdnURL);
 
         List<AzureStorageAccount> azureStorageAccounts = CredentialsProvider.lookupCredentials(
                 AzureStorageAccount.class,
@@ -44,7 +45,8 @@ public class CredentialRenameTest {
         AzureStorageAccount storageCred = azureStorageAccounts.get(0);
 
         assertEquals(expected.getStorageAccountName(), storageCred.getStorageAccountName());
-        assertEquals(expected.getEndpointURL(), storageCred.getBlobEndpointURL());
+        assertEquals(expected.getBlobEndpointURL(), storageCred.getBlobEndpointURL());
+        assertEquals(expected.getCdnEndpointURL(), storageCred.getCdnEndpointURL());
         assertEquals(expected.getSecureKey().getPlainText(), storageCred.getPlainStorageKey());
     }
 }

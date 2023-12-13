@@ -92,12 +92,12 @@ public class CredentialMigrationTest {
 
         assertEquals(2, s.getCredentials(Domain.global()).size());
                 
-        AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL);
+        AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL, "");
         AzureStorageAccount storageCred = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(AzureStorageAccount.class, jenkinsInstance, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(u.getId()));
 
         assertEquals(u.getStorageAccountName(), storageCred.getStorageAccountName());
-        assertEquals(u.getEndpointURL(), storageCred.getBlobEndpointURL());
+        assertEquals(u.getBlobEndpointURL(), storageCred.getBlobEndpointURL());
         assertEquals(u.getSecureKey().getPlainText(), storageCred.getPlainStorageKey());
         
     }
@@ -110,8 +110,8 @@ public class CredentialMigrationTest {
         System.out.println("getOldStorageConfig");
 
         List<StorageAccountInfo> expResult = new ArrayList<StorageAccountInfo>();
-        expResult.add(new StorageAccountInfo("abcdef", "12345", "http://test1/"));
-        expResult.add(new StorageAccountInfo("12345", "abcdef", "http://test2/"));
+        expResult.add(new StorageAccountInfo("abcdef", "12345", "http://test1/", ""));
+        expResult.add(new StorageAccountInfo("12345", "abcdef", "http://test2/", ""));
         
         File configFile = testFolder.newFile("test.xml");
         FileUtils.writeStringToFile(configFile, correctConfigContent);

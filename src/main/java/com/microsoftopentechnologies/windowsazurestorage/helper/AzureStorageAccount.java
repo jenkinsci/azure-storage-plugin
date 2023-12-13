@@ -50,18 +50,25 @@ public class AzureStorageAccount extends BaseStandardCredentials {
         private final String storageAccountName;
         private final Secret storageAccountKey;
         private final String blobEndpointURL;
+        private final String cdnEndpointURL;
 
         public StorageAccountCredential(
                 String storageAccountName,
                 String storageKey,
-                String endpointURL) {
+                String blobEndpointURL,
+                String cdnEndpointURL) {
             this.storageAccountName = storageAccountName;
             this.storageAccountKey = Secret.fromString(storageKey);
-            String url = endpointURL;
-            if (StringUtils.isBlank(endpointURL)) {
+            String url = blobEndpointURL;
+            if (StringUtils.isBlank(blobEndpointURL)) {
                 url = Constants.DEF_BLOB_URL;
             }
             this.blobEndpointURL = joinAccountNameAndEndpoint(storageAccountName, url);
+            if (StringUtils.isBlank(cdnEndpointURL)) {
+                this.cdnEndpointURL = "";
+            } else {
+                this.cdnEndpointURL = cdnEndpointURL;
+            }
         }
 
         /**
@@ -85,6 +92,7 @@ public class AzureStorageAccount extends BaseStandardCredentials {
             this.storageAccountName = "";
             this.storageAccountKey = Secret.fromString("");
             this.blobEndpointURL = Constants.DEF_BLOB_URL;
+            this.cdnEndpointURL = "";
         }
 
         public boolean isValidStorageCredential() throws WAStorageException {
@@ -115,9 +123,13 @@ public class AzureStorageAccount extends BaseStandardCredentials {
             return storageAccountKey;
         }
 
-        public String getEndpointURL() {
+        public String getBlobEndpointURL() {
             // joined in getter as constructor isn't called when reading saved configuration
             return joinAccountNameAndEndpoint(storageAccountName, blobEndpointURL);
+        }
+
+        public String getCdnEndpointURL() {
+            return cdnEndpointURL;
         }
 
         public String getId() {
@@ -136,10 +148,11 @@ public class AzureStorageAccount extends BaseStandardCredentials {
             String description,
             String storageAccountName,
             String storageKey,
-            String blobEndpointURL
+            String blobEndpointURL,
+            String cdnEndpointURL
     ) {
         super(scope, id, description);
-        storageData = new StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL);
+        storageData = new StorageAccountCredential(storageAccountName, storageKey, blobEndpointURL, cdnEndpointURL);
     }
 
     public static AzureStorageAccount.StorageAccountCredential getStorageAccountCredential(Item owner,
@@ -213,7 +226,11 @@ public class AzureStorageAccount extends BaseStandardCredentials {
     }
 
     public String getBlobEndpointURL() {
-        return storageData.getEndpointURL();
+        return storageData.getBlobEndpointURL();
+    }
+
+    public String getCdnEndpointURL() {
+        return storageData.getCdnEndpointURL();
     }
 
     public StorageAccountCredential getStorageCred() {
@@ -235,11 +252,12 @@ public class AzureStorageAccount extends BaseStandardCredentials {
         public FormValidation doVerifyConfiguration(
                 @QueryParameter String storageAccountName,
                 @QueryParameter Secret storageKey,
-                @QueryParameter String blobEndpointURL) {
+                @QueryParameter String blobEndpointURL,
+                @QueryParameter String cdnEndpointURL) {
 
             try {
                 StorageAccountInfo storageAccount = new StorageAccountInfo(
-                        storageAccountName, storageKey.getPlainText(), blobEndpointURL);
+                        storageAccountName, storageKey.getPlainText(), blobEndpointURL, cdnEndpointURL);
                 AzureUtils.validateStorageAccount(storageAccount, false);
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
@@ -252,7 +270,7 @@ public class AzureStorageAccount extends BaseStandardCredentials {
 
     public static StorageAccountInfo convertToStorageAccountInfo(StorageAccountCredential storageCreds) {
         return new StorageAccountInfo(storageCreds.getStorageAccountName(), storageCreds.getStorageAccountKey(),
-                storageCreds.getEndpointURL());
+                storageCreds.getBlobEndpointURL(), storageCreds.getCdnEndpointURL());
     }
 
 }
