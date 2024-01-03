@@ -13,8 +13,14 @@ import io.jenkins.blueocean.rest.model.BlueArtifact;
 
 @Extension(optional = true)
 public final class AzureStorageBlueArtifact extends BlueArtifact {
-    private final AzureBlobAction action;
-    private final AzureBlob artifact;
+    private AzureBlobAction action;
+    private AzureBlob artifact;
+
+    public AzureStorageBlueArtifact() {
+        super(null);
+        this.action = null;
+        this.artifact = null;
+    }
 
     public AzureStorageBlueArtifact(AzureBlobAction action, AzureBlob artifact, Link parent) {
         super(parent);
