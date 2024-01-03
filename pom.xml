@@ -92,6 +92,7 @@
         <dependency>
             <groupId>io.jenkins.blueocean</groupId>
             <artifactId>blueocean-rest</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
