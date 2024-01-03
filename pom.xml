@@ -13,7 +13,7 @@
     <url>https://github.com/jenkinsci/azure-storage-plugin</url>
 
     <properties>
-        <changelist>9999-SNAPSHOT</changelist>
+        <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/azure-storage-plugin</gitHubRepo>
         <jenkins.version>2.387.3</jenkins.version>
     </properties>
