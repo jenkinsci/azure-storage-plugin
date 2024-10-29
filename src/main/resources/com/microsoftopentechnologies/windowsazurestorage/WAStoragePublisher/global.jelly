@@ -1,35 +1,36 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:sf="/lib/credentials" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:section title="${%WindowsAzureStorage_title}" id="windows-azure-storage">
-        <f:entry title="${%entry_title}" >
-            <f:entry var="storageAccount" items="${descriptor.storageAccounts}" noAddButton="true" minimum="1">
-                <table width="102%">
-                    
-                    <f:entry field="storageCredentialId" help="/plugin/windows-azure-storage/help-storageaccounts.html"> 
-                        <div style="display: none; !important">
-                            <sf:select class="display: none !important" expressionAllowed="false" />
-                        </div>
-                    </f:entry> 
-                    <j:set var="storagePublisher" value="${app.getDescriptorByName('com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.WAStorageDescriptor')}"/>
-                    <j:set var="storageCreds" value="${instance.getStorageCredentials()}"/>
-                </table>
-                <div align="left" style="font-size:110%">
-                    <j:forEach var="storageCred" items="${storageCreds}">
-                        <ul style="list-style-type: none;">
-                            <li>
-                                <label>${storageCred}</label>
-                            </li>
-                        </ul>                
-                    </j:forEach>
-                </div>
-                <div align="center"> 
-                    <j:set var="credsAjaxURI" value="${rootURL}${instance.getAjaxURI()}"/>
-                    <input type="button" class="yui-button" value="Add Storage Accounts" onclick="window.credentials.add('${credsAjaxURI}')" /> 
-                    <p>
-                        <a href="credentials/store/system/domain/_/" target="_blank">Manage Storage Accounts in Credential Store</a>
-                    </p>
-                </div>
-            </f:entry> 	
-        </f:entry>	
-    </f:section>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form" xmlns:st="jelly:stapler"
+>
+  <f:section title="${%WindowsAzureStorage_title}">
+    <f:entry title="${%entry_title}" help="/plugin/windows-azure-storage/help-storageaccounts.html">
+      <j:set var="storageCreds" value="${instance.getStorageCredentials()}"/>
+      <div>
+        <j:forEach var="storageCred" items="${storageCreds}">
+          <ul>
+            <li>
+              <label>${storageCred}</label>
+            </li>
+          </ul>
+        </j:forEach>
+      </div>
+      <div>
+        <st:adjunct includes="lib.credentials.select.select"/>
+        <st:adjunct includes="lib.azure-storage.credentials"/>
+        <j:set var="credsAjaxURI" value="${rootURL}${instance.getAjaxURI()}"/>
+        <button
+            class="jenkins-button"
+            id="azure-storage-add-credentials"
+            data-credentials-uri="${credsAjaxURI}"
+        >
+          Add Storage Accounts
+        </button>
+        <p>
+          <a href="credentials/store/system/domain/_/" target="_blank">
+            Manage Storage Accounts in Credential Store
+          </a>
+        </p>
+      </div>
+    </f:entry>
+  </f:section>
 </j:jelly>
