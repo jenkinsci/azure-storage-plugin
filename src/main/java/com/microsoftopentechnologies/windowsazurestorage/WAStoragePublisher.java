@@ -53,6 +53,15 @@ import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.servlet.ServletException;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
@@ -64,16 +73,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.servlet.ServletException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(WAStoragePublisher.class.getName());
@@ -800,21 +799,18 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         @Restricted(NoExternalUse.class)
         public List<String> getStorageCredentials() {
             Item owner = null;
-            ListBoxModel allCreds = new StandardListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(
-                            AzureStorageAccount.class,
-                            owner,
-                            ACL.SYSTEM,
-                            Collections.<DomainRequirement>emptyList()));
-            ArrayList<Object> res = new ArrayList<Object>();
-            List<String> allStorageCred = new ArrayList<String>();
-            for (int i = 0; i < allCreds.size(); i++) {
-                res.add(allCreds.get(i));
-                String eachStorageCredential = res.get(i).toString();
-                String eachStorageAccount = eachStorageCredential.substring(0, eachStorageCredential.indexOf('='));
 
-                allStorageCred.add(eachStorageAccount);
+            List<AzureStorageAccount> storageAccounts = CredentialsProvider.lookupCredentialsInItem(
+                    AzureStorageAccount.class,
+                    null,
+                    ACL.SYSTEM2
+            );
 
+            List<String> allStorageCred = new ArrayList<>();
+            for (AzureStorageAccount storageAccount : storageAccounts) {
+                allStorageCred.add(
+                        String.format("%s (%s)", storageAccount.getStorageAccountName(), storageAccount.getId())
+                );
             }
             return allStorageCred;
         }
