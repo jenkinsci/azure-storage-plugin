@@ -808,7 +808,9 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
             List<String> allStorageCred = new ArrayList<>();
             for (AzureStorageAccount storageAccount : storageAccounts) {
-                allStorageCred.add(String.format("%s (%s)", storageAccount.getStorageAccountName(), storageAccount.getId()));
+                allStorageCred.add(
+                        String.format("%s (%s)", storageAccount.getStorageAccountName(), storageAccount.getId())
+                );
             }
             return allStorageCred;
         }
