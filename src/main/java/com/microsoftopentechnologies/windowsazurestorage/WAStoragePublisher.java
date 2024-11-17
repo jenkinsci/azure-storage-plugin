@@ -676,12 +676,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          *
          * @param request
          * @return FormValidation result
-         * @throws IOException
-         * @throws ServletException
          */
-        public FormValidation doCheckContainerName(StaplerRequest request)
-                throws IOException, ServletException {
-            final String containerName = request.getParameter("val");
+        public FormValidation doCheckContainerName(@QueryParameter("value") String containerName) {
             if (!StringUtils.isBlank(containerName)) {
                 // Token resolution happens dynamically at runtime , so for
                 // basic validations
@@ -696,8 +692,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
-        public FormValidation doCheckFileShareName(StaplerRequest request) {
-            final String fileShareName = request.getParameter("val");
+        public FormValidation doCheckFileShareName(@QueryParameter("value") String fileShareName) {
             if (!StringUtils.isBlank(fileShareName)) {
                 // Token resolution happens dynamically at runtime , so for
                 // basic validations
@@ -712,8 +707,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
-        public FormValidation doCheckPath(@QueryParameter String val) {
-            if (StringUtils.isBlank(val)) {
+        public FormValidation doCheckFilesPath(@QueryParameter String value) {
+            if (StringUtils.isBlank(value)) {
                 return FormValidation.error(Messages
                         .WAStoragePublisher_artifacts_req());
             }
