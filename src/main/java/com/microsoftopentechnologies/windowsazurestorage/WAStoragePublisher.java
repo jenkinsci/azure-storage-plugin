@@ -73,6 +73,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.verb.POST;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(WAStoragePublisher.class.getName());
@@ -639,6 +640,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
          * @throws IOException
          * @throws ServletException
          */
+        @POST
         public FormValidation doCheckAccount(
                 //CHECKSTYLE:OFF
                 @QueryParameter String was_storageAccName,
@@ -671,12 +673,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return FormValidation.ok(Messages.WAStoragePublisher_SA_val());
         }
 
-        /**
-         * Checks for valid container name.
-         *
-         * @param request
-         * @return FormValidation result
-         */
+        @POST
         public FormValidation doCheckContainerName(@QueryParameter("value") String containerName) {
             if (!StringUtils.isBlank(containerName)) {
                 // Token resolution happens dynamically at runtime , so for
@@ -692,6 +689,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
+        @POST
         public FormValidation doCheckFileShareName(@QueryParameter("value") String fileShareName) {
             if (!StringUtils.isBlank(fileShareName)) {
                 // Token resolution happens dynamically at runtime , so for
@@ -707,6 +705,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
+        @POST
         public FormValidation doCheckFilesPath(@QueryParameter String value) {
             if (StringUtils.isBlank(value)) {
                 return FormValidation.error(Messages
@@ -715,6 +714,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
+        @POST
         public FormValidation doCheckBlobName(@QueryParameter String val) {
             if (StringUtils.isBlank(val)) {
                 return FormValidation.error(Messages
