@@ -6,8 +6,7 @@
         <c:select expressionAllowed="false"/>
     </f:entry>
     <f:entry title="${%filesPath_title}" field="filesPath" help="/plugin/windows-azure-storage/help-filesPath.html">
-        <f:textbox
-                checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkPath?val='+encodeURIComponent(this.value)"/>
+        <f:textbox />
     </f:entry>
 
     <f:section title="${%storageType_title}">
@@ -17,8 +16,7 @@
             <f:nested>
                 <f:entry title="${%containerName_title}" field="containerName"
                          help="/plugin/windows-azure-storage/help-containerName.html">
-                    <f:textbox
-                            checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkContainerName?val='+escape(this.value)"/>
+                    <f:textbox />
                 </f:entry>
             </f:nested>
         </f:radioBlock>
@@ -28,8 +26,7 @@
             <f:nested>
                 <f:entry title="${%fileShareName_title}" field="fileShareName"
                          help="/plugin/windows-azure-storage/help-azureFileShareName.html">
-                    <f:textbox
-                            checkUrl="'${rootURL}/publisher/WAStoragePublisher/checkFileShareName?val='+escape(this.value)"/>
+                    <f:textbox />
                 </f:entry>
             </f:nested>
         </f:radioBlock>
