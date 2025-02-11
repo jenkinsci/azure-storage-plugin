@@ -13,13 +13,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.model.RunAction2;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.springframework.security.core.Authentication;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -90,8 +90,8 @@ public class AzureBlobAction implements RunAction2 {
     }
 
     public void doProcessDownloadRequest(
-            StaplerRequest request,
-            StaplerResponse response) throws IOException, ServletException {
+            StaplerRequest2 request,
+            StaplerResponse2 response) throws IOException, ServletException {
         if (!allowAnonymousAccess && isAnonymousAccess(Jenkins.getAuthentication2())) {
             String url = request.getOriginalRequestURI();
             response.sendRedirect(request.getContextPath() + "/login?from=" + url);

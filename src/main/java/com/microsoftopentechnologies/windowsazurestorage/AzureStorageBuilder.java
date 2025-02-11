@@ -17,7 +17,6 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
@@ -58,7 +57,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -396,8 +395,8 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
         public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
 
             return new StandardListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(
-                            AzureStorageAccount.class, owner, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()));
+                    CredentialsProvider.lookupCredentialsInItem(
+                            AzureStorageAccount.class, owner, ACL.SYSTEM2, Collections.emptyList()));
         }
 
         public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter String value) {
@@ -410,7 +409,7 @@ public class AzureStorageBuilder extends Builder implements SimpleBuildStep {
             return projectList;
         }
 
-        public boolean configure(StaplerRequest req, JSONObject formData)
+        public boolean configure(StaplerRequest2 req, JSONObject formData)
                 throws FormException {
             save();
             return super.configure(req, formData);
