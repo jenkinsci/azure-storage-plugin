@@ -10,12 +10,11 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -121,11 +120,11 @@ public final class CredentialMigration {
                         new AzureStorageAccount.StorageAccountCredential(
                                 storageAccount, storageAccountKey, storageBlobURL, "");
                 AzureStorageAccount cred = CredentialsMatchers.firstOrNull(
-                        CredentialsProvider.lookupCredentials(
+                        CredentialsProvider.lookupCredentialsInItemGroup(
                                 AzureStorageAccount.class,
                                 Jenkins.getInstance(),
-                                ACL.SYSTEM,
-                                Collections.<DomainRequirement>emptyList()),
+                                ACL.SYSTEM2,
+                                Collections.emptyList()),
                         CredentialsMatchers.withId(u.getId()));
                 if (cred != null) {
                     return;
@@ -143,7 +142,7 @@ public final class CredentialMigration {
                         storageAccount,
                         storageAccountKey,
                         storageBlobURL, "");
-                final SecurityContext securityContext = ACL.impersonate(ACL.SYSTEM);
+                final SecurityContext securityContext = ACL.impersonate2(ACL.SYSTEM2);
 
                 try {
                     CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();

@@ -9,7 +9,6 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -93,7 +92,7 @@ public class CredentialMigrationTest {
         assertEquals(2, s.getCredentials(Domain.global()).size());
                 
         AzureStorageAccount.StorageAccountCredential u = new AzureStorageAccount.StorageAccountCredential(storageAccount, storageAccountKey, storageBlobURL, "");
-        AzureStorageAccount storageCred = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(AzureStorageAccount.class, jenkinsInstance, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()),
+        AzureStorageAccount storageCred = CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentialsInItemGroup(AzureStorageAccount.class, jenkinsInstance, ACL.SYSTEM2, Collections.emptyList()),
                 CredentialsMatchers.withId(u.getId()));
 
         assertEquals(u.getStorageAccountName(), storageCred.getStorageAccountName());

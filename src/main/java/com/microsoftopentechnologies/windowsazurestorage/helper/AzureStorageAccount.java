@@ -18,7 +18,6 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.microsoftopentechnologies.windowsazurestorage.Messages;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
@@ -161,11 +160,11 @@ public class AzureStorageAccount extends BaseStandardCredentials {
             return null;
         }
         AzureStorageAccount creds = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(
+                CredentialsProvider.lookupCredentialsInItem(
                         AzureStorageAccount.class,
                         owner,
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
+                        ACL.SYSTEM2,
+                        Collections.emptyList()),
                 CredentialsMatchers.withId(storageCredentialId));
         if (creds == null) {
             return new AzureStorageAccount.StorageAccountCredential();
@@ -195,11 +194,11 @@ public class AzureStorageAccount extends BaseStandardCredentials {
                     return credentials;
                 }
             } else {
-                List<AzureStorageAccount> allCreds = CredentialsProvider.lookupCredentials(
+                List<AzureStorageAccount> allCreds = CredentialsProvider.lookupCredentialsInItemGroup(
                         AzureStorageAccount.class,
                         Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList());
+                        ACL.SYSTEM2,
+                        Collections.emptyList());
                 for (AzureStorageAccount cred : allCreds) {
                     if (storageAccName.equals(cred.getStorageAccountName())) {
                         return cred.getStorageCred();

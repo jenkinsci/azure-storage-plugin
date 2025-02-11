@@ -35,10 +35,10 @@ public class CredentialRenameTest {
         AzureStorageAccount.StorageAccountCredential expected = new AzureStorageAccount.StorageAccountCredential(
                 storageAccount, storageAccountKey, storageBlobURL, storageCdnURL);
 
-        List<AzureStorageAccount> azureStorageAccounts = CredentialsProvider.lookupCredentials(
+        List<AzureStorageAccount> azureStorageAccounts = CredentialsProvider.lookupCredentialsInItem(
                 AzureStorageAccount.class,
-                (Item) null,
-                ACL.SYSTEM,
+                null,
+                ACL.SYSTEM2,
                 Collections.emptyList());
         assertNotNull(azureStorageAccounts);
         assertEquals(1, azureStorageAccounts.size());

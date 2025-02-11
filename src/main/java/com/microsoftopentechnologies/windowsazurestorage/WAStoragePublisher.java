@@ -17,7 +17,6 @@ package com.microsoftopentechnologies.windowsazurestorage;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureStorageAccount;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -61,7 +60,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
@@ -72,7 +71,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
 
 public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
@@ -620,7 +619,7 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData)
+        public boolean configure(StaplerRequest2 req, JSONObject formData)
                 throws FormException {
 
             STORAGE_ACCOUNTS.replaceBy(req.bindParametersToList(
@@ -784,11 +783,11 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
         public ListBoxModel doFillStorageCredentialIdItems(@AncestorInPath Item owner) {
             return new StandardListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(
+                    CredentialsProvider.lookupCredentialsInItem(
                             AzureStorageAccount.class,
                             owner,
-                            ACL.SYSTEM,
-                            Collections.<DomainRequirement>emptyList()));
+                            ACL.SYSTEM2,
+                            Collections.emptyList()));
         }
 
         @Restricted(NoExternalUse.class)
