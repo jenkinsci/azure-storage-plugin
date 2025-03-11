@@ -9,23 +9,21 @@ import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import io.jenkins.plugins.casc.model.CNode;
 import io.jenkins.plugins.casc.model.Mapping;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class ConfigAsCodeTest {
-
-    @ClassRule
-    @ConfiguredWithCode("configuration-as-code.yml")
-    public static JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
+@WithJenkinsConfiguredWithCode
+class ConfigAsCodeTest {
 
     @Test
-    public void should_support_configuration_as_code() {
+    @ConfiguredWithCode("configuration-as-code.yml")
+    void should_support_configuration_as_code(JenkinsConfiguredWithCodeRule j) {
         AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(0);
 
@@ -38,7 +36,8 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    public void should_support_configuration_as_code_with_cdn() {
+    @ConfiguredWithCode("configuration-as-code.yml")
+    void should_support_configuration_as_code_with_cdn(JenkinsConfiguredWithCodeRule j) {
         AzureStorageAccount credentials = (AzureStorageAccount) SystemCredentialsProvider.getInstance().getCredentials()
                 .get(1);
 
@@ -52,7 +51,8 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    public void export_configuration() throws Exception {
+    @ConfiguredWithCode("configuration-as-code.yml")
+    void export_configuration(JenkinsConfiguredWithCodeRule j) throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
 
@@ -83,7 +83,8 @@ public class ConfigAsCodeTest {
     }
 
     @Test
-    public void export_configuration_with_cdn() throws Exception {
+    @ConfiguredWithCode("configuration-as-code.yml")
+    void export_configuration_with_cdn(JenkinsConfiguredWithCodeRule j) throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
 

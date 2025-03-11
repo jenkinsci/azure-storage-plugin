@@ -11,38 +11,45 @@ import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo;
 import hudson.util.Secret;
-import java.util.UUID;
 import jenkins.model.Jenkins;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.IOException;
+import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author arroyc
  */
-public class AzureStorageAccountTest {
-    private String stName = "test1";
-    private String stKey = "123";
-    private String stBlobURL = "http://test1";
-    private String stCdnURL = "http://cdn-test1";
+@WithJenkins
+class AzureStorageAccountTest {
+    private static final String stName = "test1";
+    private static final String stKey = "123";
+    private static final String stBlobURL = "http://test1";
+    private static final String stCdnURL = "http://cdn-test1";
 
     private AzureStorageAccount azureCred;
     private AzureStorageAccount.StorageAccountCredential stCred;
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
+    private static JenkinsRule j;
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        j = rule;
+    }
+
+    @BeforeEach
+    void setUp() throws IOException {
         azureCred = new AzureStorageAccount(CredentialsScope.GLOBAL, UUID.randomUUID().toString(), null, stName, stKey, stBlobURL, stCdnURL);
         stCred = new AzureStorageAccount.StorageAccountCredential(stName, stKey, stBlobURL, stCdnURL);
-        CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
+        CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.get()).iterator().next();
         s.addCredentials(Domain.global(), azureCred);
     }
 
@@ -50,13 +57,13 @@ public class AzureStorageAccountTest {
      * Test of getStorageAccountCredential method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetStorageAccountCredential() {
+    void testGetStorageAccountCredential() {
         System.out.println("getStorageAccountCredential");
         assertNull(AzureStorageAccount.getStorageAccountCredential(null, null));
         String storageCredentialId = azureCred.getId();
 
         AzureStorageAccount.StorageAccountCredential result = AzureStorageAccount.getStorageAccountCredential(null, storageCredentialId);
-        assert result != null;
+        assertNotNull(result);
         assertEquals(stCred.getStorageAccountKey(), result.getStorageAccountKey());
         assertEquals(stCred.getSecureKey(), result.getSecureKey());
         assertEquals(stCred.getStorageAccountName(), result.getStorageAccountName());
@@ -68,7 +75,7 @@ public class AzureStorageAccountTest {
      * Test of getStorageCreds method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetStorageCreds() {
+    void testGetStorageCreds() {
         System.out.println("getStorageCreds");
         AzureStorageAccount.StorageAccountCredential result = AzureStorageAccount.getStorageCreds(azureCred.getId(), stName);
         assertEquals(stCred.getStorageAccountKey(), result.getStorageAccountKey());
@@ -87,7 +94,7 @@ public class AzureStorageAccountTest {
      * Test of getStorageAccountName method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetStorageAccountName() {
+    void testGetStorageAccountName() {
         System.out.println("getStorageAccountName");
         assertEquals(stName, azureCred.getStorageAccountName());
     }
@@ -96,7 +103,7 @@ public class AzureStorageAccountTest {
      * Test of getStorageKey method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetStorageKey() {
+    void testGetStorageKey() {
         System.out.println("getStorageKey");
         assertEquals(stCred.getSecureKey().getPlainText(), Secret.decrypt(azureCred.getStorageKey()).getPlainText());
     }
@@ -105,7 +112,7 @@ public class AzureStorageAccountTest {
      * Test of getBlobEndpointURL method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetBlobEndpointURL() {
+    void testGetBlobEndpointURL() {
         System.out.println("getBlobEndpointURL");
         assertEquals(stBlobURL, azureCred.getBlobEndpointURL());
     }
@@ -114,7 +121,7 @@ public class AzureStorageAccountTest {
      * Test of getCdnEndpointURL method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetCdnEndpointURL() {
+    void testGetCdnEndpointURL() {
         System.out.println("getCdnEndpointURL");
         assertEquals(stCdnURL, azureCred.getCdnEndpointURL());
     }
@@ -123,7 +130,7 @@ public class AzureStorageAccountTest {
      * Test of getStorageCred method, of class AzureStorageAccount.
      */
     @Test
-    public void testGetStorageCred() {
+    void testGetStorageCred() {
         System.out.println("getStorageCred");
         assertEquals(stCred.getStorageAccountKey(), azureCred.getStorageCred().getStorageAccountKey());
         assertEquals(stCred.getSecureKey(), azureCred.getStorageCred().getSecureKey());
@@ -136,7 +143,7 @@ public class AzureStorageAccountTest {
      * Test of convertToStorageAccountInfo method, of class AzureStorageAccount.
      */
     @Test
-    public void testConvertToStorageAccountInfo() {
+    void testConvertToStorageAccountInfo() {
         System.out.println("convertToStorageAccountInfo");
         StorageAccountInfo expResult = new StorageAccountInfo(stName, stKey, stBlobURL, stCdnURL);
         StorageAccountInfo result = AzureStorageAccount.convertToStorageAccountInfo(azureCred.getStorageCred());

@@ -3,26 +3,24 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import hudson.model.Item;
 import hudson.security.ACL;
-import java.util.Collections;
-import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import java.util.Collections;
+import java.util.List;
 
-public class CredentialRenameTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class CredentialRenameTest {
 
     @Test
     @LocalData
-    public void testRenameStorageConfig() throws Exception {
+    void testRenameStorageConfig(JenkinsRule j) {
         String storageAccount = "name";
         String storageAccountKey = "key";
         String storageBlobURL = "https://blob.core.windows.net/";

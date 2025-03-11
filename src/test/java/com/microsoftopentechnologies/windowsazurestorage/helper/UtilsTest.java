@@ -7,25 +7,35 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author arroyc
  */
-public class UtilsTest {
+@WithJenkins
+class UtilsTest {
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
+    private static JenkinsRule j;
+
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Test of validateContainerName method, of class Utils.
      */
     @Test
-    public void testValidateContainerName() {
+    @Disabled
+    void testValidateContainerName() {
         System.out.println("check test result in testContainerName in \\windows-azure-storage-plugin\\src\\test\\java\\com\\microsoftopentechnologies\\windowsazurestorage\\WindowsAzureStorageTest.java");
     }
 
@@ -33,7 +43,7 @@ public class UtilsTest {
      * Test of validateBlobName method, of class Utils.
      */
     @Test
-    public void testValidateBlobName() {
+    void testValidateBlobName() {
         System.out.println("validateBlobName");
         boolean expResult = false;
         assertEquals(expResult, Utils.validateBlobName(null));
@@ -48,14 +58,15 @@ public class UtilsTest {
             }
         }
         assertEquals(expResult, Utils.validateBlobName(sb.toString()));
-        assertEquals(true, Utils.validateBlobName("abcd"));
+        assertTrue(Utils.validateBlobName("abcd"));
     }
 
     /**
      * Test of isNullOrEmpty method, of class Utils.
      */
     @Test
-    public void testIsNullOrEmpty() {
+    @Disabled
+    void testIsNullOrEmpty() {
         System.out.println("check test result in testNullOrEmptyCheck in \\windows-azure-storage-plugin\\src\\test\\java\\com\\microsoftopentechnologies\\windowsazurestorage\\WindowsAzureStorageTest.java");
     }
 
@@ -63,23 +74,23 @@ public class UtilsTest {
      * Test of containTokens method, of class Utils.
      */
     @Test
-    public void testContainTokens() {
+    void testContainTokens() {
         System.out.println("containTokens");
         String text = "";
         boolean expResult = false;
         boolean result = Utils.containTokens(text);
         assertEquals(expResult, result);
         result = Utils.containTokens("$Aab123_");
-        assertEquals(true, result);
-        assertEquals(true, Utils.containTokens("${Aab123_}"));
-        assertEquals(false, Utils.containTokens("${Aab123_"));
+        assertTrue(result);
+        assertTrue(Utils.containTokens("${Aab123_}"));
+        assertFalse(Utils.containTokens("${Aab123_"));
     }
 
     /**
      * Test of getBlobEP method, of class Utils.
      */
     @Test
-    public void testGetBlobEP() {
+    void testGetBlobEP() {
         System.out.println("getBlobEP");
         String blobURL = "";
         String expResult = Constants.DEF_BLOB_URL;
@@ -93,7 +104,8 @@ public class UtilsTest {
      * Test of getDefaultBlobURL method, of class Utils.
      */
     @Test
-    public void testGetDefaultBlobURL() {
+    @Disabled
+    void testGetDefaultBlobURL() {
         System.out.println("check result in testGetBlobEPReturnsDefaultURL in \\windows-azure-storage-plugin\\src\\test\\java\\com\\microsoftopentechnologies\\windowsazurestorage\\WindowsAzureStorageTest.java");
     }
 
@@ -101,9 +113,9 @@ public class UtilsTest {
      * Test of getJenkinsInstance method, of class Utils.
      */
     @Test
-    public void testGetJenkinsInstance() {
+    void testGetJenkinsInstance() {
         System.out.println("getJenkinsInstance");
-        Jenkins expResult = Jenkins.getInstance();
+        Jenkins expResult = Jenkins.get();
         Jenkins result = Jenkins.get();
         assertEquals(expResult, result);
     }
@@ -112,7 +124,7 @@ public class UtilsTest {
      * Test of getMD5 method, of class Utils.
      */
     @Test
-    public void testGetMD5() {
+    void testGetMD5() {
         System.out.println("getMD5");
         String plainText = "this is a test for md5 hash";
         String expResult = DigestUtils.md5Hex(plainText);
@@ -124,9 +136,9 @@ public class UtilsTest {
      * Test of getWorkDirectory method, of class Utils.
      */
     @Test
-    public void testGetWorkDirectory() {
+    void testGetWorkDirectory() {
         System.out.println("getWorkDirectory");
-        String expResult = Jenkins.getInstance().root.getAbsolutePath();
+        String expResult = Jenkins.get().root.getAbsolutePath();
         String result = Utils.getWorkDirectory();
         assertEquals(expResult, result);
     }
@@ -135,7 +147,7 @@ public class UtilsTest {
      * Test of getPluginInstance method, of class Utils.
      */
     @Test
-    public void testGetPluginInstance() {
+    void testGetPluginInstance() {
         System.out.println("getPluginInstance");
         String expResult = Jenkins.get().getLegacyInstanceId();
         String result = Utils.getPluginInstance();
@@ -146,11 +158,10 @@ public class UtilsTest {
      * Test of getPluginVersion method, of class Utils.
      */
     @Test
-    public void testGetPluginVersion() {
+    void testGetPluginVersion() {
         System.out.println("getPluginVersion");
         String expResult = Utils.class.getPackage().getImplementationVersion();
         String result = Utils.getPluginVersion();
         assertEquals(expResult, result);
     }
-
 }

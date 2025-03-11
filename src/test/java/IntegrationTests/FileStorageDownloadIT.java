@@ -15,6 +15,7 @@
 
 package IntegrationTests;
 
+import com.azure.storage.common.ParallelTransferOptions;
 import com.azure.storage.file.share.ShareDirectoryClient;
 import com.azure.storage.file.share.ShareFileClient;
 import com.microsoftopentechnologies.windowsazurestorage.helper.AzureUtils;
@@ -25,25 +26,28 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public class FileStorageDownloadIT extends IntegrationTest {
-    @Before
-    public void setUp() throws IOException, URISyntaxException, InterruptedException {
-        final String fileShareName = "testshare" + TestEnvironment.GenerateRandomString(15);
+@WithJenkins
+class FileStorageDownloadIT extends IntegrationTest {
+
+    @BeforeEach
+    void setUp() throws Exception {
+        final String fileShareName = "testshare" + TestEnvironment.generateRandomString(15);
         testEnv = new TestEnvironment(fileShareName);
 
         File directory = new File(fileShareName);
@@ -76,7 +80,8 @@ public class FileStorageDownloadIT extends IntegrationTest {
             try (FileInputStream fis = new FileInputStream(file); BufferedInputStream bis = new BufferedInputStream(fis)) {
                 cloudFile.upload(
                         bis,
-                        localPath.length());
+                        localPath.length(),
+                        new ParallelTransferOptions());
             }
             testEnv.downloadFileList.put(tempContent, temp);
         }
@@ -84,11 +89,11 @@ public class FileStorageDownloadIT extends IntegrationTest {
     }
 
     @Test
-    public void testDownloadFromFile() throws IOException {
+    void testDownloadFromFile() throws IOException {
         Run mockRun = mock(Run.class);
         Launcher mockLauncher = mock(Launcher.class);
 
-        File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.GenerateRandomString(5));
+        File downloaded = new File(new File(".").getAbsolutePath(), TestEnvironment.generateRandomString(5));
         downloaded.mkdir();
         FilePath workspace = new FilePath(downloaded.getAbsoluteFile());
 
@@ -105,7 +110,7 @@ public class FileStorageDownloadIT extends IntegrationTest {
         assertEquals(testEnv.downloadFileList.size(), listofFiles.length);
 
         for (File each : listofFiles) {
-            assertEquals(true, each.isFile());
+	        assertTrue(each.isFile());
             String tempContent = FileUtils.readFileToString(each, "utf-8");
             File tempFile = testEnv.downloadFileList.get(tempContent);
             assertEquals(FileUtils.readFileToString(tempFile, "utf-8"), tempContent);
@@ -115,8 +120,8 @@ public class FileStorageDownloadIT extends IntegrationTest {
         FileUtils.deleteDirectory(downloaded);
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         for (File file : testEnv.downloadFileList.values()) {
             if (file.getParentFile().exists()) {
                 try {
