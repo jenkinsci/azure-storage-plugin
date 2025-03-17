@@ -29,31 +29,30 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
-public class FileStorageUploadIT extends IntegrationTest {
+@WithJenkins
+class FileStorageUploadIT extends IntegrationTest {
     private static final Logger LOGGER = Logger.getLogger(FileStorageUploadIT.class.getName());
     private String fileShareName;
 
-    @Before
-    public void setUp() throws IOException, URISyntaxException {
-        fileShareName = "testshare-" + TestEnvironment.GenerateRandomString(10);
+    @BeforeEach
+    void setUp() throws Exception {
+        fileShareName = "testshare-" + TestEnvironment.generateRandomString(10);
         testEnv = new TestEnvironment(fileShareName);
         File directory = new File(fileShareName);
         if (!directory.exists()) {
@@ -69,7 +68,7 @@ public class FileStorageUploadIT extends IntegrationTest {
             testEnv.fileShare.create();
         }
 
-        for (int i = 0; i < testEnv.TOTAL_FILES; i++) {
+        for (int i = 0; i < TestEnvironment.TOTAL_FILES; i++) {
             String tempContent = UUID.randomUUID().toString();
             File temp = new File(directory.getAbsolutePath(), "upload" + tempContent + ".txt");
             FileUtils.writeStringToFile(temp, tempContent, StandardCharsets.UTF_8);
@@ -78,94 +77,84 @@ public class FileStorageUploadIT extends IntegrationTest {
     }
 
     @Test
-    public void testUploadFile() {
-        try {
-            Run mockRun = mock(Run.class);
-            Launcher mockLauncher = mock(Launcher.class);
-            List<AzureBlobMetadataPair> metadata = new ArrayList<>();
+    void testUploadFile() throws Exception {
+        Run mockRun = mock(Run.class);
+        Launcher mockLauncher = mock(Launcher.class);
+        List<AzureBlobMetadataPair> metadata = new ArrayList<>();
 
-            File workspaceDir = new File(fileShareName);
-            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+        File workspaceDir = new File(fileShareName);
+        FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
-            serviceData.setFileShareName(fileShareName);
-            serviceData.setCleanUpContainerOrShare(false);
-            serviceData.setFilePath("*.txt");
-            serviceData.setVirtualPath("");
-            serviceData.setExcludedFilesPath("");
-            serviceData.setUploadType(UploadType.INDIVIDUAL);
-            serviceData.setAzureBlobMetadata(metadata);
+        UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+        serviceData.setFileShareName(fileShareName);
+        serviceData.setCleanUpContainerOrShare(false);
+        serviceData.setFilePath("*.txt");
+        serviceData.setVirtualPath("");
+        serviceData.setExcludedFilesPath("");
+        serviceData.setUploadType(UploadType.INDIVIDUAL);
+        serviceData.setAzureBlobMetadata(metadata);
 
-            UploadService service = new UploadToFileService(serviceData);
-            int uploaded = service.execute();
+        UploadService service = new UploadToFileService(serviceData);
+        int uploaded = service.execute();
 
-            assertEquals(testEnv.uploadFileList.size(), uploaded);
-            ShareDirectoryClient rootDirectoryClient = testEnv.fileShare.getRootDirectoryClient();
-            for (ShareFileItem item : rootDirectoryClient.listFilesAndDirectories()) {
-                if (!item.isDirectory()) {
-                    ByteArrayOutputStream output = new ByteArrayOutputStream();
-                    rootDirectoryClient.getFileClient(item.getName()).download(output);
-                    String downloadedContent = output.toString(StandardCharsets.UTF_8.name());
-                    File temp = testEnv.uploadFileList.get(downloadedContent);
-                    String tempContent = FileUtils.readFileToString(temp, "utf-8");
-                    //check for filenames
-                    assertEquals(tempContent, downloadedContent);
-                    //check for file contents
-                    assertEquals("upload" + downloadedContent + ".txt", temp.getName());
-                    temp.delete();
-                }
+        assertEquals(testEnv.uploadFileList.size(), uploaded);
+        ShareDirectoryClient rootDirectoryClient = testEnv.fileShare.getRootDirectoryClient();
+        for (ShareFileItem item : rootDirectoryClient.listFilesAndDirectories()) {
+            if (!item.isDirectory()) {
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                rootDirectoryClient.getFileClient(item.getName()).download(output);
+                String downloadedContent = output.toString(StandardCharsets.UTF_8);
+                File temp = testEnv.uploadFileList.get(downloadedContent);
+                String tempContent = FileUtils.readFileToString(temp, "utf-8");
+                //check for filenames
+                assertEquals(tempContent, downloadedContent);
+                //check for file contents
+                assertEquals("upload" + downloadedContent + ".txt", temp.getName());
+                temp.delete();
             }
-
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
         }
     }
 
     @Test
-    public void testUploadFileWithEmptyMetaData() {
-        try {
-            Run mockRun = mock(Run.class);
-            Launcher mockLauncher = mock(Launcher.class);
-            List<AzureBlobMetadataPair> metadata = Arrays.asList(
-                    new AzureBlobMetadataPair(null, "v1"),
-                    new AzureBlobMetadataPair("", "v1"),
-                    new AzureBlobMetadataPair(" ", "v1"),
-                    new AzureBlobMetadataPair("k1", null),
-                    new AzureBlobMetadataPair("k2", ""),
-                    new AzureBlobMetadataPair("k2", " ")
-            );
+    void testUploadFileWithEmptyMetaData() throws Exception{
+        Run mockRun = mock(Run.class);
+        Launcher mockLauncher = mock(Launcher.class);
+        List<AzureBlobMetadataPair> metadata = Arrays.asList(
+                new AzureBlobMetadataPair(null, "v1"),
+                new AzureBlobMetadataPair("", "v1"),
+                new AzureBlobMetadataPair(" ", "v1"),
+                new AzureBlobMetadataPair("k1", null),
+                new AzureBlobMetadataPair("k2", ""),
+                new AzureBlobMetadataPair("k2", " ")
+        );
 
-            Iterator it = testEnv.uploadFileList.entrySet().iterator();
-            Map.Entry firstPair = (Map.Entry) it.next();
-            File firstFile = (File) firstPair.getValue();
+        Iterator it = testEnv.uploadFileList.entrySet().iterator();
+        Map.Entry firstPair = (Map.Entry) it.next();
+        File firstFile = (File) firstPair.getValue();
 
-            File workspaceDir = new File(fileShareName);
-            FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
+        File workspaceDir = new File(fileShareName);
+        FilePath workspace = new FilePath(mockLauncher.getChannel(), workspaceDir.getAbsolutePath());
 
-            UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
-            serviceData.setFileShareName(fileShareName);
-            serviceData.setCleanUpContainerOrShare(false);
-            serviceData.setFilePath(firstFile.getName());
-            serviceData.setVirtualPath("");
-            serviceData.setExcludedFilesPath("");
-            serviceData.setUploadType(UploadType.INDIVIDUAL);
-            serviceData.setAzureBlobMetadata(metadata);
+        UploadServiceData serviceData = new UploadServiceData(mockRun, workspace, mockLauncher, TaskListener.NULL, testEnv.sampleStorageAccount);
+        serviceData.setFileShareName(fileShareName);
+        serviceData.setCleanUpContainerOrShare(false);
+        serviceData.setFilePath(firstFile.getName());
+        serviceData.setVirtualPath("");
+        serviceData.setExcludedFilesPath("");
+        serviceData.setUploadType(UploadType.INDIVIDUAL);
+        serviceData.setAzureBlobMetadata(metadata);
 
-            UploadService service = new UploadToFileService(serviceData);
-            int uploaded = service.execute();
+        UploadService service = new UploadToFileService(serviceData);
+        int uploaded = service.execute();
 
-            assertEquals(1, uploaded);
-            ShareFileClient cloudFile = testEnv.fileShare.getRootDirectoryClient().getFileClient(firstFile.getName());
-            Map<String, String> downloadedMeta = cloudFile.getProperties().getMetadata();
-            assertTrue(downloadedMeta.isEmpty());
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
+        assertEquals(1, uploaded);
+        ShareFileClient cloudFile = testEnv.fileShare.getRootDirectoryClient().getFileClient(firstFile.getName());
+        Map<String, String> downloadedMeta = cloudFile.getProperties().getMetadata();
+        assertTrue(downloadedMeta.isEmpty());
     }
 
-    @After
-    public void tearDown() {
-        System.gc();
+    @AfterEach
+    void tearDown() {
         Iterator it = testEnv.uploadFileList.entrySet().iterator();
         if (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();

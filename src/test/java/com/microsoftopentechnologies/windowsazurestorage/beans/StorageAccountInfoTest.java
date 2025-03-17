@@ -5,24 +5,24 @@
  */
 package com.microsoftopentechnologies.windowsazurestorage.beans;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- *
  * @author arroyc
  */
-public class StorageAccountInfoTest {
-    
-    private StorageAccountInfo st;
-    private String stName = "test1";
-    private String stKey = "123";
-    private String stBlobURL = "http://test1";
-    private String stCdnURL = "http://cdn-test1";
+class StorageAccountInfoTest {
 
-    @Before
-    public void setUp() {
+    private StorageAccountInfo st;
+    private final String stName = "test1";
+    private final String stKey = "123";
+    private final String stBlobURL = "http://test1";
+    private final String stCdnURL = "http://cdn-test1";
+
+    @BeforeEach
+    void setUp() {
         st = new StorageAccountInfo(stName, stKey, stBlobURL, stCdnURL);
     }
 
@@ -30,7 +30,7 @@ public class StorageAccountInfoTest {
      * Test of getStorageAccName method, of class StorageAccountInfo.
      */
     @Test
-    public void testGetStorageAccName() {
+    void testGetStorageAccName() {
         System.out.println("getStorageAccName");
         StorageAccountInfo instance = st;
         assertEquals(stName, instance.getStorageAccName());
@@ -40,7 +40,7 @@ public class StorageAccountInfoTest {
      * Test of setStorageAccName method, of class StorageAccountInfo.
      */
     @Test
-    public void testSetStorageAccName() {
+    void testSetStorageAccName() {
         System.out.println("setStorageAccName");
         StorageAccountInfo instance = st;
         assertEquals(stName, instance.getStorageAccName());
@@ -52,7 +52,7 @@ public class StorageAccountInfoTest {
      * Test of getStorageAccountKey method, of class StorageAccountInfo.
      */
     @Test
-    public void testGetStorageAccountKey() {
+    void testGetStorageAccountKey() {
         System.out.println("getStorageAccountKey");
         StorageAccountInfo instance = st;
         assertEquals(stKey, instance.getStorageAccountKey());
@@ -62,7 +62,7 @@ public class StorageAccountInfoTest {
      * Test of setStorageAccountKey method, of class StorageAccountInfo.
      */
     @Test
-    public void testSetStorageAccountKey() {
+    void testSetStorageAccountKey() {
         System.out.println("setStorageAccountKey");
         String storageAccountKey = "999";
         StorageAccountInfo instance = st;
@@ -75,7 +75,7 @@ public class StorageAccountInfoTest {
      * Test of getBlobEndPointURL method, of class StorageAccountInfo.
      */
     @Test
-    public void testGetBlobEndPointURL() {
+    void testGetBlobEndPointURL() {
         System.out.println("getBlobEndPointURL");
         StorageAccountInfo instance = st;
         assertEquals(stBlobURL, instance.getBlobEndPointURL());
@@ -85,7 +85,7 @@ public class StorageAccountInfoTest {
      * Test of setBlobEndPointURL method, of class StorageAccountInfo.
      */
     @Test
-    public void testSetBlobEndPointURL() {
+    void testSetBlobEndPointURL() {
         System.out.println("setBlobEndPointURL");
         StorageAccountInfo instance = st;
         assertEquals(stBlobURL, instance.getBlobEndPointURL());
@@ -97,7 +97,7 @@ public class StorageAccountInfoTest {
      * Test of getCdnEndPointURL method, of class StorageAccountInfo.
      */
     @Test
-    public void testGetCdnEndPointURL() {
+    void testGetCdnEndPointURL() {
         System.out.println("getCdnEndPointURL");
         StorageAccountInfo instance = st;
         assertEquals(stCdnURL, instance.getCdnEndPointURL());
@@ -107,7 +107,7 @@ public class StorageAccountInfoTest {
      * Test of setCdnEndPointURL method, of class StorageAccountInfo.
      */
     @Test
-    public void testSetCdnEndPointURL() {
+    void testSetCdnEndPointURL() {
         System.out.println("setCdnEndPointURL");
         StorageAccountInfo instance = st;
         assertEquals(stCdnURL, instance.getCdnEndPointURL());
