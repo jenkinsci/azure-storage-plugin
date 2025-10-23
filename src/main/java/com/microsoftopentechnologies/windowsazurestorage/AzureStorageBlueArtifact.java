@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import hudson.Extension;
 import hudson.model.Run;
 import io.jenkins.blueocean.rest.Reachable;
 import io.jenkins.blueocean.rest.factory.BlueArtifactFactory;
 import io.jenkins.blueocean.rest.hal.Link;
 import io.jenkins.blueocean.rest.model.BlueArtifact;
+import org.jenkinsci.plugins.variant.OptionalExtension;
 
-@Extension(optional = true)
+@OptionalExtension(requirePlugins = "blueocean-rest")
 public final class AzureStorageBlueArtifact extends BlueArtifact {
     private AzureBlobAction action;
     private AzureBlob artifact;
@@ -54,7 +54,7 @@ public final class AzureStorageBlueArtifact extends BlueArtifact {
         return true;
     }
 
-    @Extension
+    @OptionalExtension(requirePlugins = "blueocean-rest")
     public static final class FactoryImpl extends BlueArtifactFactory {
         @Override
         public Collection<BlueArtifact> getArtifacts(Run<?, ?> run, final Reachable reachable) {
