@@ -48,7 +48,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public final class AzureUtils {
     private static final String TEST_CNT_NAME = "testcheckfromjenkins";

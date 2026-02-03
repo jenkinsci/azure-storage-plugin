@@ -18,7 +18,7 @@ package com.microsoftopentechnologies.windowsazurestorage.service;
 import com.microsoftopentechnologies.windowsazurestorage.exceptions.WAStorageException;
 import com.microsoftopentechnologies.windowsazurestorage.service.model.ServiceData;
 import hudson.model.Result;
-import org.apache.commons.lang.time.DurationFormatUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import java.io.PrintWriter;
 

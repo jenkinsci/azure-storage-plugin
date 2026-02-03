@@ -37,7 +37,7 @@ import hudson.util.DirScanner;
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;

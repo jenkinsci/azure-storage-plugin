@@ -63,7 +63,7 @@ import java.util.logging.Logger;
 import jakarta.servlet.ServletException;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
