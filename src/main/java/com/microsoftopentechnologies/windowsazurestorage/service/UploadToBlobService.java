@@ -30,8 +30,8 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.util.DirScanner;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

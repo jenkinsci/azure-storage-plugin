@@ -17,7 +17,7 @@ package com.microsoftopentechnologies.windowsazurestorage.helper;
 
 import hudson.Util;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
