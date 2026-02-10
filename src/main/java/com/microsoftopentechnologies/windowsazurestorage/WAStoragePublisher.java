@@ -114,12 +114,16 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
 
     @DataBoundSetter
     public void setContainerName(String containerName) {
-        this.containerName = Util.fixEmpty(containerName);
+        if (Constants.BLOB_STORAGE.equals(getStorageType())) {
+            this.containerName = Util.fixEmpty(containerName);
+        }
     }
 
     @DataBoundSetter
     public void setFileShareName(String fileShareName) {
-        this.fileShareName = Util.fixEmpty(fileShareName);
+        if (Constants.FILE_STORAGE.equals(getStorageType())) {
+            this.fileShareName = Util.fixEmpty(fileShareName);
+        }
     }
 
     @DataBoundSetter
@@ -375,11 +379,13 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
         return virtualPath;
     }
 
+    @Override
     public WAStorageDescriptor getDescriptor() {
         return (WAStorageDescriptor) super.getDescriptor();
     }
 
     //Defines project actions
+    @Override
     public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
         AzureBlobProjectAction projectAction = new AzureBlobProjectAction(project);
         List<Action> projectActions = new ArrayList<Action>();
@@ -560,20 +566,8 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        // Check if storage account credentials are valid
-        try {
-            AzureUtils.validateStorageAccount(storageAccount, true);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            listener.getLogger().println(Messages.Client_SA_val_fail());
-            listener.getLogger().println(
-                    "Storage Account name --->"
-                            + storageAccount.getStorageAccName() + "<----");
-            listener.getLogger().println(
-                    "Blob end point url --->"
-                            + storageAccount.getBlobEndPointURL() + "<----");
-            return false;
-        }
+        // NOTE let's validate account credentials at runtime, actual validateStorageAccount works only for blobstore,
+        // if fileshare is configured it will fail
         return true;
     }
 
