@@ -566,8 +566,6 @@ public class WAStoragePublisher extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        // NOTE let's validate account credentials at runtime, actual validateStorageAccount works only for blobstore,
-        // if fileshare is configured it will fail
         return true;
     }
 
