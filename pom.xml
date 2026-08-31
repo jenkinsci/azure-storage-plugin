@@ -16,7 +16,7 @@
     <properties>
         <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/azure-storage-plugin</gitHubRepo>
-        <jenkins.baseline>2.479</jenkins.baseline>
+        <jenkins.baseline>2.555</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
         <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
@@ -34,7 +34,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>5054.v620b_5d2b_d5e6</version>
+                <version>6931.vea_a_b_c6fd017d</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -42,6 +42,16 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- tika-core offers jakarta APIs at a shallower depth than the newer ones from
+             azure-sdk; declare them so the newer versions resolve -->
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>jakarta-activation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>jakarta-xml-bind-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>azure-sdk</artifactId>
@@ -101,6 +111,8 @@
         <dependency>
             <groupId>io.jenkins.blueocean</groupId>
             <artifactId>blueocean-rest</artifactId>
+            <!-- no longer managed by the plugin BOM -->
+            <version>1.27.26</version>
             <optional>true</optional>
         </dependency>
 
